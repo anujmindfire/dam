@@ -36,8 +36,10 @@ export const apiUrl = {
 
 export const enums = {
   pending: "pending",
+  pending_approval: "pending_approval",
   reviewed: "reviewed",
   approved: "approved",
+  rejected: "rejected",
   expired: "expired",
   archived: "archived",
 };
@@ -91,6 +93,8 @@ export const modelName = {
   assetVersion: "assetVersion",
   role: "role",
   user: "user",
+  approval: "approval",
+  approvalComment: "approvalComment",
 };
 
 export const common = {

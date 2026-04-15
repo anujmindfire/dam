@@ -13,7 +13,7 @@ class Asset extends Model<AssetsProps, AssetCreationAttributes> implements Asset
   public owner!: string | null;
   public size!: number | null;
   public mimetype!: string | null;
-  public status!: "pending" | "reviewed" | "approved" | "expired" | "archived";
+  public status!: "pending" | "pending_approval" | "reviewed" | "approved" | "rejected" | "expired" | "archived";
   public currentVersion!: number;
   public department!: string | null;
   public usageRights!: string | null;

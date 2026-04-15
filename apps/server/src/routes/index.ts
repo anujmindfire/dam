@@ -3,6 +3,7 @@ import auth from "./auth";
 import user from "./user";
 import collection from "./collection";
 import asset from "./asset";
+import approval from "./approval";
 import analytics from "./analytics";
 import {
   apiUrl,
@@ -31,6 +32,9 @@ router.use(`${baseRoute}${apiUrl.collection}`, collection);
 
 /****** ASSET ******/
 router.use(`${baseRoute}${apiUrl.assest}`, asset);
+
+/****** APPROVAL ******/
+router.use(`${baseRoute}/approvals`, approval);
 
 /****** STATISTICS & ANALYTICS ******/
 router.use(`${baseRoute}/stats`, analytics);

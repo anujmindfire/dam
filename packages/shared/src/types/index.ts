@@ -42,7 +42,7 @@ export interface AssetsProps {
   owner: string | null;
   size: number | null;
   mimetype: string | null;
-  status: "pending" | "reviewed" | "approved" | "expired" | "archived";
+  status: "pending" | "pending_approval" | "reviewed" | "approved" | "rejected" | "expired" | "archived";
   currentVersion: number;
   department: string | null;
   usageRights: string | null;

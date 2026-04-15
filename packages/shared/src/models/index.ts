@@ -2,6 +2,8 @@ import Asset from "./asset";
 import Collection from "./collection";
 import Metadata from "./metadata";
 import AssetVersion from "./version";
+import Approval from "./approval";
+import ApprovalComment from "./approvalComment";
 
 // Collection self-associations (Hierarchy)
 Collection.hasMany(Collection, {
@@ -47,4 +49,26 @@ AssetVersion.belongsTo(Asset, {
   foreignKey: "assetId",
 });
 
-export { Asset, Collection, Metadata, AssetVersion };
+// Asset and Approval associations
+Asset.hasMany(Approval, {
+  as: "approvals",
+  foreignKey: "assetId",
+});
+
+Approval.belongsTo(Asset, {
+  as: "asset",
+  foreignKey: "assetId",
+});
+
+// Approval and ApprovalComment associations
+Approval.hasMany(ApprovalComment, {
+  as: "comments",
+  foreignKey: "approvalId",
+});
+
+ApprovalComment.belongsTo(Approval, {
+  as: "approval",
+  foreignKey: "approvalId",
+});
+
+export { Asset, Collection, Metadata, AssetVersion, Approval, ApprovalComment };

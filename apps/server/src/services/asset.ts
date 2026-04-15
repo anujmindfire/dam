@@ -185,6 +185,14 @@ export const updateAsset = async (req: Request) => {
       return new CustomError(assetMsg.notFound, statusCode.notFound);
     }
 
+    // Publish event for other services
+    await publishMessage("asset_updated", {
+      assetId: updatedAsset.id,
+      changes: { department, usageRights, expiryDate, collectionId },
+      updatedBy: req.user?.id,
+      timestamp: new Date().toISOString(),
+    });
+
     // Invalidate Caches
     await cache.del(`${assetCacheKeyPrefix}${id}`);
     await cache.delByPattern(`${assetListCacheKey}*`);
@@ -218,6 +226,15 @@ export const updateStatus = async (req: Request) => {
       return new CustomError(assetMsg.notFound, statusCode.notFound);
     }
 
+    // Publish event for status change
+    await publishMessage("asset_status_changed", {
+      assetId: updatedAsset.id,
+      oldStatus: updatedAsset.status,
+      newStatus: status,
+      changedBy: req.user?.id,
+      timestamp: new Date().toISOString(),
+    });
+
     // Invalidate Caches
     await cache.del(`${assetCacheKeyPrefix}${id}`);
     await cache.delByPattern(`${assetListCacheKey}*`);
@@ -238,11 +255,25 @@ export const deleteAsset = async (req: Request) => {
   try {
     const { id } = req.params;
 
+    // Get asset details before deletion for event publishing
+    const asset = await findOne(assetModel, { id: Number(id) });
+    if (!asset) {
+      return new CustomError(assetMsg.notFound, statusCode.notFound);
+    }
+
     const deletedCount = await deleteRecord(assetModel, { id: Number(id) });
 
     if (deletedCount === 0) {
       return new CustomError(assetMsg.notFound, statusCode.notFound);
     }
+
+    // Publish event for deletion
+    await publishMessage("asset_deleted", {
+      assetId: asset.id,
+      filename: asset.filename,
+      deletedBy: req.user?.id,
+      timestamp: new Date().toISOString(),
+    });
 
     // Invalidate Caches
     await cache.del(`${assetCacheKeyPrefix}${id}`);
