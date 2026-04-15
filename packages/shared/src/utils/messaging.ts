@@ -1,9 +1,13 @@
+import amqplib from "amqplib";
 import dotEnv from "../config/dotEnv";
 import logger from "./logger";
 import { common } from "./constant";
 
-let connection: amqp.Connection | null = null;
-let channel: amqp.Channel | null = null;
+type Connection = amqplib.Connection;
+type Channel = amqplib.Channel;
+
+let connection: Connection | null = null;
+let channel: Channel | null = null;
 
 /**
  * Establishes a connection to the RabbitMQ broker and creates a communication channel.
@@ -14,7 +18,7 @@ let channel: amqp.Channel | null = null;
 export const connectRabbitMQ = async (): Promise<void> => {
   try {
     if (!connection) {
-      connection = await amqp.connect(dotEnv.rabbitmqURL);
+      connection = await amqplib.connect(dotEnv.rabbitmqURL);
       channel = await connection.createChannel();
       logger.info(common.rmqConnected);
     }
