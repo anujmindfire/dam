@@ -1,0 +1,9 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+if ! command -v npx &> /dev/null; then
+  echo "⚠️  npx not found - skipping lint-staged"
+  exit 0
+fi
+
+npx lint-staged
