@@ -1,0 +1,414 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Digital Asset Management (DAM) API",
+    "version": "1.0.0",
+    "description": "Comprehensive REST API for managing digital assets, collections, usage tracking, and analytics."
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Local Development" },
+    { "url": "http://localhost:8080", "description": "Via API Gateway (Nginx)" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": { "type": "object" },
+          "totalCount": { "type": "integer" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string" }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "filename": { "type": "string" },
+          "storageKey": { "type": "string" },
+          "owner": { "type": "string" },
+          "size": { "type": "integer" },
+          "mimetype": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "reviewed", "approved", "expired", "archived"] },
+          "currentVersion": { "type": "integer" },
+          "department": { "type": "string" },
+          "usageRights": { "type": "string" },
+          "expiryDate": { "type": "string", "format": "date-time" },
+          "collectionId": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Collection": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "owner": { "type": "string" },
+          "parentId": { "type": "integer", "nullable": true }
+        }
+      },
+      "UsageLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "assetId": { "type": "string" },
+          "action": { "type": "string" },
+          "context": { "type": "object" },
+          "loggedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Auth", "description": "Authentication endpoints" },
+    { "name": "Users", "description": "User management" },
+    { "name": "Assets", "description": "Digital asset lifecycle management" },
+    { "name": "Collections", "description": "Asset grouping and organization" },
+    { "name": "Statistics", "description": "Analytics, compliance and usage tracking" }
+  ],
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User login",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful", "$ref": "#/components/schemas/SuccessResponse" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout current user",
+        "responses": {
+          "200": { "description": "Logged out successfully" }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create a user",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created" },
+          "409": { "description": "User already exists" }
+        }
+      },
+      "get": {
+        "tags": ["Users"],
+        "summary": "List all users (Admin only)",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "Users retrieved" }
+        }
+      }
+    },
+    "/api/v1/assest/upload": {
+      "post": {
+        "tags": ["Assets"],
+        "summary": "Upload a file and create asset record",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "department": { "type": "string" },
+                  "usageRights": { "type": "string" },
+                  "expiryDate": { "type": "string", "format": "date" },
+                  "collectionId": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Asset uploaded and record created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Asset" } } } },
+          "400": { "description": "No file provided" }
+        }
+      }
+    },
+    "/api/v1/assest": {
+      "post": {
+        "tags": ["Assets"],
+        "summary": "Create asset record (without file)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filename", "storageKey", "size", "mimetype"],
+                "properties": {
+                  "filename": { "type": "string" },
+                  "storageKey": { "type": "string" },
+                  "size": { "type": "integer" },
+                  "mimetype": { "type": "string" },
+                  "department": { "type": "string" },
+                  "usageRights": { "type": "string" },
+                  "expiryDate": { "type": "string", "format": "date" },
+                  "collectionId": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Asset created" }
+        }
+      },
+      "get": {
+        "tags": ["Assets"],
+        "summary": "List assets with filtering and pagination",
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["pending","reviewed","approved","expired","archived"] } },
+          { "name": "department", "in": "query", "schema": { "type": "string" } },
+          { "name": "searchKey", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "sortKey", "in": "query", "schema": { "type": "string", "default": "createdAt" } },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["ASC","DESC"], "default": "DESC" } }
+        ],
+        "responses": {
+          "200": { "description": "Assets retrieved" }
+        }
+      }
+    },
+    "/api/v1/assest/{id}": {
+      "get": {
+        "tags": ["Assets"],
+        "summary": "Get asset by ID with metadata and versions",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Asset found" },
+          "404": { "description": "Asset not found" }
+        }
+      },
+      "patch": {
+        "tags": ["Assets"],
+        "summary": "Update asset metadata fields",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "department": { "type": "string" },
+                  "usageRights": { "type": "string" },
+                  "expiryDate": { "type": "string", "format": "date" },
+                  "collectionId": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Asset updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Assets"],
+        "summary": "Delete an asset",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Asset deleted" },
+          "404": { "description": "Asset not found" }
+        }
+      }
+    },
+    "/api/v1/assest/{id}/status": {
+      "patch": {
+        "tags": ["Assets"],
+        "summary": "Transition asset lifecycle status",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["pending","reviewed","approved","expired","archived"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status updated" }
+        }
+      }
+    },
+    "/api/v1/collection": {
+      "post": {
+        "tags": ["Collections"],
+        "summary": "Create a new collection or folder",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "parentId": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Collection created" } }
+      },
+      "get": {
+        "tags": ["Collections"],
+        "summary": "List collections (supports hierarchy via parentId)",
+        "parameters": [
+          { "name": "parentId", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": { "200": { "description": "Collections retrieved" } }
+      }
+    },
+    "/api/v1/collection/{id}": {
+      "get": {
+        "tags": ["Collections"],
+        "summary": "Get collection details with assets and sub-folders",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Collection found" } }
+      },
+      "patch": {
+        "tags": ["Collections"],
+        "summary": "Update collection",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" }, "description": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Collection updated" } }
+      },
+      "delete": {
+        "tags": ["Collections"],
+        "summary": "Delete a collection",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Collection deleted" } }
+      }
+    },
+    "/api/v1/collection/{id}/assest": {
+      "post": {
+        "tags": ["Collections"],
+        "summary": "Add an asset to a collection",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["assetId"], "properties": { "assetId": { "type": "integer" } } } } } },
+        "responses": { "200": { "description": "Asset added to collection" } }
+      }
+    },
+    "/api/v1/stats/overview": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "System analytics overview for dashboard",
+        "responses": { "200": { "description": "Overview data with total assets, status distribution, compliance score, and usage trends" } }
+      }
+    },
+    "/api/v1/stats/compliance": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Compliance metrics report",
+        "responses": { "200": { "description": "Compliance data with duplicates, expired and at-risk counts" } }
+      }
+    },
+    "/api/v1/stats/track": {
+      "post": {
+        "tags": ["Statistics"],
+        "summary": "Log an asset usage event",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["assetId", "action"],
+                "properties": {
+                  "assetId": { "type": "integer" },
+                  "action": { "type": "string", "enum": ["view","download","share","update"] },
+                  "context": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Usage event logged" } }
+      }
+    },
+    "/api/v1/stats/track/{id}": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Get usage history for a specific asset",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": { "200": { "description": "Usage logs returned" } }
+      }
+    }
+  }
+}

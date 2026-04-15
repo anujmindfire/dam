@@ -1,0 +1,17 @@
+# root 
+node_modules 
+**/node_modules 
+
+# builds 
+**/dist 
+
+# logs 
+**/logs 
+*.log 
+
+# git 
+.git 
+.github 
+
+# misc 
+coverage

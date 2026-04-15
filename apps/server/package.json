@@ -1,0 +1,61 @@
+{
+  "name": "@dam/server",
+  "version": "1.0.0",
+  "description": "Premium API Service for Digital Asset Management (API, Seed, Verify)",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && copyfiles -u 1 src/templates/*.html dist/",
+    "start": "node dist/index.js",
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
+    "seed": "ts-node src/index.ts --seed",
+    "test": "jest --runInBand --forceExit",
+    "test:coverage": "jest --coverage --runInBand --forceExit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "author": "DAM",
+  "license": "ISC",
+  "dependencies": {
+    "@dam/shared": "workspace:*",
+    "bcrypt": "^5.1.1",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "4.21.2",
+    "helmet": "^7.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "9.0.3",
+    "multer": "^1.4.5-lts.2",
+    "redis": "^4.6.5",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^11.1.0",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "4.17.21",
+    "@types/jsonwebtoken": "9.0.10",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^24.12.2",
+    "@types/supertest": "^6.0.3",
+    "@types/uuid": "^10.0.0",
+    "@types/winston": "^2.4.4",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.0",
+    "ts-jest": "^29.3.2",
+    "ts-node": "^10.9.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/src/__tests__"],
+    "moduleNameMapper": {
+      "^@dam/shared$": "<rootDir>/../../packages/shared/src/index.ts"
+    },
+    "testPathPattern": "\\.test\\.ts$"
+  }
+}

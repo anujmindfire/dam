@@ -1,0 +1,7 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm install -g pnpm && pnpm install --no-frozen-lockfile
+RUN pnpm --filter @dam/shared build && pnpm --filter @dam/server build
+EXPOSE 3000
+CMD ["node", "apps/server/dist/index.js"]
