@@ -1,4 +1,3 @@
-import { Op } from "sequelize";
 import {
   assetModel,
   usageModel,
@@ -7,7 +6,8 @@ import {
   findAll,
   statusCode,
   CustomError,
-  cache,
+  cacheUtil as cache,
+  Op,
 } from "@dam/shared";
 
 const OVERVIEW_KEY = "analytics:overview";
@@ -26,16 +26,14 @@ export const getSystemOverview = async () => {
 
     // 1. Status distribution via GROUP BY
     const { result: statusRows } = await findAll(assetModel, {
-      attributes: [
-        "status",
-        [sequelize.fn("COUNT", sequelize.col("id")), "count"],
-      ],
+      attributes: ["status", [sequelize.fn("COUNT", sequelize.col("id")), "count"]],
       group: ["status"],
       raw: true,
     });
 
     const totalAssets = statusRows.reduce(
-      (sum: number, row: any) => sum + parseInt(row.count, 10), 0,
+      (sum: number, row: any) => sum + parseInt(row.count, 10),
+      0,
     );
 
     const statusDistribution = statusRows.reduce((acc: any, row: any) => {
@@ -84,7 +82,7 @@ export const getSystemOverview = async () => {
     await cache.set(OVERVIEW_KEY, result, 3600);
     return result;
   } catch (error) {
-    return new CustomError((error as Error).message, statusCode.badRequest);
+    throw new CustomError((error as Error).message, statusCode.badRequest);
   }
 };
 
@@ -100,10 +98,7 @@ export const getComplianceReport = async () => {
     if (cached) return cached;
 
     const { result: statusRows } = await findAll(assetModel, {
-      attributes: [
-        "status",
-        [sequelize.fn("COUNT", sequelize.col("id")), "count"],
-      ],
+      attributes: ["status", [sequelize.fn("COUNT", sequelize.col("id")), "count"]],
       group: ["status"],
       raw: true,
     });
@@ -116,6 +111,6 @@ export const getComplianceReport = async () => {
     await cache.set(COMPLIANCE_KEY, result, 21600);
     return result;
   } catch (error) {
-    return new CustomError((error as Error).message, statusCode.badRequest);
+    throw new CustomError((error as Error).message, statusCode.badRequest);
   }
 };

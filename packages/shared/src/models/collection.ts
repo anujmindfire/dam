@@ -54,6 +54,7 @@ Collection.init(
     tableName: modelName.collection,
     freezeTableName: true,
     timestamps: true,
+    indexes: [{ fields: ["owner"] }, { fields: ["parentId"] }],
   },
 );
 

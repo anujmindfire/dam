@@ -1,19 +1,15 @@
 import sequelize from "../config/sequelizeConnection";
 import { DataTypes, Model, Optional } from "sequelize";
+import { ApprovalCommentProps } from "../types/index";
 import { modelName } from "../utils/constant";
-
-export interface ApprovalCommentProps {
-  id: number;
-  approvalId: number;
-  userId: string;
-  message: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { capitalize } from "../utils/common";
 
 export interface ApprovalCommentCreationAttributes extends Optional<ApprovalCommentProps, "id"> {}
 
-class ApprovalComment extends Model<ApprovalCommentProps, ApprovalCommentCreationAttributes> implements ApprovalCommentProps {
+class ApprovalComment
+  extends Model<ApprovalCommentProps, ApprovalCommentCreationAttributes>
+  implements ApprovalCommentProps
+{
   public id!: number;
   public approvalId!: number;
   public userId!: string;
@@ -45,20 +41,19 @@ ApprovalComment.init(
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   },
   {
     sequelize,
+    modelName: capitalize(modelName.approvalComment),
     tableName: modelName.approvalComment,
+    freezeTableName: true,
     timestamps: true,
-  }
+    indexes: [
+      {
+        fields: ["approvalId"],
+      },
+    ],
+  },
 );
 
 export default ApprovalComment;

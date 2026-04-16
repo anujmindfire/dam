@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import {
   requestApproval,
   listApproval,
@@ -7,23 +7,23 @@ import {
   rejectAsset,
   getApprovalHistory,
 } from "../services/approval";
-import { sendSuccessResponse, CustomError, statusCode } from "@dam/shared";
+import { sendSuccessResponse, CustomError, statusCode, approvalMsg, RequestWithUser } from "@dam/shared";
 
 /**
  * Controller: Request approval for an asset
  */
-export const request = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const request = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await requestApproval(req);
 
     if (result instanceof CustomError) {
-      return next(result);
+      return next(new CustomError(result.message, result.statusCode));
     }
 
     sendSuccessResponse({
       res,
       statusCode: statusCode.successCreated,
-      message: "Approval request created successfully",
+      message: approvalMsg.createSuccess,
       data: result,
     });
   } catch (error) {
@@ -34,18 +34,18 @@ export const request = async (req: Request, res: Response, next: NextFunction): 
 /**
  * Controller: List approval requests
  */
-export const list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const list = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await listApproval(req);
 
     if (result instanceof CustomError) {
-      return next(result);
+      return next(new CustomError(result.message, result.statusCode));
     }
 
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: "Approvals retrieved successfully",
+      message: approvalMsg.listSuccess,
       data: result.result,
       totalCount: result.totalCount,
     });
@@ -57,18 +57,18 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
 /**
  * Controller: Get approval by ID
  */
-export const getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getById = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await getApprovalById(req);
 
     if (result instanceof CustomError) {
-      return next(result);
+      return next(new CustomError(result.message, result.statusCode));
     }
 
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: "Approval retrieved successfully",
+      message: approvalMsg.getSuccess,
       data: result,
     });
   } catch (error) {
@@ -79,12 +79,12 @@ export const getById = async (req: Request, res: Response, next: NextFunction): 
 /**
  * Controller: Approve an asset
  */
-export const approve = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const approve = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await approveAsset(req);
 
     if (result instanceof CustomError) {
-      return next(result);
+      return next(new CustomError(result.message, result.statusCode));
     }
 
     sendSuccessResponse({
@@ -101,12 +101,12 @@ export const approve = async (req: Request, res: Response, next: NextFunction): 
 /**
  * Controller: Reject an asset
  */
-export const reject = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const reject = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await rejectAsset(req);
 
     if (result instanceof CustomError) {
-      return next(result);
+      return next(new CustomError(result.message, result.statusCode));
     }
 
     sendSuccessResponse({
@@ -123,18 +123,18 @@ export const reject = async (req: Request, res: Response, next: NextFunction): P
 /**
  * Controller: Get approval history for an asset
  */
-export const history = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const history = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await getApprovalHistory(req);
 
     if (result instanceof CustomError) {
-      return next(result);
+      return next(new CustomError(result.message, result.statusCode));
     }
 
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: "Approval history retrieved successfully",
+      message: approvalMsg.historySuccess,
       data: result.result,
       totalCount: result.totalCount,
     });

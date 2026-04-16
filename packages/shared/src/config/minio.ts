@@ -1,10 +1,10 @@
+// @ts-ignore
 import * as Minio from "minio";
 import dotEnv from "./dotEnv";
 import logger from "../utils/logger";
 
 /**
  * Initializes the MinIO client using centralized environment variables.
- * 
  * Supports endpoint, port, SSL, and root credentials configuration.
  */
 export const minioClient = new Minio.Client({
@@ -18,7 +18,6 @@ export const minioClient = new Minio.Client({
 /**
  * Uploads a file buffer to a specified MinIO bucket.
  * Automatically creates the bucket if it does not already exist.
- *
  * @param {string} bucketName - Name of the MinIO bucket.
  * @param {string} objectName - Name (path) of the object in the bucket.
  * @param {Buffer} buffer - The file content buffer.

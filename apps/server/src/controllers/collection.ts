@@ -1,18 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import { 
-  createCollection, 
-  listCollection, 
-  getCollectionById, 
-  updateCollection, 
-  deleteCollection, 
-  addAssetToCollection as addAssetService 
+import {
+  createCollection,
+  listCollection,
+  getCollectionById,
+  updateCollection,
+  deleteCollection,
+  addAssetToCollection as addAssetService,
 } from "../services/collection";
-import { 
-  sendSuccessResponse, 
-  CustomError, 
-  statusCode, 
-  collection as collectionMsg 
-} from "@dam/shared";
+import { sendSuccessResponse, CustomError, statusCode, collectionMsg, RequestWithUser } from "@dam/shared";
 
 /**
  * API Endpoint: Create a new collection or folder.
@@ -23,7 +18,7 @@ import {
  * @param {NextFunction} next - Express next function for error handling.
  */
 
-export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const create = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await createCollection(req);
 
@@ -50,7 +45,7 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
  * @param {NextFunction} next - Express next function.
  */
 
-export const list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const list = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await listCollection(req);
 
@@ -78,7 +73,7 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
  * @param {NextFunction} next - Express next function.
  */
 
-export const getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getById = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await getCollectionById(req);
 
@@ -98,14 +93,14 @@ export const getById = async (req: Request, res: Response, next: NextFunction): 
 };
 
 /**
- * API Endpoint: Update an existing collection. 
+ * API Endpoint: Update an existing collection.
  * Applies partial or full updates to a collection's properties via the service layer.
  * @param {Request} req - Express request object.
  * @param {Response} res - Express response object.
  * @param {NextFunction} next - Express next function.
  */
 
-export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const update = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await updateCollection(req);
 
@@ -132,7 +127,7 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
  * @param {NextFunction} next - Express next function.
  */
 
-export const remove = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const remove = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await deleteCollection(req);
 
@@ -158,7 +153,11 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
  * @param {NextFunction} next - Express next function.
  */
 
-export const addAssetToCollection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const addAssetToCollection = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await addAssetService(req);
 

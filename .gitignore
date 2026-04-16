@@ -63,3 +63,7 @@ node_modules/
 dist/
 .next/
 logs/
+
+# Tools
+.husky/
+.turbo/

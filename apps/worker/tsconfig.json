@@ -3,9 +3,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": true
+    "declaration": true,
+    "baseUrl": ".",
+    "paths": {
+      "minio": ["src/types/minio.d.ts"]
+    }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"],
+  "exclude": ["node_modules", "dist", "src/tests", "**/*.test.ts"],
   "references": [{ "path": "../../packages/shared" }]
 }

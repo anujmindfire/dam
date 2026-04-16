@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { trackUsage, getAssetUsage, getAllUsage } from "../services/usage";
 import { getSystemOverview, getComplianceReport } from "../services/analytics";
-import { sendSuccessResponse, CustomError, statusCode, common } from "@dam/shared";
+import { sendSuccessResponse, CustomError, statusCode, commonMsg, usageMsg, publishMessage, redis } from "@dam/shared";
 
 /**
  * POST /usage/track — Logs an asset usage event.
@@ -9,8 +9,13 @@ import { sendSuccessResponse, CustomError, statusCode, common } from "@dam/share
 export const track = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await trackUsage(req);
-    if (result instanceof CustomError) return next(result);
-    sendSuccessResponse({ res, statusCode: statusCode.successCreated, message: "Usage tracked successfully", data: result });
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.successCreated,
+      message: usageMsg.trackSuccess,
+      data: result,
+    });
   } catch (error) {
     return next(error);
   }
@@ -19,14 +24,18 @@ export const track = async (req: Request, res: Response, next: NextFunction): Pr
 /**
  * GET /usage/:assetId — Returns paginated usage logs for a specific asset.
  */
-export const getByAsset = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getByAsset = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await getAssetUsage(req);
-    if (result instanceof CustomError) return next(result);
+
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: common.apiSuccessMessage,
+      message: commonMsg.apiSuccessMessage,
       data: (result as any).result,
       totalCount: (result as any).totalCount,
     });
@@ -41,11 +50,11 @@ export const getByAsset = async (req: Request, res: Response, next: NextFunction
 export const list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await getAllUsage(req);
-    if (result instanceof CustomError) return next(result);
+
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: common.apiSuccessMessage,
+      message: commonMsg.apiSuccessMessage,
       data: (result as any).result,
       totalCount: (result as any).totalCount,
     });
@@ -60,8 +69,13 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
 export const overview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await getSystemOverview();
-    if (result instanceof CustomError) return next(result);
-    sendSuccessResponse({ res, statusCode: statusCode.success, message: common.apiSuccessMessage, data: result });
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.success,
+      message: commonMsg.apiSuccessMessage,
+      data: result,
+    });
   } catch (error) {
     return next(error);
   }
@@ -70,11 +84,62 @@ export const overview = async (req: Request, res: Response, next: NextFunction):
 /**
  * GET /analytics/compliance — Compliance and flag metrics.
  */
-export const compliance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const compliance = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await getComplianceReport();
-    if (result instanceof CustomError) return next(result);
-    sendSuccessResponse({ res, statusCode: statusCode.success, message: common.apiSuccessMessage, data: result });
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.success,
+      message: commonMsg.apiSuccessMessage,
+      data: result,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * GET /analytics/report — Detailed system freshness and compliance report.
+ * Returns the latest precomputed report from cache.
+ */
+export const report = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const cachedReport = await redis.get("system:report:latest");
+
+    if (!cachedReport) {
+      // If no report cached, trigger one and inform user
+      await publishMessage("report_generation", { requestedBy: req.user?.id });
+      return next(new CustomError("Report is being generated. Please try again in a few moments.", statusCode.accepted));
+    }
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.success,
+      message: commonMsg.reportSuccess,
+      data: JSON.parse(cachedReport),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * POST /analytics/report/trigger — Manually triggers a background report generation jobs.
+ */
+export const triggerReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await publishMessage("report_generation", { requestedBy: req.user?.id });
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.accepted,
+      message: "Report generation triggered successfully",
+    });
   } catch (error) {
     return next(error);
   }

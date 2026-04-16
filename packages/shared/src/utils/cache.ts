@@ -8,7 +8,7 @@ import logger from "./logger";
 export const cache = {
   /**
    * Retrieves an item from the cache.
-   * 
+   *
    * @param {string} key - The unique identifier for the cached data.
    * @returns {Promise<any | null>} The parsed JSON data or null if not found.
    */
@@ -25,7 +25,7 @@ export const cache = {
 
   /**
    * Stores an item in the cache with an optional expiration time.
-   * 
+   *
    * @param {string} key - The unique identifier for the data.
    * @param {any} value - The data to cache (will be stringified).
    * @param {number} ttlSeconds - Time-to-live in seconds (default 1 hour).
@@ -41,7 +41,7 @@ export const cache = {
 
   /**
    * Removes a specific item from the cache.
-   * 
+   *
    * @param {string} key - The key to delete.
    */
   del: async (key: string): Promise<void> => {
@@ -55,7 +55,7 @@ export const cache = {
   /**
    * Clears multiple cache keys matching a pattern.
    * Useful for invalidating listings when a resource is updated.
-   * 
+   *
    * @param {string} pattern - Redis key pattern (e.g., "assets:*").
    */
   delByPattern: async (pattern: string): Promise<void> => {

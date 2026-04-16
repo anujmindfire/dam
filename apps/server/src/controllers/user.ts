@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { createUser, listUser, updateUser, deleteUser } from "../services/user";
-import { sendSuccessResponse, CustomError, statusCode, user } from "@dam/shared";
+import { sendSuccessResponse, CustomError, statusCode, userMsg } from "@dam/shared";
 
 /**
  * API Endpoint: Create a new user account.
@@ -21,7 +21,7 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: user.createSuccess,
+      message: userMsg.createSuccess,
     });
   } catch (error) {
     return next(error);
@@ -47,7 +47,7 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: user.listSuccess,
+      message: userMsg.listSuccess,
       totalCount: result.totalCount,
       data: result.result,
     });
@@ -75,7 +75,7 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: user.updateSuccess,
+      message: userMsg.updateSuccess,
       data: result,
     });
   } catch (error) {
@@ -102,7 +102,7 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: user.deleted,
+      message: userMsg.deleted,
     });
   } catch (error) {
     return next(error);

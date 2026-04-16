@@ -2,7 +2,7 @@ import sequelize from "../config/sequelizeConnection";
 import Role from "./role";
 import { DataTypes, Model, Optional } from "sequelize";
 import { UserProps } from "../types/index";
-import { user, modelName, regex } from "../utils/constant";
+import { userMsg, modelName, regex } from "../utils/constant";
 import { capitalize } from "../utils/common";
 
 export interface UserCreationAttributes extends Optional<UserProps, "id"> {}
@@ -38,14 +38,14 @@ User.init(
       },
       validate: {
         isEmail: {
-          msg: user.invalidEmail,
+          msg: userMsg.invalidEmail,
         },
         notEmpty: {
-          msg: user.emailRequired,
+          msg: userMsg.emailRequired,
         },
         isValidFormat(value: string) {
           if (!regex.email.test(value)) {
-            throw new Error(user.invalidEmail);
+            throw new Error(userMsg.invalidEmail);
           }
         },
       },
@@ -80,6 +80,9 @@ User.init(
       {
         unique: true,
         fields: ["email"],
+      },
+      {
+        fields: ["roleId"],
       },
     ],
   },

@@ -1,4 +1,4 @@
-import "express";
+import { Request } from "express";
 
 /**
  * Represents the structure of an entry in the error log.
@@ -31,6 +31,11 @@ export interface PaginationProps {
   offset: number | null;
 }
 
+export interface PaginatedResult<T> {
+  result: T[];
+  totalCount: number;
+}
+
 /**
  * Core properties of a digital asset (image, video, etc.).
  */
@@ -42,7 +47,14 @@ export interface AssetsProps {
   owner: string | null;
   size: number | null;
   mimetype: string | null;
-  status: "pending" | "pending_approval" | "reviewed" | "approved" | "rejected" | "expired" | "archived";
+  status:
+    | "pending"
+    | "pending_approval"
+    | "reviewed"
+    | "approved"
+    | "rejected"
+    | "expired"
+    | "archived";
   currentVersion: number;
   department: string | null;
   usageRights: string | null;
@@ -61,6 +73,7 @@ export interface MetadataProps {
   department: string | null;
   analysisResults?: any;
   isDuplicate?: boolean;
+  hash: string;
 }
 
 /**
@@ -179,6 +192,53 @@ export interface TokenPayloadProps {
   loginId: number;
   roleId: number;
   tokenVersion: number;
+}
+
+export interface ApprovalProps {
+  id: number;
+  assetId: number;
+  requestedBy: string;
+  approvedBy?: string | null;
+  status: "pending" | "approved" | "rejected";
+  reason?: string | null;
+  priority: "low" | "normal" | "high";
+  assignedTo?: string[] | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ApprovalCommentProps {
+  id: number;
+  approvalId: number;
+  userId: string;
+  message: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface SystemReportProps {
+  generatedAt: string;
+  summary: {
+    totalAssets: number;
+    freshAssets: number;
+    duplicates: number;
+    expired: number;
+    complianceRate: string;
+  };
+  statusBreakdown: any[];
+  failingAssets: {
+    expiredCount: number;
+    duplicateProbability: string;
+  };
+}
+
+export interface RequestWithUser extends Request {
+  user?: {
+    id: string;
+    email: string;
+    tokenVersion: number;
+    roleId: number;
+  };
 }
 
 /**

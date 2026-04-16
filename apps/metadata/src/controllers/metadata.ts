@@ -1,15 +1,26 @@
 import { Request, Response, NextFunction } from "express";
 import { getMetadata, updateMetadata, searchByTags, getDuplicates } from "../services/metadata";
-import { sendSuccessResponse, CustomError, statusCode, common } from "@dam/shared";
+import { sendSuccessResponse, CustomError, statusCode, commonMsg, metadataMsg } from "@dam/shared";
 
 /**
  * GET /metadata/:assetId — Returns metadata for an asset (Redis cached).
  */
-export const getByAsset = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getByAsset = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await getMetadata(req);
-    if (result instanceof CustomError) return next(result);
-    sendSuccessResponse({ res, statusCode: statusCode.success, message: common.apiSuccessMessage, data: result });
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.success,
+      message: commonMsg.apiSuccessMessage,
+      data: result,
+    });
   } catch (error) {
     return next(error);
   }
@@ -21,8 +32,15 @@ export const getByAsset = async (req: Request, res: Response, next: NextFunction
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await updateMetadata(req);
-    if (result instanceof CustomError) return next(result);
-    sendSuccessResponse({ res, statusCode: statusCode.success, message: "Metadata updated successfully", data: result });
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.success,
+      message: metadataMsg.updateSuccess,
+      data: result,
+    });
   } catch (error) {
     return next(error);
   }
@@ -34,11 +52,13 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
 export const search = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await searchByTags(req);
-    if (result instanceof CustomError) return next(result);
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: common.apiSuccessMessage,
+      message: commonMsg.apiSuccessMessage,
       data: (result as any).result,
       totalCount: (result as any).totalCount,
     });
@@ -50,14 +70,20 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
 /**
  * GET /metadata/duplicates — Returns all assets flagged as duplicates.
  */
-export const duplicates = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const duplicates = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await getDuplicates(req);
-    if (result instanceof CustomError) return next(result);
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: common.apiSuccessMessage,
+      message: commonMsg.apiSuccessMessage,
       data: (result as any).result,
       totalCount: (result as any).totalCount,
     });

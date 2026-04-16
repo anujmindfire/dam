@@ -1,19 +1,8 @@
 import sequelize from "../config/sequelizeConnection";
 import { DataTypes, Model, Optional } from "sequelize";
+import { ApprovalProps } from "../types/index";
 import { modelName } from "../utils/constant";
-
-export interface ApprovalProps {
-  id: number;
-  assetId: number;
-  requestedBy: string;
-  approvedBy?: string | null;
-  status: "pending" | "approved" | "rejected";
-  reason?: string | null;
-  priority: "low" | "normal" | "high";
-  assignedTo?: string[] | null;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { capitalize } from "../utils/common";
 
 export interface ApprovalCreationAttributes extends Optional<ApprovalProps, "id"> {}
 
@@ -41,7 +30,7 @@ Approval.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: modelName.asset,
+        model: modelName.assets,
         key: "id",
       },
     },
@@ -70,20 +59,20 @@ Approval.init(
       allowNull: true,
       defaultValue: [],
     },
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   },
   {
     sequelize,
+    modelName: capitalize(modelName.approval),
     tableName: modelName.approval,
+    freezeTableName: true,
     timestamps: true,
-  }
+    indexes: [
+      { fields: ["assetId"] },
+      { fields: ["status"] },
+      { fields: ["requestedBy"] },
+      { fields: ["approvedBy"] },
+    ],
+  },
 );
 
 export default Approval;

@@ -2,7 +2,7 @@ import dotEnv from "./dotEnv";
 import { Sequelize } from "sequelize";
 
 /**
- * Initializes a new Sequelize instance with the database configuration 
+ * Initializes a new Sequelize instance with the database configuration
  * provided by the dotEnv utility.
  * Uses PostgreSQL as the dialect and disables logging to keep the console clean.
  **/

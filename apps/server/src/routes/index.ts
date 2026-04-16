@@ -2,41 +2,59 @@ import express, { Router, Request, Response } from "express";
 import auth from "./auth";
 import user from "./user";
 import collection from "./collection";
-import asset from "./asset";
 import approval from "./approval";
-import analytics from "./analytics";
+import { proxyRequest } from "../utils/proxy";
 import {
   apiUrl,
   baseRoute,
   defaultRoute,
   sendSuccessResponse,
   statusCode,
-  common,
+  commonMsg,
+  dotEnv,
 } from "@dam/shared";
 
 const router: Router = express.Router();
 
 /****** HEALTH CHECK ******/
 router.get(defaultRoute, (_req: Request, res: Response) => {
-  sendSuccessResponse({ res, statusCode: statusCode.success, message: common.healthy });
+  sendSuccessResponse({ res, statusCode: statusCode.success, message: commonMsg.healthy });
 });
 
-/****** AUTH ******/
+router.get(`${baseRoute}/health`, async (_req: Request, res: Response) => {
+  sendSuccessResponse({
+    res,
+    statusCode: statusCode.success,
+    message: "System is healthy",
+    data: {
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+
+/****** AUTH (Gateway Local) ******/
 router.use(`${baseRoute}${apiUrl.auth}`, auth);
 
-/****** USER ******/
+/****** USER (Gateway Local) ******/
 router.use(`${baseRoute}${apiUrl.user}`, user);
 
-/****** COLLECTION ******/
+/****** COLLECTION (Gateway Local) ******/
 router.use(`${baseRoute}${apiUrl.collection}`, collection);
 
-/****** ASSET ******/
-router.use(`${baseRoute}${apiUrl.assest}`, asset);
+/****** ASSET (Proxy to Microservice) ******/
+router.all(`${baseRoute}${apiUrl.assets}*`, proxyRequest("localhost", dotEnv.assetsPort));
 
-/****** APPROVAL ******/
-router.use(`${baseRoute}/approvals`, approval);
+/****** APPROVAL (Gateway Local) ******/
+router.use(`${baseRoute}${apiUrl.approval}`, approval);
 
-/****** STATISTICS & ANALYTICS ******/
-router.use(`${baseRoute}/stats`, analytics);
+/****** METADATA (Proxy to Microservice) ******/
+router.all(`${baseRoute}${apiUrl.metadata}*`, proxyRequest("localhost", dotEnv.metadataPort));
+
+/****** USAGE (Proxy to Microservice) ******/
+router.all(`${baseRoute}${apiUrl.usage}*`, proxyRequest("localhost", dotEnv.usagePort));
+
+/****** ANALYTICS (Proxy to Microservice) ******/
+router.all(`${baseRoute}${apiUrl.analytics}*`, proxyRequest("localhost", dotEnv.usagePort));
 
 export default router;

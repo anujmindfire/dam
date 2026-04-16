@@ -29,9 +29,25 @@ export const apiUrl = {
   collection: "/collection",
   auth: "/auth",
   user: "/users",
-  assest: "/assest",
+  assets: "/assets",
+  metadata: "/metadata",
+  usage: "/usage",
+  analytics: "/analytics",
   login: "/login",
   logout: "/logout",
+  approval: "/approval",
+  upload: "/upload",
+  status: "/status",
+  search: "/search",
+  duplicates: "/duplicates",
+  overview: "/overview",
+  compliance: "/compliance",
+  track: "/track",
+  approve: "/approve",
+  reject: "/reject",
+  history: "/history",
+  report: "/report",
+  version: "/version",
 };
 
 export const enums = {
@@ -97,8 +113,12 @@ export const modelName = {
   approvalComment: "approvalComment",
 };
 
-export const common = {
-  expressAppRunning: (port: string) => `🚀 API Service running on port ${port}`,
+export const commonMsg = {
+  expressAppRunning: (port: number) => `🚀 API Service running on port ${port}`,
+  assetServiceRunning: (port: number) => `🚀 Asset Service running on port ${port}`,
+  metadataServiceRunning: (port: number) => `🚀 Metadata Service running on port ${port}`,
+  usageServiceRunning: (port: number) => `🚀 Usage Service running on port ${port}`,
+  serviceFailed: (serviceName: string) => `${serviceName} Service failed to start:`,
   unSupportMethod: "Unsupported HTTP method",
   signInDown: "SIGINT received. Shutting down...",
   httpServerClosed: "HTTP server closed",
@@ -112,12 +132,15 @@ export const common = {
   healthy: "healthy",
   uncaughtException: "Uncaught Exception",
   unhandledRejection: "Unhandled Rejection",
-  rmqConnected: "Successfully connected to RabbitMQ",
+  rmqConnected: "🔗 Connected to RabbitMQ",
+  rmqConnectionError: "Failed to connect to RabbitMQ:",
   redisConnecting: "Connecting to Redis...",
   redisReady: "Redis client is ready",
+  badGateway: "Bad Gateway: Service temporarily unavailable",
+  reportSuccess: "Report generated successfully",
 };
 
-export const database = {
+export const databaseMsg = {
   dbConnectionSuccess: "Database is connected 👍 😄",
   dbConnectionError: "Database Connection Error:",
   dbSeedData: (length: number) => `Inserted ${length} roles into the database`,
@@ -126,7 +149,7 @@ export const database = {
   seed: "--seed",
 };
 
-export const user = {
+export const userMsg = {
   nameLengthError: "Name must be between 2 and 100 characters.",
   nameRequired: "Name is required.",
   invalidEmail: "Please provide a valid email address.",
@@ -138,10 +161,10 @@ export const user = {
   updateSuccess: "User updated successfully",
   deleted: "User deleted successfully",
   alreadyExist: "User already exists",
-  notfound: "User not found"
+  notfound: "User not found",
 };
 
-export const auth = {
+export const authMsg = {
   invalidCredentials: "LogIn failed: Invalid credentials provided.",
   invalidToken: "Invalid or expired token.",
   loginSuccess: "Successfully logged in.",
@@ -154,7 +177,7 @@ export const auth = {
   userNotFound: "User not found or is deactivated",
 };
 
-export const collection = {
+export const collectionMsg = {
   createSuccess: "Collection created successfully",
   listSuccess: "Collections retrieved successfully",
   getSuccess: "Collection details retrieved successfully",
@@ -165,7 +188,7 @@ export const collection = {
   assetNotFound: "Asset not found",
 };
 
-export const asset = {
+export const assetMsg = {
   createSuccess: "Asset created successfully",
   listSuccess: "Assets retrieved successfully",
   getSuccess: "Asset details retrieved successfully",
@@ -174,9 +197,10 @@ export const asset = {
   deleted: "Asset deleted successfully",
   notFound: "Asset not found",
   invalidStatus: "Invalid lifecycle status transition",
+  noFile: "No file provided",
 };
 
-export const cache = {
+export const cacheMsg = {
   assetCacheKeyPrefix: "assets:",
   assetListCacheKey: "assets:list",
 };
@@ -185,3 +209,62 @@ export const redisMsg = {
   connectionError: "Redis connection error:",
 };
 
+export const metadataMsg = {
+  updateSuccess: "Metadata updated successfully",
+  notFound: "Metadata not found for this asset",
+  tagsRequired: "Tags query parameter is required",
+};
+
+export const usageMsg = {
+  trackSuccess: "Usage tracked successfully",
+};
+
+export const approvalMsg = {
+  createSuccess: "Approval request created successfully",
+  listSuccess: "Approvals retrieved successfully",
+  getSuccess: "Approval retrieved successfully",
+  historySuccess: "Approval history retrieved successfully",
+  approveSuccess: "Asset approved successfully",
+  rejectSuccess: "Asset rejected successfully",
+  assetNotFound: "Asset not found",
+  notFound: "Approval not found",
+  createFailed: "Failed to create approval request",
+  rejectionRequired: "Rejection reason is required",
+};
+
+export const consumerMsg = {
+  metadataAnalyzedProcessing: (assetId: number) =>
+    `[Metadata Consumer] Processing analysis for asset ${assetId}`,
+  metadataAnalyzedSuccess: (assetId: number) =>
+    `[Metadata Consumer] Metadata updated for asset ${assetId}`,
+  metadataAnalyzedError: (assetId: number) =>
+    `[Metadata Consumer] Error processing asset ${assetId}:`,
+  assetCreatedMetadata: (assetId: number) =>
+    `[Metadata Consumer] Initializing metadata for new asset ${assetId}`,
+  assetCreatedMetadataReady: (assetId: number) =>
+    `[Metadata Consumer] Asset ${assetId} ready for enrichment`,
+  assetCreatedMetadataError: "[Metadata Consumer] Error on asset_created:",
+  assetDeletedMetadata: (assetId: number) =>
+    `[Metadata Consumer] Cleaning metadata for deleted asset ${assetId}`,
+  assetDeletedMetadataCleanup: (assetId: number) =>
+    `[Metadata Consumer] Metadata cleanup done for asset ${assetId}`,
+  assetDeletedMetadataError: "[Metadata Consumer] Error on asset_deleted:",
+  allMetadataConsumersStarted: "✅ All metadata consumers started",
+  metadataConsumersError: "Failed to start metadata consumers:",
+
+  usageAssetCreated: (assetId: number) =>
+    `[Usage Consumer] Initializing tracking for new asset ${assetId}`,
+  usageAssetCreatedSuccess: (assetId: number) =>
+    `[Usage Consumer] Tracking initialized for asset ${assetId}`,
+  usageAssetCreatedError: "[Usage Consumer] Error on asset_created:",
+  usageAssetApproved: (assetId: number) =>
+    `[Usage Consumer] Asset ${assetId} approved - usage tracking active`,
+  usageAssetApprovedError: "[Usage Consumer] Error on asset_approved:",
+  usageAssetDeleted: (assetId: number) =>
+    `[Usage Consumer] Archiving usage data for asset ${assetId}`,
+  usageAssetDeletedSuccess: (assetId: number) =>
+    `[Usage Consumer] Usage data archived for asset ${assetId}`,
+  usageAssetDeletedError: "[Usage Consumer] Error on asset_deleted:",
+  allUsageConsumersStarted: "✅ All usage consumers started",
+  usageConsumersError: "Failed to start usage consumers:",
+};

@@ -12,14 +12,13 @@ import { seedDatabase } from "./config/seed";
 import {
   logger,
   connectDB,
-  apiUrl,
-  database,
+  databaseMsg,
   dotEnv,
   requestLogger,
   errorHandler,
   notFoundHandler,
   rateLimit,
-  common,
+  commonMsg,
 } from "@dam/shared";
 
 const swaggerDocument = JSON.parse(fs.readFileSync(path.join(__dirname, "swagger.json"), "utf8"));
@@ -37,7 +36,7 @@ app.use(helmet());
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(requestLogger as unknown as express.RequestHandler);
-app.use(rateLimit as unknown as express.RequestHandler);
+app.use(rateLimit() as unknown as express.RequestHandler);
 app.use(webRoutes);
 app.use(notFoundHandler as unknown as express.RequestHandler);
 app.use(errorHandler as unknown as express.ErrorRequestHandler);
@@ -45,41 +44,41 @@ app.use(errorHandler as unknown as express.ErrorRequestHandler);
 const startServer = async (): Promise<void> => {
   await connectDB();
 
-  if (process.argv.includes(database.seed)) {
+  if (process.argv.includes(databaseMsg.seed)) {
     await seedDatabase();
     process.exit(0);
   }
 
-  httpServer.listen(dotEnv.port, () => {
-    logger.info(common.expressAppRunning(dotEnv.port));
+  httpServer.listen(dotEnv.serverPort, "0.0.0.0", () => {
+    logger.info(commonMsg.expressAppRunning(dotEnv.serverPort));
   });
 };
 
 process.on("uncaughtException", (error: Error) => {
-  logger.error(common.uncaughtException, error);
+  logger.error(commonMsg.uncaughtException, error);
   process.exit(1);
 });
 
 process.on("unhandledRejection", (error: Error) => {
-  logger.error(common.unhandledRejection, error);
+  logger.error(commonMsg.unhandledRejection, error);
   process.exit(1);
 });
 
 process.on("SIGTERM", async () => {
-  logger.info(common.httpCloseConnection);
+  logger.info(commonMsg.httpCloseConnection);
 
   httpServer.close(() => {
-    logger.info(common.httpServerClosed);
+    logger.info(commonMsg.httpServerClosed);
   });
 
   process.exit(0);
 });
 
 process.on("SIGINT", async () => {
-  logger.info(common.signInDown);
+  logger.info(commonMsg.signInDown);
 
   httpServer.close(() => {
-    logger.info(common.httpServerClosed);
+    logger.info(commonMsg.httpServerClosed);
     process.exit(0);
   });
 });

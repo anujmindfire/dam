@@ -1,4 +1,4 @@
-import Asset from "./asset";
+import Asset from "./assets";
 import Collection from "./collection";
 import Metadata from "./metadata";
 import AssetVersion from "./version";

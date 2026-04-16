@@ -3,7 +3,7 @@ import logger from "../utils/logger";
 import { Model, ModelStatic } from "sequelize";
 import { ObjectSchema } from "joi";
 import { Request, Response, NextFunction, RequestHandler, ErrorRequestHandler } from "express";
-import { common, statusCode, method, auth } from "../utils/constant";
+import { commonMsg, statusCode, method, authMsg } from "../utils/constant";
 import { findOne } from "../repositories/index";
 import { CustomError } from "../utils/customError";
 import { sendSuccessResponse } from "../utils/response";
@@ -60,7 +60,7 @@ export const errorHandler: ErrorRequestHandler = async (
   sendSuccessResponse({
     res,
     statusCode: statusCode.somethingWentWrong,
-    message: common.somethingWentWrong,
+    message: commonMsg.somethingWentWrong,
     success: false,
   });
 };
@@ -73,11 +73,11 @@ export const errorHandler: ErrorRequestHandler = async (
  */
 
 export const notFoundHandler: RequestHandler = (req, res): void => {
-  logger.warn(`${common.pageNotFound}: ${req.method} ${req.url}`);
+  logger.warn(`${commonMsg.pageNotFound}: ${req.method} ${req.url}`);
   sendSuccessResponse({
     res,
     statusCode: statusCode.notFound,
-    message: common.pageNotFound,
+    message: commonMsg.pageNotFound,
     success: false,
   });
 };
@@ -107,7 +107,7 @@ export const validatedRequest = (schema: ObjectSchema): RequestHandler => {
 
       default:
         res.status(statusCode.badRequest).json({
-          error: { message: common.unSupportMethod },
+          error: { message: commonMsg.unSupportMethod },
         });
         return;
     }
@@ -140,11 +140,11 @@ export const authorizeRoles = (...allowedRoles: number[]) => {
     const userRoleId = req.user?.roleId;
 
     if (!userRoleId) {
-      return next(new CustomError(common.unAuthorized, statusCode.unAuthorize));
+      return next(new CustomError(commonMsg.unAuthorized, statusCode.unAuthorize));
     }
 
     if (!allowedRoles.includes(userRoleId)) {
-      return next(new CustomError(common.accessForbidden, statusCode.accessDenied));
+      return next(new CustomError(commonMsg.accessForbidden, statusCode.accessDenied));
     }
 
     next();
@@ -166,33 +166,33 @@ export const verifyTokenFactory = (
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!domain) {
-        return next(new CustomError(auth.appConfiguration, statusCode.unAuthorize));
+        return next(new CustomError(authMsg.appConfiguration, statusCode.unAuthorize));
       }
 
       const sessionToken = req.cookies?.[domain] || req.headers?.authorization?.split(" ")[1];
 
       if (!sessionToken) {
-        return next(new CustomError(auth.tokenNotFound, statusCode.unAuthorize));
+        return next(new CustomError(authMsg.tokenNotFound, statusCode.unAuthorize));
       }
 
       if (!secret) {
-        return next(new CustomError(auth.tokenNotFound, statusCode.notFound));
+        return next(new CustomError(authMsg.tokenNotFound, statusCode.notFound));
       }
 
       const decoded = jwt.verify(sessionToken, secret) as TokenPayloadProps;
 
       if (!decoded?.userId) {
-        return next(new CustomError(auth.invalidToken, statusCode.badRequest));
+        return next(new CustomError(authMsg.invalidToken, statusCode.badRequest));
       }
 
       const userExist = await findOne(userModel, { id: decoded.userId });
 
       if (!userExist) {
-        return next(new CustomError(auth.userNotFound, statusCode.unAuthorize));
+        return next(new CustomError(authMsg.userNotFound, statusCode.unAuthorize));
       }
 
       if (userExist.tokenVersion !== decoded.tokenVersion) {
-        return next(new CustomError(auth.invalidToken, statusCode.unAuthorize));
+        return next(new CustomError(authMsg.invalidToken, statusCode.unAuthorize));
       }
 
       req.user = {
@@ -203,12 +203,12 @@ export const verifyTokenFactory = (
       };
       next();
     } catch (error) {
-      if (error instanceof Error && error.name === auth.tokenExpiredError) {
-        return next(new CustomError(auth.tokenExpired, statusCode.unAuthorize));
+      if (error instanceof Error && error.name === authMsg.tokenExpiredError) {
+        return next(new CustomError(authMsg.tokenExpired, statusCode.unAuthorize));
       }
 
-      if (error instanceof Error && error.name === auth.invalidSignature) {
-        return next(new CustomError(auth.tokenExpired, statusCode.unAuthorize));
+      if (error instanceof Error && error.name === authMsg.invalidSignature) {
+        return next(new CustomError(authMsg.tokenExpired, statusCode.unAuthorize));
       }
 
       return next(error);
@@ -249,7 +249,7 @@ export const rateLimit = (
     }
 
     if (rateData.count >= max) {
-      return next(new CustomError(common.tooManyRequest, statusCode.tooManyRequest));
+      return next(new CustomError(commonMsg.tooManyRequest, statusCode.tooManyRequest));
     }
 
     rateData.count++;

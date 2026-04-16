@@ -4,7 +4,7 @@ import {
   sendSuccessResponse,
   CustomError,
   statusCode,
-  auth,
+  authMsg,
   defaultRoute,
   dotEnv,
 } from "@dam/shared";
@@ -28,7 +28,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 
     const appDomain = dotEnv.appDomain;
     if (!appDomain) {
-      return next(new CustomError(auth.appConfiguration, statusCode.badRequest));
+      return next(new CustomError(authMsg.appConfiguration, statusCode.badRequest));
     }
 
     res.cookie(appDomain as string, response.accessToken, {
@@ -41,7 +41,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: auth.loginSuccess,
+      message: authMsg.loginSuccess,
       data: response,
     });
   } catch (error) {
@@ -67,7 +67,7 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
 
     const appDomain = dotEnv.appDomain;
     if (!appDomain) {
-      return next(new CustomError(auth.appConfiguration, statusCode.badRequest));
+      return next(new CustomError(authMsg.appConfiguration, statusCode.badRequest));
     }
 
     res.clearCookie(appDomain, {
@@ -79,7 +79,7 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
-      message: auth.logoutSuccess,
+      message: authMsg.logoutSuccess,
     });
   } catch (error) {
     return next(error);

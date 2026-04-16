@@ -7,15 +7,17 @@ import {
   authorizeRoles,
   defaultRoute,
   updateRoute,
+  roleId,
 } from "@dam/shared";
 import { verifyToken } from "../config/verifyToken";
 
 const apiRoutes: Router = express.Router();
 
-const adminAccess = authorizeRoles(1);
+apiRoutes.use(verifyToken);
+const adminAccess = authorizeRoles(roleId.admin);
 apiRoutes.post(defaultRoute, validateUserCreate, create);
-apiRoutes.get(defaultRoute, verifyToken, adminAccess, validateList, list);
-apiRoutes.patch(updateRoute, verifyToken, adminAccess, validateUserUpdate, update);
-apiRoutes.delete(updateRoute, verifyToken, adminAccess, remove);
+apiRoutes.get(defaultRoute, adminAccess, validateList, list);
+apiRoutes.patch(updateRoute, adminAccess, validateUserUpdate, update);
+apiRoutes.delete(updateRoute, adminAccess, remove);
 
 export default apiRoutes;

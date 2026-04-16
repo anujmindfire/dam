@@ -1,6 +1,6 @@
 import sequelize from "./sequelizeConnection";
 import logger from "../utils/logger";
-import { database } from "../utils/constant";
+import { databaseMsg } from "../utils/constant";
 
 /**
  * Shared database connection logic.
@@ -10,11 +10,11 @@ import { database } from "../utils/constant";
 export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    logger.info(database.dbConnectionSuccess);
+    logger.info(databaseMsg.dbConnectionSuccess);
 
     await sequelize.sync();
   } catch (error) {
-    logger.error(`${database.dbConnectionError}: ${error}`);
+    logger.error(`${databaseMsg.dbConnectionError}: ${error}`);
     process.exit(1);
   }
 };

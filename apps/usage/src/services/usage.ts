@@ -1,20 +1,12 @@
-import { Request } from "express";
-import {
-  usageModel,
-  create,
-  findAll,
-  statusCode,
-  CustomError,
-} from "@dam/shared";
+import { usageModel, create, findAll, statusCode, CustomError, RequestWithUser } from "@dam/shared";
 
 /**
  * Logs an asset usage event (view, download, share, update).
  * Stores user context including IP and user agent for auditing.
- *
  * @param {Request} req - Express request with assetId, action, context in body.
  * @returns {Promise<any | CustomError>}
  */
-export const trackUsage = async (req: Request) => {
+export const trackUsage = async (req: RequestWithUser) => {
   try {
     const { assetId, action, context } = req.body;
 
@@ -32,17 +24,16 @@ export const trackUsage = async (req: Request) => {
 
     return log;
   } catch (error) {
-    return new CustomError((error as Error).message, statusCode.badRequest);
+    throw new CustomError((error as Error).message, statusCode.badRequest);
   }
 };
 
 /**
  * Retrieves paginated usage logs for a specific asset.
- *
  * @param {Request} req - Express request with assetId in params.
  * @returns {Promise<any | CustomError>}
  */
-export const getAssetUsage = async (req: Request) => {
+export const getAssetUsage = async (req: RequestWithUser) => {
   try {
     const { assetId } = req.params;
     const { limit = "50", offset = "0" } = req.query;
@@ -56,17 +47,16 @@ export const getAssetUsage = async (req: Request) => {
 
     return { result, totalCount };
   } catch (error) {
-    return new CustomError((error as Error).message, statusCode.badRequest);
+    throw new CustomError((error as Error).message, statusCode.badRequest);
   }
 };
 
 /**
  * Retrieves all usage logs across all assets, with pagination.
- *
  * @param {Request} req - Express request with page/limit query.
  * @returns {Promise<any | CustomError>}
  */
-export const getAllUsage = async (req: Request) => {
+export const getAllUsage = async (req: RequestWithUser) => {
   try {
     const { limit = "100", offset = "0" } = req.query;
 
@@ -78,6 +68,6 @@ export const getAllUsage = async (req: Request) => {
 
     return { result, totalCount };
   } catch (error) {
-    return new CustomError((error as Error).message, statusCode.badRequest);
+    throw new CustomError((error as Error).message, statusCode.badRequest);
   }
 };

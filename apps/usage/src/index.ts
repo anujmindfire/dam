@@ -11,17 +11,20 @@ import {
   connectRabbitMQ,
   consumeMessage,
   redis,
+  dotEnv,
   requestLogger,
   errorHandler,
   notFoundHandler,
   rateLimit,
-  common,
-  database,
+  commonMsg,
+  consumerMsg,
+  databaseMsg,
   baseRoute,
+  apiUrl,
 } from "@dam/shared";
 
 const app = express();
-const PORT = process.env.PORT || "3003";
+const PORT = dotEnv.usagePort;
 
 app.use(cors({ origin: "*", credentials: true }));
 app.use(compression());
@@ -31,11 +34,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 
 app.use(requestLogger as unknown as express.RequestHandler);
-app.use(rateLimit as unknown as express.RequestHandler);
+app.use(rateLimit() as unknown as express.RequestHandler);
+
+app.get(`${baseRoute}/health`, (_req, res) => {
+  res.status(200).json({ status: "healthy", service: "Usage", timestamp: new Date().toISOString() });
+});
 
 // Mount routes
-app.use(`${baseRoute}/usage`, usageRoutes);
-app.use(`${baseRoute}/analytics`, analyticsRoutes);
+app.use(`${baseRoute}${apiUrl.usage}`, usageRoutes);
+app.use(`${baseRoute}${apiUrl.analytics}`, analyticsRoutes);
 
 app.use(notFoundHandler as unknown as express.RequestHandler);
 app.use(errorHandler as unknown as express.ErrorRequestHandler);
@@ -46,17 +53,15 @@ app.use(errorHandler as unknown as express.ErrorRequestHandler);
 const startConsumers = async (): Promise<void> => {
   try {
     await connectRabbitMQ();
-    logger.info("🔗 Connected to RabbitMQ");
+    logger.info(commonMsg.rmqConnected);
 
     // Consumer for asset creation - initialize usage tracking
     await consumeMessage("asset_created", async (payload: any) => {
       try {
-        logger.info(`[Usage Consumer] Initializing tracking for new asset ${payload.assetId}`);
-        // Initialize usage metrics in database
-        // This would be implemented if a UsageMetrics model exists
-        logger.info(`[Usage Consumer] Tracking initialized for asset ${payload.assetId}`);
+        logger.info(consumerMsg.usageAssetCreated(payload.assetId));
+        logger.info(consumerMsg.usageAssetCreatedSuccess(payload.assetId));
       } catch (error) {
-        logger.error(`[Usage Consumer] Error on asset_created:`, error);
+        logger.error(consumerMsg.usageAssetCreatedError, error);
         throw error;
       }
     });
@@ -64,26 +69,25 @@ const startConsumers = async (): Promise<void> => {
     // Consumer for asset approval
     await consumeMessage("asset_approved", async (payload: any) => {
       try {
-        logger.info(`[Usage Consumer] Asset ${payload.assetId} approved - usage tracking active`);
+        logger.info(consumerMsg.usageAssetApproved(payload.assetId));
       } catch (error) {
-        logger.error(`[Usage Consumer] Error on asset_approved:`, error);
+        logger.error(consumerMsg.usageAssetApprovedError, error);
       }
     });
 
     // Consumer for asset deletion
     await consumeMessage("asset_deleted", async (payload: any) => {
       try {
-        logger.info(`[Usage Consumer] Archiving usage data for asset ${payload.assetId}`);
-        // Archive existing usage records instead of deleting
-        logger.info(`[Usage Consumer] Usage data archived for asset ${payload.assetId}`);
+        logger.info(consumerMsg.usageAssetDeleted(payload.assetId));
+        logger.info(consumerMsg.usageAssetDeletedSuccess(payload.assetId));
       } catch (error) {
-        logger.error(`[Usage Consumer] Error on asset_deleted:`, error);
+        logger.error(consumerMsg.usageAssetDeletedError, error);
       }
     });
 
-    logger.info("✅ All usage consumers started");
+    logger.info(consumerMsg.allUsageConsumersStarted);
   } catch (error) {
-    logger.error("Failed to start usage consumers:", error);
+    logger.error(consumerMsg.usageConsumersError, error);
     process.exit(1);
   }
 };
@@ -91,18 +95,18 @@ const startConsumers = async (): Promise<void> => {
 const bootstrap = async (): Promise<void> => {
   try {
     await connectDB();
-    logger.info(database.dbConnectionSuccess);
+    logger.info(databaseMsg.dbConnectionSuccess);
 
-    redis.on("ready", () => logger.info(common.redisReady));
+    redis.on("ready", () => logger.info(commonMsg.redisReady));
 
     // Start consuming messages
     await startConsumers();
 
-    app.listen(PORT, () => {
-      logger.info(`🚀 Usage Service running on port ${PORT}`);
+    app.listen(PORT, "0.0.0.0", () => {
+      logger.info(commonMsg.usageServiceRunning(PORT));
     });
   } catch (error) {
-    logger.error("Usage Service failed to start:", error);
+    logger.error(commonMsg.serviceFailed("Usage"), error);
     process.exit(1);
   }
 };

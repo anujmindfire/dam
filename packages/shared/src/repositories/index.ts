@@ -6,6 +6,7 @@ import {
   Transaction,
   FindAndCountOptions,
 } from "sequelize";
+import { PaginatedResult } from "../types";
 
 /**
  * Creates a new item in the database using the provided Sequelize model.
@@ -84,13 +85,22 @@ export const findOne = async <T extends Model>(
 export const findAll = async <T extends Model>(
   model: ModelStatic<T>,
   options: FindOptions = {},
-): Promise<{ result: any[]; totalCount: number }> => {
+): Promise<PaginatedResult<any>> => {
   try {
     const { rows, count } = await model.findAndCountAll({
       ...options,
       distinct: true,
     });
-    return { result: rows, totalCount: typeof count === "number" ? count : (count as any).length };
+    const rawCount: any = count;
+    return {
+      result: rows,
+      totalCount:
+        typeof rawCount === "number"
+          ? rawCount
+          : Array.isArray(rawCount)
+            ? rawCount.length
+            : Object.keys(rawCount).length,
+    };
   } catch (error) {
     throw error;
   }
@@ -190,17 +200,20 @@ export const deleteRecord = async <T extends Model>(
 export const findAndCountAll = async <T extends Model>(
   model: ModelStatic<T>,
   options: FindAndCountOptions,
-): Promise<{
-  rows: T[];
-  count: number;
-}> => {
+): Promise<PaginatedResult<T>> => {
   const result = await model.findAndCountAll({
     ...options,
     distinct: true,
   });
 
+  const rawCount: any = result.count;
   return {
-    rows: result.rows as T[],
-    count: result.count,
+    result: result.rows as T[],
+    totalCount:
+      typeof rawCount === "number"
+        ? rawCount
+        : Array.isArray(rawCount)
+          ? rawCount.length
+          : Object.keys(rawCount).length,
   };
 };
