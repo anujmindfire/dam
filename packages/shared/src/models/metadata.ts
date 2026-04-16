@@ -4,20 +4,19 @@ import { MetadataProps } from "../types/index";
 import { modelName } from "../utils/constant";
 import { capitalize } from "../utils/common";
 
-export interface MetadataCreationAttributes
-  extends Optional<MetadataProps, "tags" | "isDuplicate" | "analysisResults"> {}
+export interface MetadataCreationAttributes extends Optional<
+  MetadataProps,
+  "tags" | "isDuplicate" | "analysisResults"
+> {}
 
-class Metadata
-  extends Model<MetadataProps, MetadataCreationAttributes>
-  implements MetadataProps
-{
+class Metadata extends Model<MetadataProps, MetadataCreationAttributes> implements MetadataProps {
   public id!: number;
   public assetId!: string;
   public tags!: string[];
   public department!: string | null;
   public analysisResults?: any;
-  public isDuplicate?: boolean;
-  public hash?: string;
+  public isDuplicate!: boolean;
+  public hash!: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -61,6 +60,15 @@ Metadata.init(
     tableName: modelName.metadata,
     freezeTableName: true,
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["assetId"],
+      },
+      {
+        fields: ["hash"],
+      },
+    ],
   },
 );
 

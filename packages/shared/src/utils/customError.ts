@@ -1,6 +1,6 @@
 /**
  * A specialized error class for handling application-specific exceptions.
- * Extends the built-in Error class to include an HTTP status code, 
+ * Extends the built-in Error class to include an HTTP status code,
  * allowing the global error handler to send consistent responses to the client.
  */
 

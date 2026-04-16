@@ -1,3 +1,6 @@
 {
-  "apps/*/src/**/*.{ts,tsx,js,jsx}": ["eslint --fix --no-warn-ignored", "prettier --write"]
+  "**/*.{ts,tsx,js,jsx}": [
+    "eslint --fix --no-warn-ignored",
+    "prettier --write"
+  ]
 }

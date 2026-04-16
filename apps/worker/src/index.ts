@@ -8,9 +8,16 @@ import {
   findOne,
   findOneAndUpdate,
   update,
-  common,
-  database,
+  findAll,
+  commonMsg,
+  databaseMsg,
+  Op,
+  dotEnv,
+  redis,
+  generateSystemReport,
+  baseRoute,
 } from "@dam/shared";
+import express, { Request, Response } from "express";
 import { analyzeAsset } from "./services/analysis";
 
 /**
@@ -50,11 +57,7 @@ const detectDuplicate = async (assetId: number, hash: string): Promise<boolean> 
   const existing = await findOne(metadataModel, { hash } as any);
 
   if (existing && (existing as any).assetId !== String(assetId)) {
-    await findOneAndUpdate(
-      metadataModel,
-      { assetId: String(assetId) },
-      { isDuplicate: true },
-    );
+    await findOneAndUpdate(metadataModel, { assetId: String(assetId) }, { isDuplicate: true });
     logger.warn(`[Worker] Duplicate detected for Asset [ID: ${assetId}] — matches hash ${hash}`);
     return true;
   }
@@ -68,10 +71,10 @@ const bootstrap = async (): Promise<void> => {
   try {
     // 1. Connect to shared infrastructure
     await connectDB();
-    logger.info(database.dbConnectionSuccess);
+    logger.info(databaseMsg.dbConnectionSuccess);
 
     await connectRabbitMQ();
-    logger.info(common.rmqConnected);
+    logger.info(commonMsg.rmqConnected);
 
     // 2. Start consuming asset upload events
     await consumeMessage("asset_uploaded", async (payload: AssetUploadedPayload) => {
@@ -100,25 +103,24 @@ const bootstrap = async (): Promise<void> => {
         // C. Check for duplicate assets
         const isDuplicate = await detectDuplicate(payload.assetId, hash);
         if (isDuplicate) {
-          logger.warn(`[Worker] Asset [ID: ${payload.assetId}] is a DUPLICATE — skipping lifecycle transition`);
+          logger.warn(
+            `[Worker] Asset [ID: ${payload.assetId}] is a DUPLICATE — skipping lifecycle transition`,
+          );
           return;
         }
 
         // D. Flag expiry if past expiryDate
         const isExpired = await flagExpiryIfNeeded(payload.assetId);
         if (isExpired) {
-          logger.warn(`[Worker] Asset [ID: ${payload.assetId}] is EXPIRED — skipping lifecycle transition`);
+          logger.warn(
+            `[Worker] Asset [ID: ${payload.assetId}] is EXPIRED — skipping lifecycle transition`,
+          );
           return;
         }
 
         // E. Lifecycle transition: pending → reviewed
-        await findOneAndUpdate(
-          assetModel,
-          { id: payload.assetId },
-          { status: "reviewed" },
-        );
+        await findOneAndUpdate(assetModel, { id: payload.assetId }, { status: "reviewed" });
         logger.info(`[Worker] Asset [ID: ${payload.assetId}] transitioned to "reviewed"`);
-
       } catch (err) {
         logger.error(`[Worker] Failed to process Asset [ID: ${payload.assetId}]:`, err);
         // Mark as failed without crashing the worker (fault tolerance)
@@ -126,8 +128,46 @@ const bootstrap = async (): Promise<void> => {
       }
     });
 
-    logger.info("[Worker] ✅ Listening for jobs on queue: asset_uploaded");
+    // 3. Start consuming system maintenance events (Bulk scanning)
+    await consumeMessage("system_maintenance", async () => {
+      logger.info("[Worker] Starting periodic system maintenance scan...");
 
+      const { result: assets } = await findAll(assetModel, {
+        where: { status: { [Op.not]: "expired" } },
+      });
+
+      let flaggedCount = 0;
+      for (const asset of assets) {
+        const isExpired = await flagExpiryIfNeeded((asset as any).id);
+        if (isExpired) flaggedCount++;
+      }
+
+      logger.info(`[Worker] Maintenance scan complete. ${flaggedCount} assets flagged as expired.`);
+    });
+
+    // 4. Start consuming report generation events
+    await consumeMessage("report_generation", async () => {
+      logger.info("[Worker] 📊 Starting background report generation...");
+      try {
+        const report = await generateSystemReport();
+        // Save to Redis for fast retrieval by the API
+        await redis.set("system:report:latest", JSON.stringify(report), "EX", 3600); // 1 hour TTL
+        logger.info("[Worker] ✅ System report precomputed and cached.");
+      } catch (err) {
+        logger.error("[Worker] Failed to generate background report:", err);
+      }
+    });
+
+    logger.info("[Worker] ✅ Listening for jobs on queues: asset_uploaded, system_maintenance, report_generation");
+
+    // 5. Minimal health check server for worker
+    const healthApp = express();
+    healthApp.get(`${baseRoute}/health`, (_req: Request, res: Response) => {
+      res.status(200).json({ status: "healthy", service: "Worker", uptime: process.uptime() });
+    });
+    healthApp.listen(dotEnv.workerPort || 3005, "0.0.0.0", () => {
+      logger.info(`[Worker] Health monitor running on port ${dotEnv.workerPort || 3005}`);
+    });
   } catch (err) {
     logger.error("[Worker] Bootstrap failed:", err);
     process.exit(1);

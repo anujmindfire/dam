@@ -1,12 +1,14 @@
 // Models
 export * from "./models";
-export { default as assetModel } from "./models/asset";
+export { default as assetModel } from "./models/assets";
 export { default as metadataModel } from "./models/metadata";
 export { default as usageModel } from "./models/usage";
 export { default as versionModel } from "./models/version";
 export { default as collectionModel } from "./models/collection";
 export { default as roleModel } from "./models/role";
 export { default as userModel } from "./models/user";
+export { default as approvalModel } from "./models/approval";
+export { default as approvalCommentModel } from "./models/approvalComment";
 
 // Config & Core
 export { default as sequelize } from "./config/sequelizeConnection";
@@ -16,7 +18,7 @@ export { connectDB } from "./config/dbConnection";
 export * from "./config/minio";
 export * from "./utils/messaging";
 export { default as redis } from "./config/redis";
-export { cache } from "./utils/cache";
+export { cache as cacheUtil } from "./utils/cache";
 
 // Wildcard Utilities & Middleware
 export { Op } from "sequelize";
@@ -28,6 +30,4 @@ export * from "./utils/constant";
 export * from "./utils/common";
 export * from "./utils/response";
 export * from "./utils/customError";
-
-// Explicit Type Exports (Resolving Red Problems)
-export * from "./types/index";
+export * from "./utils/report";

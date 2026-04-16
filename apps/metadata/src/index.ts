@@ -7,18 +7,25 @@ import metadataRoutes from "./routes/metadata";
 import {
   logger,
   connectDB,
+  connectRabbitMQ,
+  consumeMessage,
   redis,
+  dotEnv,
   requestLogger,
   errorHandler,
   notFoundHandler,
   rateLimit,
-  common,
-  database,
+  commonMsg,
+  consumerMsg,
+  databaseMsg,
   baseRoute,
+  apiUrl,
+  metadataModel,
+  findOneAndUpdate,
 } from "@dam/shared";
 
 const app = express();
-const PORT = process.env.PORT || "3002";
+const PORT = dotEnv.metadataPort;
 
 app.use(cors({ origin: "*", credentials: true }));
 app.use(compression());
@@ -28,26 +35,84 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 
 app.use(requestLogger as unknown as express.RequestHandler);
-app.use(rateLimit as unknown as express.RequestHandler);
+app.use(rateLimit() as unknown as express.RequestHandler);
 
-// Mount metadata routes
-app.use(`${baseRoute}/metadata`, metadataRoutes);
+app.get(`${baseRoute}/health`, (_req, res) => {
+  res.status(200).json({ status: "healthy", service: "Metadata", timestamp: new Date().toISOString() });
+});
+
+app.use(`${baseRoute}${apiUrl.metadata}`, metadataRoutes);
 
 app.use(notFoundHandler as unknown as express.RequestHandler);
 app.use(errorHandler as unknown as express.ErrorRequestHandler);
 
+/**
+ * Starts consuming asset lifecycle events
+ */
+const startConsumers = async (): Promise<void> => {
+  try {
+    await connectRabbitMQ();
+    logger.info(commonMsg.rmqConnected);
+
+    await consumeMessage("metadata_analyzed", async (payload: any) => {
+      try {
+        logger.info(consumerMsg.metadataAnalyzedProcessing(payload.assetId));
+
+        await findOneAndUpdate(
+          metadataModel,
+          { assetId: payload.assetId },
+          {
+            analysisResults: payload.analysisResults,
+            tags: payload.analysisResults?.objects || [],
+          },
+        );
+
+        logger.info(consumerMsg.metadataAnalyzedSuccess(payload.assetId));
+      } catch (error) {
+        logger.error(consumerMsg.metadataAnalyzedError(payload.assetId), error);
+        throw error;
+      }
+    });
+
+    await consumeMessage("asset_created", async (payload: any) => {
+      try {
+        logger.info(consumerMsg.assetCreatedMetadata(payload.assetId));
+        logger.info(consumerMsg.assetCreatedMetadataReady(payload.assetId));
+      } catch (error) {
+        logger.error(consumerMsg.assetCreatedMetadataError, error);
+      }
+    });
+
+    await consumeMessage("asset_deleted", async (payload: any) => {
+      try {
+        logger.info(consumerMsg.assetDeletedMetadata(payload.assetId));
+        logger.info(consumerMsg.assetDeletedMetadataCleanup(payload.assetId));
+      } catch (error) {
+        logger.error(consumerMsg.assetDeletedMetadataError, error);
+      }
+    });
+
+    logger.info(consumerMsg.allMetadataConsumersStarted);
+  } catch (error) {
+    logger.error(consumerMsg.metadataConsumersError, error);
+    process.exit(1);
+  }
+};
+
 const bootstrap = async (): Promise<void> => {
   try {
     await connectDB();
-    logger.info(database.dbConnectionSuccess);
+    logger.info(databaseMsg.dbConnectionSuccess);
 
-    redis.on("ready", () => logger.info(common.redisReady));
+    redis.on("ready", () => logger.info(commonMsg.redisReady));
 
-    app.listen(PORT, () => {
-      logger.info(`🚀 Metadata Service running on port ${PORT}`);
+    await startConsumers();
+
+    app.listen(PORT, "0.0.0.0", () => {
+      logger.info(commonMsg.metadataServiceRunning(PORT));
     });
   } catch (error) {
-    logger.error("Metadata Service failed to start:", error);
+    logger.error(commonMsg.serviceFailed("Metadata"), error);
     process.exit(1);
   }
 };

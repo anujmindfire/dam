@@ -1,7 +1,7 @@
 import Redis from "ioredis";
 import dotEnv from "./dotEnv";
 import logger from "../utils/logger";
-import { common, redisMsg } from "../utils/constant";
+import { commonMsg, redisMsg } from "../utils/constant";
 
 /**
  * Initializes a persistent Redis client connection.
@@ -16,11 +16,11 @@ const redis = new Redis({
 });
 
 redis.on("connect", () => {
-  logger.info(common.redisConnecting);
+  logger.info(commonMsg.redisConnecting);
 });
 
 redis.on("ready", () => {
-  logger.info(common.redisReady);
+  logger.info(commonMsg.redisReady);
 });
 
 redis.on("error", (error) => {

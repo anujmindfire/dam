@@ -81,9 +81,18 @@
     { "name": "Users", "description": "User management" },
     { "name": "Assets", "description": "Digital asset lifecycle management" },
     { "name": "Collections", "description": "Asset grouping and organization" },
-    { "name": "Statistics", "description": "Analytics, compliance and usage tracking" }
+    { "name": "Approval", "description": "Asset approval workflow and history" },
+    { "name": "Metadata", "description": "Asset metadata enrichment and management" },
+    { "name": "System", "description": "Global health and diagnostic endpoints" }
   ],
   "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Check system health across gateways",
+        "responses": { "200": { "description": "System is healthy" } }
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "tags": ["Auth"],
@@ -157,7 +166,7 @@
         }
       }
     },
-    "/api/v1/assest/upload": {
+    "/api/v1/assets/upload": {
       "post": {
         "tags": ["Assets"],
         "summary": "Upload a file and create asset record",
@@ -185,7 +194,7 @@
         }
       }
     },
-    "/api/v1/assest": {
+    "/api/v1/assets": {
       "post": {
         "tags": ["Assets"],
         "summary": "Create asset record (without file)",
@@ -231,7 +240,7 @@
         }
       }
     },
-    "/api/v1/assest/{id}": {
+    "/api/v1/assets/{id}": {
       "get": {
         "tags": ["Assets"],
         "summary": "Get asset by ID with metadata and versions",
@@ -274,7 +283,29 @@
         }
       }
     },
-    "/api/v1/assest/{id}/status": {
+    "/api/v1/assets/{id}/version": {
+      "post": {
+        "tags": ["Assets"],
+        "summary": "Upload a new file version for an existing asset",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "note": { "type": "string", "example": "Updated logo colors" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Version uploaded successfully" } }
+      }
+    },
+    "/api/v1/assets/{id}/status": {
       "patch": {
         "tags": ["Assets"],
         "summary": "Transition asset lifecycle status",
@@ -352,7 +383,7 @@
         "responses": { "200": { "description": "Collection deleted" } }
       }
     },
-    "/api/v1/collection/{id}/assest": {
+    "/api/v1/collection/{id}/assets": {
       "post": {
         "tags": ["Collections"],
         "summary": "Add an asset to a collection",
@@ -408,6 +439,187 @@
           { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
         ],
         "responses": { "200": { "description": "Usage logs returned" } }
+      }
+    },
+    "/api/v1/approval": {
+      "post": {
+        "tags": ["Approval"],
+        "summary": "Request approval for an asset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["assetId"],
+                "properties": {
+                  "assetId": { "type": "integer" },
+                  "priority": { "type": "string", "enum": ["low", "normal", "high"], "default": "normal" },
+                  "assignedTo": { "type": "array", "items": { "type": "integer" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Approval request created" } }
+      },
+      "get": {
+        "tags": ["Approval"],
+        "summary": "List approval requests",
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["pending", "approved", "rejected"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": { "200": { "description": "Approvals retrieved" } }
+      }
+    },
+    "/api/v1/approval/{id}": {
+      "get": {
+        "tags": ["Approval"],
+        "summary": "Get approval request details",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Approval found" } }
+      }
+    },
+    "/api/v1/approval/{id}/approve": {
+      "patch": {
+        "tags": ["Approval"],
+        "summary": "Approve an asset",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "comments": { "type": "string" } } } } }
+        },
+        "responses": { "200": { "description": "Asset approved" } }
+      }
+    },
+    "/api/v1/approval/{id}/reject": {
+      "patch": {
+        "tags": ["Approval"],
+        "summary": "Reject an asset",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["reason"], "properties": { "reason": { "type": "string" } } } } }
+        },
+        "responses": { "200": { "description": "Asset rejected" } }
+      }
+    },
+    "/api/v1/approval/assets/{assetId}/history": {
+      "get": {
+        "tags": ["Approval"],
+        "summary": "Get approval history for an asset",
+        "parameters": [
+          { "name": "assetId", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": { "200": { "description": "History retrieved" } }
+      }
+    },
+    "/api/v1/metadata/search": {
+      "get": {
+        "tags": ["Metadata"],
+        "summary": "Search assets by metadata tags",
+        "parameters": [{ "name": "tags", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Search results" } }
+      }
+    },
+    "/api/v1/metadata/duplicates": {
+      "get": {
+        "tags": ["Metadata"],
+        "summary": "Find duplicate assets",
+        "responses": { "200": { "description": "Duplicates found" } }
+      }
+    },
+    "/api/v1/metadata/{id}": {
+      "get": {
+        "tags": ["Metadata"],
+        "summary": "Get metadata for an asset",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Asset ID", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Metadata found" } }
+      },
+      "patch": {
+        "tags": ["Metadata"],
+        "summary": "Update asset metadata",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Asset ID", "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "tags": { "type": "array", "items": { "type": "string" } }, "description": { "type": "string" } } } } }
+        },
+        "responses": { "200": { "description": "Metadata updated" } }
+      }
+    },
+    "/api/v1/usage/track": {
+      "post": {
+        "tags": ["Statistics"],
+        "summary": "Log an asset usage event",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["assetId", "action"],
+                "properties": {
+                  "assetId": { "type": "integer" },
+                  "action": { "type": "string", "enum": ["view","download","share","update"] },
+                  "context": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Usage event logged" } }
+      }
+    },
+    "/api/v1/usage": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "List all usage logs",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": { "200": { "description": "Usage logs retrieved" } }
+      }
+    },
+    "/api/v1/usage/{id}": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Get usage logs for a specific asset",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Asset ID", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Usage logs retrieved" } }
+      }
+    },
+    "/api/v1/analytics/overview": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "System analytics overview",
+        "responses": { "200": { "description": "Overview data" } }
+      }
+    },
+    "/api/v1/analytics/compliance": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Compliance metrics",
+        "responses": { "200": { "description": "Compliance data" } }
+      }
+    },
+    "/api/v1/analytics/report": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Get the latest precomputed system report",
+        "responses": {
+          "200": { "description": "Report retrieved from cache" },
+          "202": { "description": "Report is being generated" }
+        }
+      }
+    },
+    "/api/v1/analytics/report/trigger": {
+      "post": {
+        "tags": ["Statistics"],
+        "summary": "Trigger a background report generation job",
+        "responses": { "202": { "description": "Job triggered" } }
       }
     }
   }

@@ -1,20 +1,14 @@
 import express, { Router } from "express";
 import { getByAsset, update, search, duplicates } from "../controllers/metadata";
-import { verifyToken } from "@dam/shared";
+import { verifyToken } from "../config/verifyToken";
+import { apiUrl, updateRoute } from "@dam/shared";
 
 const apiRoutes: Router = express.Router();
 
-/**
- * All metadata routes require authentication.
- */
 apiRoutes.use(verifyToken);
-
-// Tag-based search and duplicate listing (before /:assetId to avoid route conflicts)
-apiRoutes.get("/search", search);
-apiRoutes.get("/duplicates", duplicates);
-
-// Per-asset metadata CRUD
-apiRoutes.get("/:assetId", getByAsset);
-apiRoutes.patch("/:assetId", update);
+apiRoutes.get(apiUrl.search, search);
+apiRoutes.get(apiUrl.duplicates, duplicates);
+apiRoutes.get(updateRoute, getByAsset);
+apiRoutes.patch(updateRoute, update);
 
 export default apiRoutes;

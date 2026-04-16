@@ -9,8 +9,9 @@ import {
   deleteRecord,
   statusCode,
   CustomError,
-  common,
-  collection as collectionMsg,
+  commonMsg,
+  collectionMsg,
+  RequestWithUser,
 } from "@dam/shared";
 
 /**
@@ -21,10 +22,10 @@ import {
  * @returns {Promise<any | CustomError>} A promise resolving to the created collection or a CustomError on failure.
  */
 
-export const createCollection = async (req: Request) => {
+export const createCollection = async (req: RequestWithUser) => {
   try {
     const { name, description, parentId } = req.body;
-    
+
     const owner = req.user?.id;
 
     const newCollection = await create(collectionModel, {
@@ -35,7 +36,7 @@ export const createCollection = async (req: Request) => {
     });
 
     if (!newCollection) {
-      return new CustomError(common.somethingWentWrong, statusCode.badRequest);
+      return new CustomError(commonMsg.somethingWentWrong, statusCode.badRequest);
     }
 
     return newCollection;
@@ -46,13 +47,13 @@ export const createCollection = async (req: Request) => {
 
 /**
  * Lists collections for the authenticated user.
- * Supports filtering by parentId to navigate the collection hierarchy. 
+ * Supports filtering by parentId to navigate the collection hierarchy.
  * Includes primary sub-collections in the result.
  * @param {Request} req - The Express request object with optional parentId query parameter.
  * @returns {Promise<any | CustomError>} A promise resolving to the list of collections or a CustomError.
  */
 
-export const listCollection = async (req: Request) => {
+export const listCollection = async (req: RequestWithUser) => {
   try {
     const parentId = req.query.parentId === "null" ? null : req.query.parentId;
     const owner = req.user?.id;
@@ -80,19 +81,23 @@ export const listCollection = async (req: Request) => {
  * @returns {Promise<any | CustomError>} A promise resolving to the detailed collection or a CustomError.
  */
 
-export const getCollectionById = async (req: Request) => {
+export const getCollectionById = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
-    
+
     const owner = req.user?.id;
 
-    const collection = await findOne(collectionModel, { id, owner: owner }, {
-      include: [
-        { model: collectionModel, as: "subCollections" },
-        { model: assetModel, as: "assets" },
-      ],
-      raw: false,
-    });
+    const collection = await findOne(
+      collectionModel,
+      { id, owner: owner },
+      {
+        include: [
+          { model: collectionModel, as: "subCollections" },
+          { model: assetModel, as: "assets" },
+        ],
+        raw: false,
+      },
+    );
 
     if (!collection) {
       return new CustomError(collectionMsg.notFound, statusCode.notFound);
@@ -111,12 +116,12 @@ export const getCollectionById = async (req: Request) => {
  * @returns {Promise<any | CustomError>} A promise resolving to the updated collection or a CustomError.
  */
 
-export const updateCollection = async (req: Request) => {
+export const updateCollection = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
-    
+
     const { name, description, parentId } = req.body;
-    
+
     const owner = req.user?.id;
 
     const updatedCollection = await findOneAndUpdate(
@@ -124,7 +129,7 @@ export const updateCollection = async (req: Request) => {
       { id: Number(id), owner: owner },
       { name, description, parentId },
       undefined,
-      true
+      true,
     );
 
     if (!updatedCollection) {
@@ -144,10 +149,10 @@ export const updateCollection = async (req: Request) => {
  * @returns {Promise<boolean | CustomError>} A promise resolving to true on success or a CustomError.
  */
 
-export const deleteCollection = async (req: Request) => {
+export const deleteCollection = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
-    
+
     const owner = req.user?.id;
 
     const deletedCount = await deleteRecord(collectionModel, { id: Number(id), owner: owner });
@@ -169,10 +174,10 @@ export const deleteCollection = async (req: Request) => {
  * @returns {Promise<any | CustomError>} A promise resolving to the updated asset or a CustomError.
  */
 
-export const addAssetToCollection = async (req: Request) => {
+export const addAssetToCollection = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
-    
+
     const { assetId } = req.body;
 
     const updatedAsset = await findOneAndUpdate(
@@ -180,7 +185,7 @@ export const addAssetToCollection = async (req: Request) => {
       { id: Number(assetId) },
       { collectionId: Number(id) },
       undefined,
-      true
+      true,
     );
 
     if (!updatedAsset) {

@@ -1,17 +1,13 @@
 import express, { Router } from "express";
-import { track, getByAsset, list, overview, compliance } from "../controllers/usage";
-import { verifyToken } from "@dam/shared";
+import { track, getByAsset, list } from "../controllers/usage";
+import { verifyToken } from "../config/verifyToken";
+import { apiUrl, defaultRoute, updateRoute } from "@dam/shared";
 
 const apiRoutes: Router = express.Router();
 
-/**
- * All usage and analytics routes require authentication.
- */
 apiRoutes.use(verifyToken);
-
-// Usage tracking
-apiRoutes.post("/track", track);
-apiRoutes.get("/", list);
-apiRoutes.get("/:assetId", getByAsset);
+apiRoutes.post(apiUrl.track, track);
+apiRoutes.get(defaultRoute, list);
+apiRoutes.get(updateRoute, getByAsset);
 
 export default apiRoutes;

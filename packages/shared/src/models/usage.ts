@@ -45,6 +45,7 @@ UsageLog.init(
     tableName: modelName.usageLog,
     freezeTableName: true,
     timestamps: true,
+    indexes: [{ fields: ["assetId"] }, { fields: ["action"] }, { fields: ["loggedAt"] }],
   },
 );
 

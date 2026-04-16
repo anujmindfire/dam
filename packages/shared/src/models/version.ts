@@ -57,6 +57,11 @@ AssetVersion.init(
     tableName: modelName.assetVersion,
     freezeTableName: true,
     timestamps: true,
+    indexes: [
+      {
+        fields: ["assetId"],
+      },
+    ],
   },
 );
 

@@ -1,14 +1,15 @@
 import { Request } from "express";
-import { Op } from "sequelize";
 import {
   metadataModel,
   assetModel,
   findOne,
   findAll,
   findOneAndUpdate,
-  cache,
+  cacheUtil as cache,
   statusCode,
   CustomError,
+  metadataMsg,
+  Op,
 } from "@dam/shared";
 
 const META_CACHE_KEY = "metadata:";
@@ -16,9 +17,9 @@ const META_CACHE_KEY = "metadata:";
 /**
  * Retrieves metadata for a given asset ID.
  * Uses Redis cache-aside pattern to reduce DB load.
- *
  * @param {Request} req - Express request with assetId in params.
  */
+
 export const getMetadata = async (req: Request) => {
   try {
     const { assetId } = req.params;
@@ -30,7 +31,7 @@ export const getMetadata = async (req: Request) => {
     const metadata = await findOne(metadataModel, { assetId: String(assetId) });
 
     if (!metadata) {
-      return new CustomError("Metadata not found for this asset", statusCode.notFound);
+      return new CustomError(metadataMsg.notFound, statusCode.notFound);
     }
 
     await cache.set(cacheKey, metadata, 3600);
@@ -43,9 +44,9 @@ export const getMetadata = async (req: Request) => {
 /**
  * Updates tags, department, or analysis results for an asset's metadata.
  * Invalidates the cache entry on every update.
- *
  * @param {Request} req - Express request with assetId in params and metadata fields in body.
  */
+
 export const updateMetadata = async (req: Request) => {
   try {
     const { assetId } = req.params;
@@ -60,10 +61,9 @@ export const updateMetadata = async (req: Request) => {
     );
 
     if (!updated) {
-      return new CustomError("Metadata not found for this asset", statusCode.notFound);
+      return new CustomError(metadataMsg.notFound, statusCode.notFound);
     }
 
-    // Invalidate cache
     await cache.del(`${META_CACHE_KEY}${assetId}`);
     return updated;
   } catch (error) {
@@ -74,15 +74,15 @@ export const updateMetadata = async (req: Request) => {
 /**
  * Searches assets by metadata tags using Postgres JSONB contains operator.
  * Supports comma-separated tag values: ?tags=brand,product
- *
  * @param {Request} req - Express request with tags query param.
  */
+
 export const searchByTags = async (req: Request) => {
   try {
     const { tags, page = "0", limit = "20" } = req.query;
 
     if (!tags) {
-      return new CustomError("Tags query parameter is required", statusCode.badRequest);
+      return new CustomError(metadataMsg.tagsRequired, statusCode.badRequest);
     }
 
     const tagList = (tags as string).split(",").map((t: string) => t.trim());
@@ -104,9 +104,9 @@ export const searchByTags = async (req: Request) => {
 
 /**
  * Retrieves all assets flagged as duplicates via metadata analysis.
- *
  * @param {Request} req - Express request.
  */
+
 export const getDuplicates = async (req: Request) => {
   try {
     const { limit = "50", offset = "0" } = req.query;

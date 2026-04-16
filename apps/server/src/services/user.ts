@@ -5,9 +5,9 @@ import {
   create,
   deleteRecord,
   findAll,
-  common,
-  user as userMsg,
-  auth,
+  commonMsg,
+  userMsg,
+  authMsg,
   roleId,
   statusCode,
   globalFilter,
@@ -51,7 +51,7 @@ export const createUser = async (req: Request) => {
     });
 
     if (!createdUser) {
-      return new CustomError(common.somethingWentWrong, statusCode.badRequest);
+      return new CustomError(commonMsg.somethingWentWrong, statusCode.badRequest);
     }
 
     return createdUser;
@@ -126,7 +126,7 @@ export const updateUser = async (req: Request) => {
     const updatedCount = await update(userModel, { id: req.params.id }, updateData);
 
     if (!updatedCount) {
-      return new CustomError(common.somethingWentWrong, statusCode.badRequest);
+      return new CustomError(commonMsg.somethingWentWrong, statusCode.badRequest);
     }
 
     return true;
@@ -143,19 +143,19 @@ export const updateUser = async (req: Request) => {
  */
 
 export const deleteUser = async (req: Request) => {
-  try {    
+  try {
     const { id } = req.params;
 
     const userData = await findOne(userModel, { id }, { attributes: ["id"] });
 
     if (!userData) {
-      return new CustomError(auth.userNotFound, statusCode.notFound);
+      return new CustomError(authMsg.userNotFound, statusCode.notFound);
     }
 
     const deleteCount = await deleteRecord(userModel, { id });
 
     if (!deleteCount) {
-      return new CustomError(common.somethingWentWrong, statusCode.badRequest);
+      return new CustomError(commonMsg.somethingWentWrong, statusCode.badRequest);
     }
 
     return true;

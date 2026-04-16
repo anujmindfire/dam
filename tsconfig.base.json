@@ -1,14 +1,22 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "node16",
+    "module": "commonjs",
     "lib": ["ES2020"],
     "declaration": true,
     "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "5.0",
+    "noEmitOnError": false,
+    "baseUrl": ".",
+    "paths": {
+      "@dam/shared": ["packages/shared/src/index.ts"],
+      "@dam/shared/*": ["packages/shared/src/*"],
+      "minio": ["packages/shared/src/types/minio.d.ts"]
+    }
   }
 }

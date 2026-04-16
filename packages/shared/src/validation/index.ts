@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { RequestHandler } from "express";
 import { validatedRequest } from "../middleware/index";
-import { user, regex } from "../utils/constant";
+import { userMsg, regex } from "../utils/constant";
 
 export const loginValidator: RequestHandler = validatedRequest(
   Joi.object({
@@ -13,14 +13,14 @@ export const loginValidator: RequestHandler = validatedRequest(
       .pattern(regex.email)
       .messages({
         "string.empty": "Email is required",
-        "string.pattern.base": user.invalidEmail,
+        "string.pattern.base": userMsg.invalidEmail,
       }),
 
     password: Joi.string().required().trim().min(8).max(15).pattern(regex.password).messages({
       "string.empty": "Password is required",
       "string.min": "Password must be at least 8 characters long",
       "string.max": "Password must be at most 15 characters long",
-      "string.pattern.base": user.invalidPassword,
+      "string.pattern.base": userMsg.invalidPassword,
     }),
   }),
 );
