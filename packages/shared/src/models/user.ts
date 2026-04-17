@@ -14,6 +14,7 @@ class User extends Model<UserProps, UserCreationAttributes> implements UserProps
   public password!: string | null;
   public roleId!: number;
   public tokenVersion!: number;
+  public refreshToken!: string | null;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -68,6 +69,10 @@ User.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    refreshToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
   {

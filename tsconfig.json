@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false
+  },
+  "files": [],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "apps/assets" },
+    { "path": "apps/metadata" },
+    { "path": "apps/server" },
+    { "path": "apps/usage" },
+    { "path": "apps/worker" }
+  ]
+}

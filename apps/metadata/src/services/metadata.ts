@@ -1,4 +1,3 @@
-import { Request } from "express";
 import {
   metadataModel,
   assetModel,
@@ -10,6 +9,7 @@ import {
   CustomError,
   metadataMsg,
   Op,
+  RequestWithUser,
 } from "@dam/shared";
 
 const META_CACHE_KEY = "metadata:";
@@ -20,7 +20,7 @@ const META_CACHE_KEY = "metadata:";
  * @param {Request} req - Express request with assetId in params.
  */
 
-export const getMetadata = async (req: Request) => {
+export const getMetadata = async (req: RequestWithUser) => {
   try {
     const { assetId } = req.params;
     const cacheKey = `${META_CACHE_KEY}${assetId}`;
@@ -47,7 +47,7 @@ export const getMetadata = async (req: Request) => {
  * @param {Request} req - Express request with assetId in params and metadata fields in body.
  */
 
-export const updateMetadata = async (req: Request) => {
+export const updateMetadata = async (req: RequestWithUser) => {
   try {
     const { assetId } = req.params;
     const { tags, department, analysisResults, isDuplicate } = req.body;
@@ -77,7 +77,7 @@ export const updateMetadata = async (req: Request) => {
  * @param {Request} req - Express request with tags query param.
  */
 
-export const searchByTags = async (req: Request) => {
+export const searchByTags = async (req: RequestWithUser) => {
   try {
     const { tags, page = "0", limit = "20" } = req.query;
 
@@ -107,7 +107,7 @@ export const searchByTags = async (req: Request) => {
  * @param {Request} req - Express request.
  */
 
-export const getDuplicates = async (req: Request) => {
+export const getDuplicates = async (req: RequestWithUser) => {
   try {
     const { limit = "50", offset = "0" } = req.query;
 

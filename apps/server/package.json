@@ -4,7 +4,7 @@
   "description": "Premium API Service for Digital Asset Management (API, Seed, Verify)",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && copyfiles -u 1 src/templates/*.html src/swagger.json dist/",
+    "build": "tsc -b && copyfiles -u 1 src/templates/*.html src/swagger.json dist/",
     "start": "node dist/index.js",
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
     "seed": "ts-node src/index.ts --seed",

@@ -164,6 +164,7 @@ export interface UserProps {
   password?: string | null;
   roleId: number;
   tokenVersion: number;
+  refreshToken?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -232,6 +233,9 @@ export interface SystemReportProps {
   };
 }
 
+/**
+ * Extends the global Express Request interface to include the authenticated user object.
+ */
 export interface RequestWithUser extends Request {
   user?: {
     id: string;
@@ -239,22 +243,4 @@ export interface RequestWithUser extends Request {
     tokenVersion: number;
     roleId: number;
   };
-}
-
-/**
- * Extends the global Express Request interface to include the authenticated user object.
- */
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        tokenVersion: number;
-        roleId: number;
-      };
-    }
-  }
 }

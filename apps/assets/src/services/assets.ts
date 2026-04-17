@@ -1,4 +1,3 @@
-import { Request } from "express";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -21,6 +20,7 @@ import {
   globalFilter,
   globalPagination,
   cacheMsg as cacheKeys,
+  RequestWithUser,
 } from "@dam/shared";
 
 const BUCKET = "assets";
@@ -29,7 +29,7 @@ const BUCKET = "assets";
  * Internal helper to save Asset, Metadata, and Version records,
  * and publish the asset_uploaded event.
  */
-const registerAsset = async (req: Request, data: any) => {
+const registerAsset = async (req: RequestWithUser, data: any) => {
   const {
     filename,
     storageKey,
@@ -93,7 +93,7 @@ const registerAsset = async (req: Request, data: any) => {
  * Uploads file buffer to MinIO, then registers asset records.
  * @param {Request} req - Express request with `req.file` from multer.
  */
-export const uploadAsset = async (req: Request) => {
+export const uploadAsset = async (req: RequestWithUser) => {
   try {
     if (!req.file) {
       return new CustomError(assetMsg.noFile, statusCode.badRequest);
@@ -128,7 +128,7 @@ export const uploadAsset = async (req: Request) => {
  * Creates an asset record from existing storageKey (no file upload).
  * Used when file is pre-uploaded externally.
  */
-export const createAsset = async (req: Request) => {
+export const createAsset = async (req: RequestWithUser) => {
   try {
     return await registerAsset(req, req.body);
   } catch (error) {
@@ -140,7 +140,7 @@ export const createAsset = async (req: Request) => {
  * Lists assets with search, filter, sort, and pagination.
  * Results are cached in Redis with a unique key per query.
  */
-export const listAsset = async (req: Request) => {
+export const listAsset = async (req: RequestWithUser) => {
   try {
     const filterCondition = globalFilter(req, ["status", "owner", "department", "collectionId"]);
     const { limit, offset } = globalPagination(req);
@@ -172,7 +172,7 @@ export const listAsset = async (req: Request) => {
  * Retrieves a single asset with metadata and version history.
  * Caches result per asset ID.
  */
-export const getAsset = async (req: Request) => {
+export const getAsset = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
 
@@ -205,7 +205,7 @@ export const getAsset = async (req: Request) => {
 /**
  * Updates mutable metadata fields of an asset and invalidates cache.
  */
-export const updateAsset = async (req: Request) => {
+export const updateAsset = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
     const { department, usageRights, expiryDate, collectionId } = req.body;
@@ -231,7 +231,7 @@ export const updateAsset = async (req: Request) => {
 /**
  * Transitions the asset through its lifecycle states and invalidates cache.
  */
-export const updateStatus = async (req: Request) => {
+export const updateStatus = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -257,7 +257,7 @@ export const updateStatus = async (req: Request) => {
 /**
  * Permanently deletes an asset record and clears its cache entries.
  */
-export const deleteAsset = async (req: Request) => {
+export const deleteAsset = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
 
@@ -275,7 +275,7 @@ export const deleteAsset = async (req: Request) => {
  * Uploads a new version of an existing asset.
  * Increments the version number and stores the new file.
  */
-export const uploadVersion = async (req: Request) => {
+export const uploadVersion = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
     if (!req.file) {

@@ -35,6 +35,7 @@ export const apiUrl = {
   analytics: "/analytics",
   login: "/login",
   logout: "/logout",
+  signup: "/signup",
   approval: "/approval",
   upload: "/upload",
   status: "/status",
@@ -48,6 +49,7 @@ export const apiUrl = {
   history: "/history",
   report: "/report",
   version: "/version",
+  refresh: "/refresh",
 };
 
 export const enums = {
@@ -87,6 +89,7 @@ export const seedData = {
       name: "Admin",
       email: "admin@dam.com",
       password: "$2b$10$sanKUITnsVbzhkzlxddqRuk37YviPx5SEdvs6F4B4jvJ7bWnETZPW",
+      roleId: 1,
     },
   ],
   roles: [
@@ -175,6 +178,7 @@ export const authMsg = {
   tokenExpired: "Session expired. Please log in again.",
   invalidSignature: "JsonWebTokenError",
   userNotFound: "User not found or is deactivated",
+  tokenRefreshSuccess: "Token refreshed successfully.",
 };
 
 export const collectionMsg = {
@@ -267,4 +271,62 @@ export const consumerMsg = {
   usageAssetDeletedError: "[Usage Consumer] Error on asset_deleted:",
   allUsageConsumersStarted: "✅ All usage consumers started",
   usageConsumersError: "Failed to start usage consumers:",
+};
+
+export const ui = {
+  dashboardTitle: "Dashboard Overview",
+  dashboardSubtitle: "Monitor your digital assets and system health",
+  assetListTitle: "Asset Library",
+  uploadAsset: "Upload Asset",
+  cancel: "Cancel",
+  save: "Save Changes",
+  edit: "Edit",
+  view: "View Details",
+  delete: "Delete",
+  download: "Download",
+  share: "Share",
+  actions: "Actions",
+
+  filterByName: "Search by name...",
+  status: "Status",
+  approved: "Approved",
+  pending: "Pending",
+  underReview: "Under Review",
+  image: "Image",
+  video: "Video",
+  document: "Document",
+  audio: "Audio",
+  noAssetsFound: "No assets found",
+  tryAdjustingFilters: "Try adjusting your search or filters to find what you're looking for.",
+
+  approve: "Approve Asset",
+  reject: "Reject Asset",
+
+  complianceTitle: "Compliance & Governance",
+  complianceSubtitle: "Track asset usage and regulatory adherence",
+
+  jobsTitle: "Background Jobs",
+  jobsSubtitle: "Monitor and manage system processing tasks",
+  failed: "Failed",
+  completed: "Completed",
+  running: "Running",
+  searchJobId: "Search job ID...",
+  noJobsFound: "No background jobs found",
+  pause: "Pause",
+  retry: "Retry",
+
+  settingsTitle: "Account Settings",
+  settingsSubtitle: "Manage your profile and platform preferences",
+  profile: "Profile Information",
+  theme: "Visual Theme",
+  notifications: "Notifications",
+  privacy: "Privacy & Security",
+  changePassword: "Change Password",
+  twoFactorAuth: "Two-Factor Authentication",
+  enable: "Enable",
+  administration: "System Administration",
+
+  reportsTitle: "System Reports",
+  reportsSubtitle: "Generate and export platform analytics",
+  export: "Export Report",
 };

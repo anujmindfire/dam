@@ -2,6 +2,6 @@ FROM node:20-alpine
 WORKDIR /app
 COPY . .
 RUN npm install -g pnpm && pnpm install --no-frozen-lockfile
-RUN pnpm --filter @dam/shared build && pnpm --filter @dam/asset build
+RUN pnpm tsc -b --clean && pnpm tsc -b
 EXPOSE 3001
 CMD ["node", "apps/assets/dist/index.js"]
