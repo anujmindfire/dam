@@ -7,7 +7,7 @@ export const Card: React.FC<CardProps> & {
   Body: React.FC<CardProps>;
 } = ({ children, className = "", style }) => (
   <div
-    className={`bg-white rounded-2xl border border-[var(--border)] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 ${className}`}
+    className={`rounded-2xl border border-[var(--border)] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 ${!className.includes("bg-") ? "bg-white" : ""} ${className}`}
     style={style}
   >
     {children}

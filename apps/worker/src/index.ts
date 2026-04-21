@@ -18,11 +18,12 @@ import {
   Op,
   dotEnv,
   redis,
-  generateSystemReport,
   baseRoute,
 } from "@dam/shared";
 import express, { Request, Response } from "express";
 import { analyzeAsset } from "./services/analysis";
+import { validateAssetExpiry } from "./services/governance";
+import { generateSystemReport } from "@dam/shared";
 
 /**
  * Payload shape published by the  Service on upload.
@@ -37,14 +38,14 @@ interface AssetUploadedPayload {
 }
 
 /**
- * Flags an asset as expired if its expiryDate is in the past.
+ * Flags an assets as expired if its expiryDate is in the past.
  * Uses findOneAndUpdate from shared repositories — no direct Sequelize calls.
  */
 const flagExpiryIfNeeded = async (assetsId: number): Promise<boolean> => {
-  const asset = await findOne(assetsModel, { id: assetsId });
-  if (!asset) return false;
+  const assetData = await findOne(assetsModel, { id: assetsId });
+  if (!assetData) return false;
 
-  if (asset.expiryDate && new Date(asset.expiryDate) < new Date()) {
+  if (assetData.expiryDate && new Date(assetData.expiryDate) < new Date()) {
     await findOneAndUpdate(assetsModel, { id: assetsId }, { status: "expired" });
     logger.warn(`[Worker]  [ID: ${assetsId}] flagged as EXPIRED`);
     return true;
@@ -57,12 +58,15 @@ const flagExpiryIfNeeded = async (assetsId: number): Promise<boolean> => {
  * Uses findOne from shared repositories.
  */
 const detectDuplicate = async (assetsId: number, hash: string): Promise<boolean> => {
-  // Find any metadata record with same hash that belongs to a different asset
-  const existing = await findOne(metadataModel, { hash } as any);
+  // Find any metadata record with same hash that belongs to a DIFFERENT assets
+  const existing = await findOne(metadataModel, {
+    hash,
+    assetsId: { [Op.ne]: assetsId },
+  } as any);
 
-  if (existing && (existing as any).assetsId !== String(assetsId)) {
-    await findOneAndUpdate(metadataModel, { assetsId: String(assetsId) }, { isDuplicate: true });
-    logger.warn(`[Worker] Duplicate detected for  [ID: ${assetsId}] — matches hash ${hash}`);
+  if (existing) {
+    await findOneAndUpdate(metadataModel, { assetsId }, { isDuplicate: true });
+    logger.warn(`[Worker] Duplicate detected for [ID: ${assetsId}] — matches hash ${hash}`);
     return true;
   }
   return false;
@@ -80,7 +84,7 @@ const bootstrap = async (): Promise<void> => {
     await connectRabbitMQ();
     logger.info(commonMsg.rmqConnected);
 
-    // 2. Start consuming asset upload events
+    // 2. Start consuming assets upload events
     await consumeMessage("asset_uploaded", async (payload: AssetUploadedPayload) => {
       logger.info(`[Worker] Processing  [ID: ${payload.assetsId}] — ${payload.filename}`);
 
@@ -187,7 +191,7 @@ const bootstrap = async (): Promise<void> => {
           },
         );
 
-        // 2. Revert asset status to pending so it can be retried
+        // 2. Revert assets status to pending so it can be retried
         await update(assetsModel, { id: payload.assetsId }, { status: "pending" });
       }
     });
@@ -201,8 +205,8 @@ const bootstrap = async (): Promise<void> => {
       });
 
       let flaggedCount = 0;
-      for (const asset of assets) {
-        const isExpired = await flagExpiryIfNeeded((asset as any).id);
+      for (const assetsData of assets) {
+        const isExpired = await flagExpiryIfNeeded((assetsData as any).id);
         if (isExpired) flaggedCount++;
       }
 
@@ -234,6 +238,15 @@ const bootstrap = async (): Promise<void> => {
     healthApp.listen(dotEnv.workerPort, () => {
       logger.info(`[Worker] Health monitor running on port ${dotEnv.workerPort}`);
     });
+
+    // 6. Automated Governance Trigger (Run every 5 minutes)
+    setInterval(
+      async () => {
+        logger.info("[Worker] 🕒 Triggering automated expiry validation...");
+        await validateAssetExpiry();
+      },
+      5 * 60 * 1000,
+    );
   } catch (err) {
     logger.error("[Worker] Bootstrap failed:", err);
     process.exit(1);

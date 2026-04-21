@@ -3,7 +3,7 @@ import "express";
 declare module "express-serve-static-core" {
   interface Request {
     user?: {
-      id: string;
+      id: number;
       email: string;
       tokenVersion: number;
       roleId: number;
@@ -14,7 +14,7 @@ declare module "express-serve-static-core" {
 declare module "express" {
   interface Request {
     user?: {
-      id: string;
+      id: number;
       email: string;
       tokenVersion: number;
       roleId: number;

@@ -14,15 +14,15 @@ import {
 } from "@dam/shared";
 
 /**
- * Requests approval for an asset.
- * Transitions asset to "pending_approval" status.
+ * Requests approval for an assets.
+ * Transitions assets to "pending_approval" status.
  * @param {Request} req - Express request with assetsId, priority, assignedTo
  */
 export const requestApproval = async (req: RequestWithUser) => {
   try {
     const { assetsId, priority = "normal", assignedTo = [] } = req.body;
 
-    // Verify asset exists
+    // Verify assets exists
     const assetsData = await findOne(assetsModel, { id: assetsId });
     if (!assetsData) {
       return new CustomError(approvalMsg.assetNotFound, statusCode.notFound);
@@ -41,7 +41,7 @@ export const requestApproval = async (req: RequestWithUser) => {
       return new CustomError(approvalMsg.createFailed, statusCode.badRequest);
     }
 
-    // Update asset status
+    // Update assets status
     await findOneAndUpdate(assetsModel, { id: assetsId }, { status: "pending_approval" });
 
     // Publish event for notification service
@@ -131,32 +131,28 @@ export const getApprovalById = async (req: RequestWithUser) => {
 };
 
 /**
- * Approves an asset.
+ * Approves an assets.
  * @param {Request} req - Express request with approvalId in params and optional comments
  */
 export const approveAsset = async (req: RequestWithUser) => {
   try {
-    const { approvalId } = req.params;
+    const { id } = req.params;
     const { comments } = req.body;
 
-    const approval = await findOne(approvalModel, { id: approvalId });
+    const approval = await findOne(approvalModel, { id });
     if (!approval) {
       return new CustomError(approvalMsg.notFound, statusCode.notFound);
     }
 
     // Update approval
-    await findOneAndUpdate(
-      approvalModel,
-      { id: approvalId },
-      { status: "approved", approvedBy: req.user?.id },
-    );
+    await findOneAndUpdate(approvalModel, { id }, { status: "approved", approvedBy: req.user?.id });
 
-    // Update asset status
+    // Update assets status
     await findOneAndUpdate(assetsModel, { id: (approval as any).assetsId }, { status: "approved" });
 
     // Publish event
     await publishMessage("assets_approved", {
-      approvalId,
+      approvalId: id,
       assetsId: (approval as any).assetsId,
       approvedBy: req.user?.id,
       comments,
@@ -165,7 +161,7 @@ export const approveAsset = async (req: RequestWithUser) => {
 
     // Invalidate cache
     await cache.delByPattern("approval*");
-    await cache.delByPattern("asset*");
+    await cache.delByPattern("assets*");
 
     return { success: true, message: approvalMsg.approveSuccess };
   } catch (error) {
@@ -174,19 +170,19 @@ export const approveAsset = async (req: RequestWithUser) => {
 };
 
 /**
- * Rejects an asset.
+ * Rejects an assets.
  * @param {Request} req - Express request with approvalId in params and rejection reason
  */
 export const rejectAsset = async (req: RequestWithUser) => {
   try {
-    const { approvalId } = req.params;
+    const { id } = req.params;
     const { reason } = req.body;
 
     if (!reason) {
       return new CustomError(approvalMsg.rejectionRequired, statusCode.badRequest);
     }
 
-    const approval = await findOne(approvalModel, { id: approvalId });
+    const approval = await findOne(approvalModel, { id });
     if (!approval) {
       return new CustomError(approvalMsg.notFound, statusCode.notFound);
     }
@@ -194,16 +190,16 @@ export const rejectAsset = async (req: RequestWithUser) => {
     // Update approval
     await findOneAndUpdate(
       approvalModel,
-      { id: approvalId },
+      { id },
       { status: "rejected", approvedBy: req.user?.id, reason },
     );
 
-    // Update asset status back to 'pending'
-    await findOneAndUpdate(assetsModel, { id: (approval as any).assetsId }, { status: "pending" });
+    // Update assets status back to 'rejected'
+    await findOneAndUpdate(assetsModel, { id: (approval as any).assetsId }, { status: "rejected" });
 
     // Publish event
     await publishMessage("assets_rejected", {
-      approvalId,
+      approvalId: id,
       assetsId: (approval as any).assetsId,
       rejectedBy: req.user?.id,
       reason,
@@ -212,7 +208,7 @@ export const rejectAsset = async (req: RequestWithUser) => {
 
     // Invalidate cache
     await cache.delByPattern("approval*");
-    await cache.delByPattern("asset*");
+    await cache.delByPattern("assets*");
 
     return { success: true, message: approvalMsg.rejectSuccess };
   } catch (error) {
@@ -221,7 +217,7 @@ export const rejectAsset = async (req: RequestWithUser) => {
 };
 
 /**
- * Gets approval history for a specific asset.
+ * Gets approval history for a specific assets.
  * @param {Request} req - Express request with assetsId in params
  */
 export const getApprovalHistory = async (req: RequestWithUser) => {

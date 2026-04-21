@@ -199,10 +199,10 @@ async function performRecursiveDelete(id: number, owner: number) {
 }
 
 /**
- * Associates an asset with a specific collection.
- * Updates the asset record's collectionId column to link it to the group.
+ * Associates an assets with a specific collection.
+ * Updates the assets record's collectionId column to link it to the group.
  * @param {Request} req - The Express request object with collection ID in params and assetsId in body.
- * @returns {Promise<any | CustomError>} A promise resolving to the updated asset or a CustomError.
+ * @returns {Promise<any | CustomError>} A promise resolving to the updated assets or a CustomError.
  */
 
 export const addAssetToCollection = async (req: RequestWithUser) => {

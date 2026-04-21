@@ -216,7 +216,7 @@ export const redisMsg = {
 
 export const metadataMsg = {
   updateSuccess: "Metadata updated successfully",
-  notFound: "Metadata not found for this asset",
+  notFound: "Metadata not found for this assets",
   tagsRequired: "Tags query parameter is required",
 };
 
@@ -239,36 +239,36 @@ export const approvalMsg = {
 
 export const consumerMsg = {
   metadataAnalyzedProcessing: (assetsId: number) =>
-    `[Metadata Consumer] Processing analysis for asset ${assetsId}`,
+    `[Metadata Consumer] Processing analysis for assets ${assetsId}`,
   metadataAnalyzedSuccess: (assetsId: number) =>
-    `[Metadata Consumer] Metadata updated for asset ${assetsId}`,
+    `[Metadata Consumer] Metadata updated for assets ${assetsId}`,
   metadataAnalyzedError: (assetsId: number) =>
-    `[Metadata Consumer] Error processing asset ${assetsId}:`,
+    `[Metadata Consumer] Error processing assets ${assetsId}:`,
   assetCreatedMetadata: (assetsId: number) =>
-    `[Metadata Consumer] Initializing metadata for new asset ${assetsId}`,
+    `[Metadata Consumer] Initializing metadata for new assets ${assetsId}`,
   assetCreatedMetadataReady: (assetsId: number) =>
     `[Metadata Consumer]  ${assetsId} ready for enrichment`,
   assetCreatedMetadataError: "[Metadata Consumer] Error on assets_created:",
   assetDeletedMetadata: (assetsId: number) =>
-    `[Metadata Consumer] Cleaning metadata for deleted asset ${assetsId}`,
+    `[Metadata Consumer] Cleaning metadata for deleted assets ${assetsId}`,
   assetDeletedMetadataCleanup: (assetsId: number) =>
-    `[Metadata Consumer] Metadata cleanup done for asset ${assetsId}`,
+    `[Metadata Consumer] Metadata cleanup done for assets ${assetsId}`,
   assetDeletedMetadataError: "[Metadata Consumer] Error on assets_deleted:",
   allMetadataConsumersStarted: "✅ All metadata consumers started",
   metadataConsumersError: "Failed to start metadata consumers:",
 
   usageAssetCreated: (assetsId: number) =>
-    `[Usage Consumer] Initializing tracking for new asset ${assetsId}`,
+    `[Usage Consumer] Initializing tracking for new assets ${assetsId}`,
   usageAssetCreatedSuccess: (assetsId: number) =>
-    `[Usage Consumer] Tracking initialized for asset ${assetsId}`,
+    `[Usage Consumer] Tracking initialized for assets ${assetsId}`,
   usageAssetCreatedError: "[Usage Consumer] Error on assets_created:",
   usageAssetApproved: (assetsId: number) =>
     `[Usage Consumer]  ${assetsId} approved - usage tracking active`,
   usageAssetApprovedError: "[Usage Consumer] Error on assets_approved:",
   usageAssetDeleted: (assetsId: number) =>
-    `[Usage Consumer] Archiving usage data for asset ${assetsId}`,
+    `[Usage Consumer] Archiving usage data for assets ${assetsId}`,
   usageAssetDeletedSuccess: (assetsId: number) =>
-    `[Usage Consumer] Usage data archived for asset ${assetsId}`,
+    `[Usage Consumer] Usage data archived for assets ${assetsId}`,
   usageAssetDeletedError: "[Usage Consumer] Error on assets_deleted:",
   allUsageConsumersStarted: "✅ All usage consumers started",
   usageConsumersError: "Failed to start usage consumers:",
@@ -304,7 +304,7 @@ export const ui = {
   reject: "Reject ",
 
   complianceTitle: "Compliance & Governance",
-  complianceSubtitle: "Track asset usage and regulatory adherence",
+  complianceSubtitle: "Track assets usage and regulatory adherence",
 
   jobsTitle: "Background Jobs",
   jobsSubtitle: "Monitor and manage system processing tasks",

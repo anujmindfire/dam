@@ -17,6 +17,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
   // New state for metadata
   const [department, setDepartment] = useState("Marketing");
   const [usageRights, setUsageRights] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
 
   const { toast } = useToast();
 
@@ -63,6 +64,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
     formData.append("file", selectedFile);
     formData.append("department", department);
     formData.append("usageRights", usageRights);
+    formData.append("expiryDate", expiryDate);
 
     try {
       await assetsService.upload(formData, (percent) => {
@@ -71,6 +73,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
       toast("Assets uploaded successfully", "success");
       setSelectedFile(null);
       setUsageRights("");
+      setExpiryDate("");
       setUploadProgress(0);
       onSuccess?.();
       onClose();
@@ -210,12 +213,31 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                       Usage Rights <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[var(--primary)] focus:bg-white transition-all"
-                      placeholder="Internal only..."
+                    <select
+                      className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[var(--primary)] focus:bg-white transition-all appearance-none"
                       value={usageRights}
                       onChange={(e) => setUsageRights(e.target.value)}
+                      disabled={isUploading}
+                    >
+                      <option value="">Select Rights</option>
+                      <option value="Internal Use Only">Internal Use Only</option>
+                      <option value="Public (Royalty Free)">Public (Royalty Free)</option>
+                      <option value="Limited (Credit Required)">Limited (Credit Required)</option>
+                      <option value="Restricted (License Required)">
+                        Restricted (License Required)
+                      </option>
+                      <option value="Private / NDA">Private / NDA</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                      Expiry Date (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[var(--primary)] focus:bg-white transition-all appearance-none"
+                      value={expiryDate}
+                      onChange={(e) => setExpiryDate(e.target.value)}
                       disabled={isUploading}
                     />
                   </div>
@@ -242,7 +264,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
                       Uploading...
                     </>
                   ) : (
-                    "Start Upload"
+                    "Upload"
                   )}
                 </Button>
               </div>

@@ -50,14 +50,14 @@ app.use(notFoundHandler as unknown as express.RequestHandler);
 app.use(errorHandler as unknown as express.ErrorRequestHandler);
 
 /**
- * Starts consuming asset lifecycle events
+ * Starts consuming assets lifecycle events
  */
 const startConsumers = async (): Promise<void> => {
   try {
     await connectRabbitMQ();
     logger.info(commonMsg.rmqConnected);
 
-    // Consumer for asset creation - initialize usage tracking
+    // Consumer for assets creation - initialize usage tracking
     await consumeMessage("assets_created", async (payload: any) => {
       try {
         logger.info(consumerMsg.usageAssetCreated(payload.assetsId));
@@ -68,7 +68,7 @@ const startConsumers = async (): Promise<void> => {
       }
     });
 
-    // Consumer for asset approval
+    // Consumer for assets approval
     await consumeMessage("assets_approved", async (payload: any) => {
       try {
         logger.info(consumerMsg.usageAssetApproved(payload.assetsId));
@@ -77,7 +77,7 @@ const startConsumers = async (): Promise<void> => {
       }
     });
 
-    // Consumer for asset deletion
+    // Consumer for assets deletion
     await consumeMessage("assets_deleted", async (payload: any) => {
       try {
         logger.info(consumerMsg.usageAssetDeleted(payload.assetsId));

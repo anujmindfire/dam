@@ -51,7 +51,7 @@ services:
       - ../gateway/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - server
-      - asset
+      - assets
       - metadata
       - usage
       - dashboard-ui
@@ -94,7 +94,7 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - LOG_LEVEL=info
-      - ASSETS_SERVICE_HOST=asset
+      - ASSETS_SERVICE_HOST=assets
       - METADATA_SERVICE_HOST=metadata
       - USAGE_SERVICE_HOST=usage
       - REDIS_HOST=redis
@@ -125,7 +125,7 @@ services:
       start_period: 10s
 
   # ─── ASSET SERVICE (3001) — Upload, CRUD, MinIO, RabbitMQ ─────
-  asset:
+  assets:
     build:
       context: ../../
       dockerfile: apps/assets/Dockerfile

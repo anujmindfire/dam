@@ -49,7 +49,7 @@ app.use(notFoundHandler as unknown as express.RequestHandler);
 app.use(errorHandler as unknown as express.ErrorRequestHandler);
 
 /**
- * Starts consuming asset lifecycle events
+ * Starts consuming assets lifecycle events
  */
 const startConsumers = async (): Promise<void> => {
   try {

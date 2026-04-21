@@ -11,7 +11,7 @@ The platform follows a **Microservices Architecture** managed within a **Turbore
 - **API Gateway (Nginx)**: The entry point that routes traffic to internal services.
 - **Server Service**: Handles authentication, user management, collections, and orchestrates requests.
 - **Asset Service**: Manages the lifecycle of digital assets (upload, CRUD, versioning).
-- **Metadata Service**: Handles asset tags, search indexing, and metadata enrichment.
+- **Metadata Service**: Handles assets tags, search indexing, and metadata enrichment.
 - **Usage Service**: Tracks system-wide activity, audit logs, and engagement analytics.
 - **Worker Service**: Background process consumer that handles media analysis and flags.
 
@@ -127,7 +127,7 @@ The primary entry point is the API Gateway at `http://localhost:3000/api/v1`.
 
 AuraDAM uses an event-driven architecture for background tasks:
 
-1. **Upload**: User uploads an asset via the Asset Service.
+1. **Upload**: User uploads an assets via the Asset Service.
 2. **Event**: Asset Service stores the file in MinIO and publishes an `asset_uploaded` event to RabbitMQ.
 3. **Consumption**: The Worker Service consumes the event from the queue.
 4. **Processing**: Worker performs analysis (checksums, duplicates check, metadata extraction).
@@ -186,7 +186,7 @@ See [.env.example](file:///.env.example) for a complete list.
 - **JWT Authentication**: Secure stateless authentication across services.
 - **RBAC**: Implementation of roles (Admin, Manager, Viewer) to restrict access.
 - **Data Isolation**: Each service manages its own domain logic while sharing the core data schema.
-- **S3 Policies**: MinIO is configured with private buckets and presigned URLs for secure asset access.
+- **S3 Policies**: MinIO is configured with private buckets and presigned URLs for secure assets access.
 
 ---
 

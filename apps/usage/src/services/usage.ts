@@ -1,7 +1,7 @@
 import { usageModel, create, findAll, statusCode, CustomError, RequestWithUser } from "@dam/shared";
 
 /**
- * Logs an asset usage event (view, download, share, update).
+ * Logs an assets usage event (view, download, share, update).
  * Stores user context including IP and user agent for auditing.
  * @param {Request} req - Express request with assetsId, action, context in body.
  * @returns {Promise<any | CustomError>}
@@ -29,7 +29,7 @@ export const trackUsage = async (req: RequestWithUser): Promise<any | CustomErro
 };
 
 /**
- * Retrieves paginated usage logs for a specific asset.
+ * Retrieves paginated usage logs for a specific assets.
  * @param {Request} req - Express request with assetsId in params.
  * @returns {Promise<any | CustomError>}
  */

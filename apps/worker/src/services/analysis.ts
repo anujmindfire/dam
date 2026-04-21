@@ -4,7 +4,7 @@ import ffmpeg from "fluent-ffmpeg";
 import { logger, getObject, uploadFile } from "@dam/shared";
 import { tmpdir } from "os";
 import { join } from "path";
-import { writeFileSync, unlinkSync, readFileSync } from "fs";
+import { writeFileSync, unlinkSync, readFileSync, existsSync } from "fs";
 
 /**
  * Analyzes an image: generates a thumbnail and calculates a hash.
@@ -15,7 +15,7 @@ import { writeFileSync, unlinkSync, readFileSync } from "fs";
  * @returns {Promise<any>}
  */
 export const processImage = async (assetsId: string, storageKey: string): Promise<any> => {
-  logger.info(`[Worker] Analyzing image asset: ${assetsId}`);
+  logger.info(`[Worker] Analyzing image assets: ${assetsId}`);
   const fileBuffer = await getObject("assets", storageKey);
 
   // 1. Generate Thumbnail
@@ -50,27 +50,27 @@ export const processImage = async (assetsId: string, storageKey: string): Promis
  * @returns {Promise<any>}
  */
 export const processVideo = async (assetsId: string, storageKey: string): Promise<any> => {
-  logger.info(`[Worker] Analyzing video asset: ${assetsId}`);
+  logger.info(`[Worker] Analyzing video assets: ${assetsId}`);
   const fileBuffer = await getObject("assets", storageKey);
 
   // Temporary file for ffmpeg
   const tempIn = join(tmpdir(), `${assetsId}_in`);
-  const tempOut = join(tmpdir(), `${assetsId}_thumb.jpg`);
+  const tempOut = join(tmpdir(), `${assetsId}_thumb.webp`);
   writeFileSync(tempIn, fileBuffer);
 
   return new Promise((resolve, reject) => {
     ffmpeg(tempIn)
       .screenshots({
         timestamps: ["00:00:01"],
-        filename: `${assetsId}_thumb.jpg`,
+        filename: `${assetsId}_thumb.webp`,
         folder: tmpdir(),
         size: "640x?",
       })
       .on("end", async () => {
         try {
           const thumbBuffer = readFileSync(tempOut);
-          const thumbKey = `thumbnails/${assetsId}.jpg`;
-          await uploadFile("assets", thumbKey, thumbBuffer, "image/jpeg");
+          const thumbKey = `thumbnails/${assetsId}.webp`;
+          await uploadFile("assets", thumbKey, thumbBuffer, "image/webp");
 
           unlinkSync(tempIn);
           unlinkSync(tempOut);
@@ -88,17 +88,17 @@ export const processVideo = async (assetsId: string, storageKey: string): Promis
         }
       })
       .on("error", (err: Error) => {
-        unlinkSync(tempIn);
+        if (existsSync(tempIn)) unlinkSync(tempIn);
         reject(err);
       });
   });
 };
 
 /**
- * Main entry point for asset analysis. Routes to specific processors based on mimetype.
+ * Main entry point for assets analysis. Routes to specific processors based on mimetype.
  * @param {string} assetsId
  * @param {string} storageKey
- * @param {string} type - Mimetype of the asset.
+ * @param {string} type - Mimetype of the assets.
  * @returns {Promise<any>}
  */
 
@@ -114,27 +114,42 @@ export const analyzeAsset = async (
   }
 
   // Default for other types (Documents, Audio, etc.)
-  logger.info(`[Worker] Analyzing generic asset: ${assetsId} (Type: ${type})`);
+  logger.info(`[Worker] Analyzing generic assets: ${assetsId} (Type: ${type})`);
   const fileBuffer = await getObject("assets", storageKey);
   const hash = crypto.createHash("md5").update(fileBuffer).digest("hex");
 
-  // Simulated Intelligence: Extracting features based on type
+  // Simulated Intelligence: Advanced Feature Extraction
   const analysisResults: any = {
     type,
     fileSize: fileBuffer.length,
-    generic: true,
     processedAt: new Date().toISOString(),
+    confidence: 0.95,
   };
 
+  // 1. Classification based on Mimetype
   if (type.includes("pdf")) {
-    analysisResults.objects = ["Document", "Text-Based", "Official"];
-    analysisResults.pageCount = Math.floor(Math.random() * 20) + 1; // Simulated page count
+    analysisResults.category = "Document";
+    analysisResults.objects = ["Text", "Official", "Multi-Page"];
+    analysisResults.pageCount = Math.floor(Math.random() * 15) + 1;
+    analysisResults.isSearchable = true;
   } else if (type.includes("audio")) {
-    analysisResults.objects = ["Audio", "Sound", "Media"];
-    analysisResults.duration = "00:03:45"; // Simulated duration
+    analysisResults.category = "Audio";
+    analysisResults.objects = ["Sound", "Media", "Waveform"];
+    analysisResults.bitrate = "320kbps";
+  } else if (type.includes("spreadsheet") || type.includes("excel")) {
+    analysisResults.category = "Data";
+    analysisResults.objects = ["Spreadsheet", "Table", "Calculations"];
+    analysisResults.sheetCount = Math.floor(Math.random() * 5) + 1;
+  } else if (type.includes("zip") || type.includes("archive")) {
+    analysisResults.category = "Archive";
+    analysisResults.objects = ["Compressed", "Container", "Multiple-Files"];
   } else {
-    analysisResults.objects = ["Other", "General Content"];
+    analysisResults.category = "General";
+    analysisResults.objects = ["Other", "Asset", "Legacy"];
   }
+
+  // 2. Similarity Tagging (Mock similarity check)
+  analysisResults.smartTags = [...analysisResults.objects, "Auto-Classified"];
 
   return { hash, analysisResults };
 };

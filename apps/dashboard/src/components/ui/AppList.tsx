@@ -35,7 +35,7 @@ export const AppList = memo(
           <div className="relative w-full max-w-2xl group">
             <input
               type="text"
-              placeholder="Search Assets, Users, and more..."
+              placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[var(--primary)] focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"

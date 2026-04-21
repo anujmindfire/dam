@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BarChart3, TrendingUp, PieChart, Download, Calendar, RefreshCcw } from "lucide-react";
+import { BarChart3, TrendingUp, PieChart, Download, RefreshCcw } from "lucide-react";
 import { analyticsService } from "../../services";
 import { useToast } from "../../components/ui/ToastProvider";
 import { Card } from "../../components/ui/Card";
@@ -9,21 +9,97 @@ import { PageSkeleton } from "../../components/ui/Loader";
 const ReportsPage: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [filters, setFilters] = useState({
+    timeRange: "Last 30 Days",
+    department: "All Departments",
+    assetType: "All Asset Types",
+  });
   const { toast } = useToast();
+
+  // Memoized stats cards data
+  const statsCards = React.useMemo(
+    () => [
+      {
+        label: "Total Assets",
+        value: stats?.totalAssets || 0,
+        icon: BarChart3,
+        color: "text-indigo-600",
+        bg: "bg-indigo-50",
+        description: "Total number of assets in the repository",
+      },
+      {
+        label: "Storage Used",
+        value: stats?.totalStorage
+          ? `${(stats.totalStorage / (1024 * 1024)).toFixed(1)} MB`
+          : "0 MB",
+        icon: TrendingUp,
+        color: "text-emerald-600",
+        bg: "bg-emerald-50",
+        description: "Total disk space consumed by assets",
+      },
+      {
+        label: "Active Jobs",
+        value: stats?.activeJobsCount?.toString() || "0",
+        icon: RefreshCcw,
+        color: "text-amber-600",
+        bg: "bg-amber-50",
+        description: "Background processing jobs currently running",
+      },
+      {
+        label: "Compliance Score",
+        value: stats?.complianceScore !== undefined ? `${stats.complianceScore}%` : "0%",
+        icon: PieChart,
+        color: "text-blue-600",
+        bg: "bg-blue-50",
+        description: "Percentage of assets meeting governance standards",
+      },
+    ],
+    [stats],
+  );
+
+  // Memoized trends calculation
+  const memoizedTrends = React.useMemo(() => {
+    if (!stats?.usageTrends) return [];
+    const maxCount = Math.max(...stats.usageTrends.map((t: any) => parseInt(t.count) || 0));
+    return stats.usageTrends.map((trend: any) => ({
+      ...trend,
+      height: maxCount > 0 ? (parseInt(trend.count) / maxCount) * 100 : 0,
+    }));
+  }, [stats?.usageTrends]);
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [filters]);
 
   const fetchStats = async () => {
     setIsLoading(true);
     try {
-      const res = await analyticsService.getOverview();
-      setStats(res.data.data);
+      const [statsRes] = await Promise.all([analyticsService.getOverview(filters)]);
+      setStats(statsRes.data.data);
     } catch (error) {
       toast("Failed to load intelligence stats", "error");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const res = await analyticsService.triggerReport();
+      const reportData = res.data.data;
+
+      if (reportData?.downloadUrl) {
+        window.open(reportData.downloadUrl, "_blank");
+        toast("Intelligence report downloaded successfully!", "success");
+      }
+
+      fetchStats();
+    } catch (error) {
+      toast("Failed to export intelligence report", "error");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -34,59 +110,68 @@ const ReportsPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold text-[var(--text-color)] tracking-tight italic">
-            Intelligence Reports
+            Asset Intelligence Reports
           </h1>
           <p className="text-slate-500 text-sm mt-1 font-medium">
             System-wide usage analytics and distribution metrics
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Calendar size={16} /> Last 30 Days
-          </Button>
-          <Button className="gap-2 shadow-lg shadow-indigo-200">
+          <select
+            className="h-10 px-4 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer"
+            value={filters.timeRange}
+            onChange={(e) => setFilters({ ...filters, timeRange: e.target.value })}
+            aria-label="Filter by Time Range"
+          >
+            <option>Last 30 Days</option>
+            <option>Last 7 Days</option>
+            <option>All Time</option>
+          </select>
+          <select
+            className="h-10 px-4 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer"
+            value={filters.department}
+            onChange={(e) => setFilters({ ...filters, department: e.target.value })}
+            aria-label="Filter by Department"
+          >
+            <option>All Departments</option>
+            <option>Marketing</option>
+            <option>PR</option>
+            <option>Engineering</option>
+          </select>
+          <select
+            className="h-10 px-4 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer"
+            value={filters.assetType}
+            onChange={(e) => setFilters({ ...filters, assetType: e.target.value })}
+            aria-label="Filter by Asset Type"
+          >
+            <option>All Asset Types</option>
+            <option>Images</option>
+            <option>Videos</option>
+            <option>Documents</option>
+          </select>
+          <Button
+            className="gap-2 shadow-lg shadow-indigo-200 ml-3"
+            onClick={handleExport}
+            isLoading={isExporting}
+            aria-label="Generate and export a new intelligence report"
+          >
             <Download size={16} /> Export Intelligence
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          {
-            label: "Total Assets",
-            value: stats?.totalAssets || 0,
-            icon: BarChart3,
-            color: "text-indigo-600",
-            bg: "bg-indigo-50",
-          },
-          {
-            label: "Storage Used",
-            value: stats?.totalStorage
-              ? `${(stats.totalStorage / (1024 * 1024)).toFixed(1)} MB`
-              : "0 MB",
-            icon: TrendingUp,
-            color: "text-emerald-600",
-            bg: "bg-emerald-50",
-          },
-          {
-            label: "Active Jobs",
-            value: stats?.activeJobsCount?.toString() || "0",
-            icon: RefreshCcw,
-            color: "text-amber-600",
-            bg: "bg-amber-50",
-          },
-          {
-            label: "Compliance Score",
-            value: stats?.complianceScore !== undefined ? `${stats.complianceScore}%` : "0%",
-            icon: PieChart,
-            color: "text-blue-600",
-            bg: "bg-blue-50",
-          },
-        ].map((stat, idx) => (
-          <Card key={idx} className="p-6 hover:border-indigo-200 transition-all group">
+        {statsCards.map((stat, idx) => (
+          <Card
+            key={idx}
+            className="p-6 hover:border-indigo-200 transition-all group focus-within:ring-2 focus-within:ring-indigo-100"
+            role="region"
+            aria-label={stat.label}
+          >
             <div className="flex items-center justify-between mb-4">
               <div
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${stat.bg} ${stat.color}`}
+                aria-hidden="true"
               >
                 <stat.icon size={22} />
               </div>
@@ -95,7 +180,9 @@ const ReportsPage: React.FC = () => {
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
               {stat.label}
             </p>
-            <h3 className="text-2xl font-bold text-[var(--text-color)]">{stat.value}</h3>
+            <h3 className="text-2xl font-bold text-[var(--text-color)]" title={stat.description}>
+              {stat.value}
+            </h3>
           </Card>
         ))}
       </div>
@@ -117,24 +204,28 @@ const ReportsPage: React.FC = () => {
             </div>
           </Card.Header>
           <Card.Body>
-            {stats?.usageTrends && stats.usageTrends.length > 0 ? (
-              <div className="h-80 flex items-end gap-3 px-6 pb-10">
-                {stats.usageTrends.map((trend: any, i: number) => {
-                  const maxCount = Math.max(
-                    ...stats.usageTrends.map((t: any) => parseInt(t.count)),
-                  );
-                  const height = maxCount > 0 ? (parseInt(trend.count) / maxCount) * 100 : 0;
+            {memoizedTrends.length > 0 ? (
+              <div
+                className="h-80 flex items-end gap-3 px-6 pb-10"
+                role="img"
+                aria-label="Usage trend chart"
+              >
+                {memoizedTrends.map((trend: any, i: number) => {
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-3 group">
                       <div
                         className="w-full bg-indigo-600 rounded-t-2xl transition-all duration-700 hover:bg-indigo-500 relative shadow-lg shadow-indigo-100"
-                        style={{ height: `${height}%` }}
+                        style={{ height: `${trend.height}%` }}
+                        aria-label={`${trend.count} events on ${new Date(trend.date).toLocaleDateString()}`}
                       >
                         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-bold">
                           {trend.count} Events
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase transform -rotate-45 origin-top-left mt-2 whitespace-nowrap">
+                      <span
+                        className="text-[9px] font-bold text-slate-400 uppercase transform -rotate-45 origin-top-left mt-2 whitespace-nowrap"
+                        aria-hidden="true"
+                      >
                         {new Date(trend.date).toLocaleDateString(undefined, {
                           day: "numeric",
                           month: "short",

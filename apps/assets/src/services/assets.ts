@@ -84,14 +84,14 @@ const registerAsset = async (req: RequestWithUser, data: any) => {
     timestamp: new Date().toISOString(),
   });
 
-  // 5. Invalidate asset list cache
+  // 5. Invalidate assets list cache
   await cache.delByPattern(`${cacheKeys.assetCacheKeyPrefix}*`);
 
   return newAsset;
 };
 
 /**
- * Uploads file buffer to MinIO, then registers asset records.
+ * Uploads file buffer to MinIO, then registers assets records.
  * @param {Request} req - Express request with `req.file` from multer.
  */
 export const uploadAsset = async (req: RequestWithUser) => {
@@ -126,9 +126,10 @@ export const uploadAsset = async (req: RequestWithUser) => {
 };
 
 /**
- * Creates an asset record from existing storageKey (no file upload).
+ * Creates an assets record from existing storageKey (no file upload).
  * Used when file is pre-uploaded externally.
  */
+
 export const createAsset = async (req: RequestWithUser) => {
   try {
     return await registerAsset(req, req.body);
@@ -173,8 +174,8 @@ export const listAsset = async (req: RequestWithUser) => {
 };
 
 /**
- * Retrieves a single asset with metadata and version history.
- * Caches result per asset ID.
+ * Retrieves a single assets with metadata and version history.
+ * Caches result per assets ID.
  */
 export const getAsset = async (req: RequestWithUser) => {
   try {
@@ -185,7 +186,7 @@ export const getAsset = async (req: RequestWithUser) => {
     const cached = await cache.get(cacheKey);
     if (cached) return cached;
 
-    const asset = await findOne(
+    const assetsData = await findOne(
       assetsModel,
       { id },
       {
@@ -198,17 +199,17 @@ export const getAsset = async (req: RequestWithUser) => {
       },
     );
 
-    if (!asset) return new CustomError(assetMsg.notFound, statusCode.notFound);
+    if (!assetsData) return new CustomError(assetMsg.notFound, statusCode.notFound);
 
-    await cache.set(cacheKey, asset);
-    return asset;
+    await cache.set(cacheKey, assetsData);
+    return assetsData;
   } catch (error) {
     return new CustomError((error as Error).message, statusCode.badRequest);
   }
 };
 
 /**
- * Updates mutable metadata fields of an asset and invalidates cache.
+ * Updates mutable metadata fields of an assets and invalidates cache.
  */
 export const updateAsset = async (req: RequestWithUser) => {
   try {
@@ -234,7 +235,7 @@ export const updateAsset = async (req: RequestWithUser) => {
 };
 
 /**
- * Transitions the asset through its lifecycle states and invalidates cache.
+ * Transitions the assets through its lifecycle states and invalidates cache.
  */
 export const updateStatus = async (req: RequestWithUser) => {
   try {
@@ -260,7 +261,7 @@ export const updateStatus = async (req: RequestWithUser) => {
 };
 
 /**
- * Permanently deletes an asset record and clears its cache entries.
+ * Permanently deletes an assets record and clears its cache entries.
  */
 export const deleteAsset = async (req: RequestWithUser) => {
   try {
@@ -278,7 +279,7 @@ export const deleteAsset = async (req: RequestWithUser) => {
 };
 
 /**
- * Uploads a new version of an existing asset.
+ * Uploads a new version of an existing assets.
  * Increments the version number and stores the new file.
  */
 export const uploadVersion = async (req: RequestWithUser) => {
@@ -310,13 +311,13 @@ export const uploadVersion = async (req: RequestWithUser) => {
       author: String(req.user?.id || "system"),
     });
 
-    // 3. Update main asset record
+    // 3. Update main assets record
     const updated = await findOneAndUpdate(
       assetsModel,
       { id: assetsData.id },
       {
         currentVersion: nextVersion,
-        storageKey, // Point main asset to latest version
+        storageKey, // Point main assets to latest version
         size,
         mimetype,
       },

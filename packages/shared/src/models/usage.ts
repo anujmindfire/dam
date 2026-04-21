@@ -8,7 +8,7 @@ export interface UsageLogCreationAttributes extends Optional<UsageLogProps, "id"
 
 class UsageLog extends Model<UsageLogProps, UsageLogCreationAttributes> implements UsageLogProps {
   public id!: number;
-  public assetsId!: string;
+  public assetsId!: number;
   public action!: string;
   public context!: any;
 

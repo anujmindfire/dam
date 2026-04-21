@@ -11,7 +11,7 @@ export interface MetadataCreationAttributes extends Optional<
 
 class Metadata extends Model<MetadataProps, MetadataCreationAttributes> implements MetadataProps {
   public id!: number;
-  public assetsId!: string;
+  public assetsId!: number;
   public tags!: string[];
   public department!: string | null;
   public analysisResults?: any;

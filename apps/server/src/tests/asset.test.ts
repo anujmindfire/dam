@@ -4,7 +4,7 @@ import router from "../routes/index";
 
 /**
  *  API Test Suite
- * Tests asset CRUD, lifecycle transitions, and file upload validation.
+ * Tests assets CRUD, lifecycle transitions, and file upload validation.
  */
 
 const app = express();
@@ -16,7 +16,7 @@ const MOCK_TOKEN = "Bearer test-token";
 
 describe(" API", () => {
   describe("POST /api/v1/assets (Create  Record)", () => {
-    it("should reject unauthenticated asset creation", async () => {
+    it("should reject unauthenticated assets creation", async () => {
       const res = await request(app).post("/api/v1/assets").send({
         filename: "test.jpg",
         storageKey: "uploads/test.jpg",
@@ -26,7 +26,7 @@ describe(" API", () => {
       expect([401, 403]).toContain(res.statusCode);
     });
 
-    it("should reject asset creation with missing required fields", async () => {
+    it("should reject assets creation with missing required fields", async () => {
       const res = await request(app)
         .post("/api/v1/assets")
         .set("Authorization", MOCK_TOKEN)
@@ -88,7 +88,7 @@ describe(" API", () => {
   });
 
   describe("GET /api/v1/assets/:id (Get  by ID)", () => {
-    it("should return 404 for non-existent asset", async () => {
+    it("should return 404 for non-existent assets", async () => {
       const res = await request(app).get("/api/v1/assets/99999").set("Authorization", MOCK_TOKEN);
       expect([404, 401, 403, 500]).toContain(res.statusCode);
     });

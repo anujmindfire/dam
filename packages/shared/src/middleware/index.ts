@@ -199,7 +199,7 @@ export const verifyTokenFactory = (
       }
 
       req.user = {
-        id: userExist.id.toString(),
+        id: userExist.id,
         email: userExist.email,
         roleId: userExist.roleId,
         tokenVersion: userExist.tokenVersion,

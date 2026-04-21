@@ -1,4 +1,3 @@
-// @ts-ignore
 import * as Minio from "minio";
 import dotEnv from "./dotEnv";
 import logger from "../utils/logger";
@@ -34,6 +33,23 @@ export const uploadFile = async (
     const exists = await minioClient.bucketExists(bucketName).catch(() => false);
     if (!exists) {
       await minioClient.makeBucket(bucketName, "us-east-1");
+
+      // Set public policy for reports bucket
+      if (bucketName === "reports") {
+        const policy = {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Effect: "Allow",
+              Principal: "*",
+              Action: ["s3:GetObject"],
+              Resource: [`arn:aws:s3:::${bucketName}/*`],
+            },
+          ],
+        };
+        await minioClient.setBucketPolicy(bucketName, JSON.stringify(policy));
+        logger.info(`Public read policy set for MinIO bucket: ${bucketName}`);
+      }
     }
     await minioClient.putObject(bucketName, objectName, buffer, buffer.length, {
       "Content-Type": mimetype,

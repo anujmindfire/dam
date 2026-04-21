@@ -86,6 +86,17 @@ User.hasMany(Assets, {
   foreignKey: "owner",
 });
 
+// UsageLog and Asset associations
+UsageLog.belongsTo(Assets, {
+  as: "assets",
+  foreignKey: "assetsId",
+});
+
+Assets.hasMany(UsageLog, {
+  as: "usageLogs",
+  foreignKey: "assetsId",
+});
+
 export {
   Assets as assetsModel,
   Assets,

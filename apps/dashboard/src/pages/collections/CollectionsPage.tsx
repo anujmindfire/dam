@@ -261,7 +261,7 @@ const CollectionsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-[var(--text-color)] flex items-center gap-2">
               <Folders size={20} className="text-indigo-500" />
-              Vault Assets
+              Assets
               <span className="ml-2 px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-xs font-bold">
                 {assetCount}
               </span>
@@ -277,24 +277,24 @@ const CollectionsPage: React.FC = () => {
                 />
               ))
             ) : assets.length > 0 ? (
-              assets.map((asset) => (
-                <Card key={asset.id} className="hover:border-indigo-200 transition-all group">
+              assets.map((assetsData) => (
+                <Card key={assetsData.id} className="hover:border-indigo-200 transition-all group">
                   <Card.Body className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 border border-indigo-100 group-hover:bg-indigo-500 group-hover:text-white transition-all">
                       <Folders size={24} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-[var(--text-color)] truncate text-sm">
-                        {asset.filename}
+                        {assetsData.filename}
                       </p>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        {asset.mimetype}
+                        {assetsData.mimetype}
                       </p>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => navigate(`/assets/${asset.id}`)}
+                      onClick={() => navigate(`/assets/${assetsData.id}`)}
                     >
                       <Eye size={16} />
                     </Button>

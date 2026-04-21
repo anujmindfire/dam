@@ -134,8 +134,10 @@ export const assetsService = {
 
 // Analytics
 export const analyticsService = {
-  getOverview: () => api.get(`${apiUrl.analytics}${apiUrl.overview}`),
+  getOverview: (params?: any) => api.get(`${apiUrl.analytics}${apiUrl.overview}`, { params }),
   getCompliance: () => api.get(`${apiUrl.analytics}${apiUrl.compliance}`),
+  getReport: () => api.get(`${apiUrl.analytics}${apiUrl.report}`),
+  triggerReport: () => api.post(`${apiUrl.analytics}${apiUrl.report}/trigger`),
 };
 
 // Metadata
@@ -155,7 +157,8 @@ export const approvalService = {
   list: (params?: any) => api.get(apiUrl.approval, { params }),
   getById: (id: string) => api.get(`${apiUrl.approval}/${id}`),
   approve: (id: string) => api.patch(`${apiUrl.approval}/${id}${apiUrl.approve}`),
-  reject: (id: string) => api.patch(`${apiUrl.approval}/${id}${apiUrl.reject}`),
+  reject: (id: string, reason: string) =>
+    api.patch(`${apiUrl.approval}/${id}${apiUrl.reject}`, { reason }),
   history: (assetsId: string) =>
     api.get(`${apiUrl.approval}${apiUrl.assets}/${assetsId}${apiUrl.history}`),
 };

@@ -28,7 +28,13 @@ app.use(compression());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: false,
+    frameguard: false,
+  }),
+);
 
 app.use(requestLogger as unknown as express.RequestHandler);
 app.use(rateLimit() as unknown as express.RequestHandler);
@@ -39,7 +45,7 @@ app.get(`${baseRoute}/health`, (_req, res) => {
     .json({ status: "healthy", service: "Assets", timestamp: new Date().toISOString() });
 });
 
-// Mount asset routes
+// Mount assets routes
 app.use(`${baseRoute}${apiUrl.assets}`, assetRoutes);
 
 app.use(notFoundHandler as unknown as express.RequestHandler);

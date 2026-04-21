@@ -7,7 +7,13 @@ import {
   deleteCollection,
   addAssetToCollection as addAssetService,
 } from "../services/collection";
-import { sendSuccessResponse, CustomError, statusCode, collectionMsg, RequestWithUser } from "@dam/shared";
+import {
+  sendSuccessResponse,
+  CustomError,
+  statusCode,
+  collectionMsg,
+  RequestWithUser,
+} from "@dam/shared";
 
 /**
  * API Endpoint: Create a new collection or folder.
@@ -18,7 +24,11 @@ import { sendSuccessResponse, CustomError, statusCode, collectionMsg, RequestWit
  * @param {NextFunction} next - Express next function for error handling.
  */
 
-export const create = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const create = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await createCollection(req);
 
@@ -45,7 +55,11 @@ export const create = async (req: RequestWithUser, res: Response, next: NextFunc
  * @param {NextFunction} next - Express next function.
  */
 
-export const list = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const list = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await listCollection(req);
 
@@ -73,7 +87,11 @@ export const list = async (req: RequestWithUser, res: Response, next: NextFuncti
  * @param {NextFunction} next - Express next function.
  */
 
-export const getById = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const getById = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await getCollectionById(req);
 
@@ -100,7 +118,11 @@ export const getById = async (req: RequestWithUser, res: Response, next: NextFun
  * @param {NextFunction} next - Express next function.
  */
 
-export const update = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const update = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await updateCollection(req);
 
@@ -127,7 +149,11 @@ export const update = async (req: RequestWithUser, res: Response, next: NextFunc
  * @param {NextFunction} next - Express next function.
  */
 
-export const remove = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const remove = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await deleteCollection(req);
 
@@ -146,8 +172,8 @@ export const remove = async (req: RequestWithUser, res: Response, next: NextFunc
 };
 
 /**
- * API Endpoint: Add an asset to a collection.
- * Links an asset to a group by updating its parent collection ID.
+ * API Endpoint: Add an assets to a collection.
+ * Links an assets to a group by updating its parent collection ID.
  * @param {Request} req - Express request object.
  * @param {Response} res - Express response object.
  * @param {NextFunction} next - Express next function.

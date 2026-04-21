@@ -15,7 +15,7 @@ import {
 const META_CACHE_KEY = "metadata:";
 
 /**
- * Retrieves metadata for a given asset ID.
+ * Retrieves metadata for a given assets ID.
  * Uses Redis cache-aside pattern to reduce DB load.
  * @param {Request} req - Express request with assetsId in params.
  */
@@ -42,7 +42,7 @@ export const getMetadata = async (req: RequestWithUser) => {
 };
 
 /**
- * Updates tags, department, or analysis results for an asset's metadata.
+ * Updates tags, department, or analysis results for an assets metadata.
  * Invalidates the cache entry on every update.
  * @param {Request} req - Express request with assetsId in params and metadata fields in body.
  */

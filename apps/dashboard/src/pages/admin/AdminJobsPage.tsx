@@ -86,16 +86,19 @@ const AdminJobsPage: React.FC = () => {
                 <thead className="bg-slate-50/50 border-b border-slate-100">
                   <tr>
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      Operation
+                      Job Type
                     </th>
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      Target Assets
+                      Asset
                     </th>
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       Status
                     </th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Started
+                    </th>
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">
-                      Age
+                      Duration
                     </th>
                   </tr>
                 </thead>
@@ -107,20 +110,39 @@ const AdminJobsPage: React.FC = () => {
                           <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-[var(--primary)] border border-indigo-100">
                             <Zap size={14} />
                           </div>
-                          <span className="text-sm font-bold text-[var(--text-color)]">
+                          <span className="text-sm font-bold text-[var(--text-color)] capitalize">
                             {job.type}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-5">
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">
-                          {job.target}
+                          {job.target || "System Task"}
                         </span>
                       </td>
                       <td className="px-6 py-5">{getStatusBadge(job.status)}</td>
+                      <td className="px-6 py-5">
+                        <span className="text-xs font-bold text-slate-400 uppercase">
+                          {new Date(job.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </td>
                       <td className="px-6 py-5 text-right">
                         <span className="text-xs font-bold text-slate-400 uppercase">
-                          {job.time}
+                          {(() => {
+                            if (job.status !== "completed" || !job.startedAt || !job.completedAt)
+                              return "--";
+                            const start = new Date(job.startedAt).getTime();
+                            const end = new Date(job.completedAt).getTime();
+                            const diffInSeconds = Math.max(0, Math.floor((end - start) / 1000));
+
+                            if (diffInSeconds < 60) return `${diffInSeconds}s`;
+                            const mins = Math.floor(diffInSeconds / 60);
+                            const secs = diffInSeconds % 60;
+                            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+                          })()}
                         </span>
                       </td>
                     </tr>

@@ -6,7 +6,6 @@ import { Button } from "../../components/ui/Button";
 import type { AssetsProps } from "../../types/index";
 import { assetsService } from "../../services";
 import { AppList } from "../../components/ui/AppList";
-import { formatBytes } from "../../utils/format";
 import type { Column } from "../../types";
 import AddToCollectionModal from "../../components/ui/CollectionModel";
 import UploadModal from "../../components/ui/UploadModal";
@@ -36,7 +35,7 @@ const AssetsListPage: React.FC = () => {
       const response = await assetsService.list({
         page,
         limit,
-        search: search || undefined,
+        searchKey: search,
       });
       const data = response.data?.data?.result || response.data?.data || [];
       const count = response.data?.totalCount || 0;
@@ -50,28 +49,28 @@ const AssetsListPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this asset?")) return;
+    if (!window.confirm("Are you sure you want to delete this assets?")) return;
     try {
       await assetsService.delete(id);
       toast("Assets deleted successfully", "success");
       fetchAssets();
     } catch (error) {
-      toast("Failed to delete asset", "error");
+      toast("Failed to delete assets", "error");
     }
   };
 
   const handleDownload = (id: string) => {
     const token = localStorage.getItem("accessToken");
-    window.open(`http://localhost:3004/api/v1/assets/${id}/download?token=${token}`, "_blank");
+    window.open(`${import.meta.env.VITE_API_URL}/assets/${id}/download?token=${token}`, "_blank");
   };
 
   const columns: Column[] = [
-    { id: "filename", label: "Assest Name", width: 30, sortable: true },
+    { id: "filename", label: "Name", width: 30, sortable: true },
     { id: "type", label: "Type", width: 10 },
-    { id: "status", label: "Status", width: 10, align: "center" },
-    { id: "size", label: "Size", width: 10, align: "center" },
-    { id: "owner", label: "Uploaded By", width: 15, align: "center" },
-    { id: "actions", label: "Actions", width: 25, align: "right" },
+    { id: "status", label: "Status", width: 15, align: "center" },
+    { id: "owner", label: "Owner", width: 15, align: "center" },
+    { id: "createdAt", label: "Last Updated", width: 15, align: "center" },
+    { id: "actions", label: "Actions", width: 15, align: "right" },
   ];
 
   const getIcon = (type: string | undefined) => {
@@ -82,25 +81,48 @@ const AssetsListPage: React.FC = () => {
     return <FileText size={18} className="text-indigo-500" />;
   };
 
-  const renderRow = (asset: AssetsProps, columnId: string) => {
+  const renderRow = (assets: AssetsProps, columnId: string) => {
     switch (columnId) {
-      case "filename":
+      case "filename": {
+        const isPreviewable =
+          assets.mimetype?.includes("image") || assets.mimetype?.includes("video");
         return (
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
-              {getIcon(asset.mimetype || asset.type)}
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0 overflow-hidden">
+              {isPreviewable ? (
+                <img
+                  src={`${import.meta.env.VITE_API_URL}/assets/${assets.id}/thumbnail?token=${localStorage.getItem("accessToken")}`}
+                  alt={assets.filename}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as any).style.display = "none";
+                    (e.target as any).parentElement.innerHTML =
+                      '<div class="text-indigo-500 font-bold text-[10px]">FILE</div>';
+                  }}
+                />
+              ) : (
+                getIcon(assets.mimetype || assets.type)
+              )}
             </div>
-            <span className="font-bold text-[var(--text-color)] truncate">{asset.filename}</span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-[var(--text-color)] truncate text-sm">
+                {assets.filename}
+              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                ID: {String(assets.id).slice(0, 8)}
+              </span>
+            </div>
           </div>
         );
+      }
       case "type":
         return (
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            {asset.mimetype.split("/")[1]}
+            {assets.mimetype.split("/")[1]}
           </span>
         );
       case "status": {
-        const s = asset.status.toLowerCase();
+        const s = assets.status.toLowerCase();
         let statusStyle = "bg-slate-50 text-slate-500 border-slate-200";
         if (s === "approved") statusStyle = "bg-emerald-50 text-emerald-600 border-emerald-100";
         if (s.includes("pending")) statusStyle = "bg-amber-50 text-amber-600 border-amber-100";
@@ -109,20 +131,20 @@ const AssetsListPage: React.FC = () => {
           <span
             className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${statusStyle}`}
           >
-            {asset.status.replace("_", " ")}
+            {assets.status.replace("_", " ")}
           </span>
         );
       }
-      case "size":
-        return (
-          <span className="text-xs font-bold text-slate-500">
-            {formatBytes(Number(asset.size) || 0)}
-          </span>
-        );
       case "owner":
         return (
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            {(asset as any).uploader?.name || "Unknown"}
+            {(assets as any).uploader?.name || assets.owner || "System"}
+          </span>
+        );
+      case "createdAt":
+        return (
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            {new Date(assets.createdAt).toLocaleDateString()}
           </span>
         );
       case "actions": {
@@ -131,7 +153,7 @@ const AssetsListPage: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(`/assets/${asset.id}`)}
+              onClick={() => navigate(`/assets/${assets.id}`)}
               className="text-slate-400 hover:text-[var(--primary)]"
             >
               <Eye size={16} />
@@ -139,7 +161,7 @@ const AssetsListPage: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setSelectedAssetsId(asset.id)}
+              onClick={() => setSelectedAssetsId(assets.id)}
               className="text-slate-400 hover:text-[var(--primary)]"
             >
               <FolderPlus size={16} />
@@ -147,7 +169,7 @@ const AssetsListPage: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => handleDownload(asset.id)}
+              onClick={() => handleDownload(assets.id)}
               className="text-slate-400 hover:text-[var(--primary)]"
             >
               <Download size={16} />
@@ -155,7 +177,7 @@ const AssetsListPage: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => handleDelete(asset.id)}
+              onClick={() => handleDelete(assets.id)}
               className="text-slate-400 hover:text-red-500"
             >
               <Trash2 size={16} />

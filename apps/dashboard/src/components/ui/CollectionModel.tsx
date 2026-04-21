@@ -39,7 +39,7 @@ const AddToCollectionModal: React.FC<AddToCollectionModalProps> = ({
       toast("Assets linked to collection", "success");
       onClose();
     } catch (error) {
-      toast("Failed to link asset. Already linked?", "error");
+      toast("Failed to link assets. Already linked?", "error");
     }
   };
 

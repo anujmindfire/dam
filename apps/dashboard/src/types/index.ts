@@ -83,7 +83,7 @@ export interface ComplianceStatsProps {
 
 export interface ComplianceIssuesProps {
   id: string;
-  asset: string;
+  assets: string;
   owner: string;
   type: "expired" | "duplicates" | "risky" | "all";
   severity: "critical" | "warning" | "info";
@@ -95,7 +95,7 @@ export interface ComplianceIssuesProps {
 export interface SystemTasksProps {
   id: string;
   type: string;
-  asset: string;
+  assets: string;
   status: string;
   started: string;
   duration: string;
@@ -186,7 +186,7 @@ export interface ApprovalRequestProps {
   status: "pending" | "approved" | "rejected";
   comments?: string;
   createdAt: string;
-  asset?: AssetsProps;
+  assets?: AssetsProps;
   requesterName?: string;
 }
 

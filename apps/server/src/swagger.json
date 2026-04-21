@@ -79,7 +79,7 @@
   "tags": [
     { "name": "Auth", "description": "Authentication endpoints" },
     { "name": "Users", "description": "User management" },
-    { "name": "Assets", "description": "Digital asset lifecycle management" },
+    { "name": "Assets", "description": "Digital assets lifecycle management" },
     { "name": "Collections", "description": " grouping and organization" },
     { "name": "Approval", "description": " approval workflow and history" },
     { "name": "Metadata", "description": " metadata enrichment and management" },
@@ -169,7 +169,7 @@
     "/api/v1/assets/upload": {
       "post": {
         "tags": ["Assets"],
-        "summary": "Upload a file and create asset record",
+        "summary": "Upload a file and create assets record",
         "requestBody": {
           "required": true,
           "content": {
@@ -197,7 +197,7 @@
     "/api/v1/assets": {
       "post": {
         "tags": ["Assets"],
-        "summary": "Create asset record (without file)",
+        "summary": "Create assets record (without file)",
         "requestBody": {
           "required": true,
           "content": {
@@ -243,7 +243,7 @@
     "/api/v1/assets/{id}": {
       "get": {
         "tags": ["Assets"],
-        "summary": "Get asset by ID with metadata and versions",
+        "summary": "Get assets by ID with metadata and versions",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "responses": {
           "200": { "description": " found" },
@@ -252,7 +252,7 @@
       },
       "patch": {
         "tags": ["Assets"],
-        "summary": "Update asset metadata fields",
+        "summary": "Update assets metadata fields",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
           "content": {
@@ -275,7 +275,7 @@
       },
       "delete": {
         "tags": ["Assets"],
-        "summary": "Delete an asset",
+        "summary": "Delete an assets",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "responses": {
           "200": { "description": " deleted" },
@@ -286,7 +286,7 @@
     "/api/v1/assets/{id}/version": {
       "post": {
         "tags": ["Assets"],
-        "summary": "Upload a new file version for an existing asset",
+        "summary": "Upload a new file version for an existing assets",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
           "content": {
@@ -308,7 +308,7 @@
     "/api/v1/assets/{id}/status": {
       "patch": {
         "tags": ["Assets"],
-        "summary": "Transition asset lifecycle status",
+        "summary": "Transition assets lifecycle status",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
           "required": true,
@@ -386,7 +386,7 @@
     "/api/v1/collection/{id}/assets": {
       "post": {
         "tags": ["Collections"],
-        "summary": "Add an asset to a collection",
+        "summary": "Add an assets to a collection",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["assetsId"], "properties": { "assetsId": { "type": "integer" } } } } } },
         "responses": { "200": { "description": " added to collection" } }
@@ -409,7 +409,7 @@
     "/api/v1/stats/track": {
       "post": {
         "tags": ["Statistics"],
-        "summary": "Log an asset usage event",
+        "summary": "Log an assets usage event",
         "requestBody": {
           "required": true,
           "content": {
@@ -432,7 +432,7 @@
     "/api/v1/stats/track/{id}": {
       "get": {
         "tags": ["Statistics"],
-        "summary": "Get usage history for a specific asset",
+        "summary": "Get usage history for a specific assets",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
           { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
@@ -444,7 +444,7 @@
     "/api/v1/approval": {
       "post": {
         "tags": ["Approval"],
-        "summary": "Request approval for an asset",
+        "summary": "Request approval for an assets",
         "requestBody": {
           "required": true,
           "content": {
@@ -485,7 +485,7 @@
     "/api/v1/approval/{id}/approve": {
       "patch": {
         "tags": ["Approval"],
-        "summary": "Approve an asset",
+        "summary": "Approve an assets",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
           "content": { "application/json": { "schema": { "type": "object", "properties": { "comments": { "type": "string" } } } } }
@@ -496,7 +496,7 @@
     "/api/v1/approval/{id}/reject": {
       "patch": {
         "tags": ["Approval"],
-        "summary": "Reject an asset",
+        "summary": "Reject an assets",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
           "required": true,
@@ -508,7 +508,7 @@
     "/api/v1/approval/assets/{assetsId}/history": {
       "get": {
         "tags": ["Approval"],
-        "summary": "Get approval history for an asset",
+        "summary": "Get approval history for an assets",
         "parameters": [
           { "name": "assetsId", "in": "path", "required": true, "schema": { "type": "integer" } },
           { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
@@ -535,13 +535,13 @@
     "/api/v1/metadata/{id}": {
       "get": {
         "tags": ["Metadata"],
-        "summary": "Get metadata for an asset",
+        "summary": "Get metadata for an assets",
         "parameters": [{ "name": "id", "in": "path", "required": true, "description": " ID", "schema": { "type": "integer" } }],
         "responses": { "200": { "description": "Metadata found" } }
       },
       "patch": {
         "tags": ["Metadata"],
-        "summary": "Update asset metadata",
+        "summary": "Update assets metadata",
         "parameters": [{ "name": "id", "in": "path", "required": true, "description": " ID", "schema": { "type": "integer" } }],
         "requestBody": {
           "content": { "application/json": { "schema": { "type": "object", "properties": { "tags": { "type": "array", "items": { "type": "string" } }, "description": { "type": "string" } } } } }
@@ -552,7 +552,7 @@
     "/api/v1/usage/track": {
       "post": {
         "tags": ["Statistics"],
-        "summary": "Log an asset usage event",
+        "summary": "Log an assets usage event",
         "requestBody": {
           "required": true,
           "content": {
@@ -586,7 +586,7 @@
     "/api/v1/usage/{id}": {
       "get": {
         "tags": ["Statistics"],
-        "summary": "Get usage logs for a specific asset",
+        "summary": "Get usage logs for a specific assets",
         "parameters": [{ "name": "id", "in": "path", "required": true, "description": " ID", "schema": { "type": "integer" } }],
         "responses": { "200": { "description": "Usage logs retrieved" } }
       }

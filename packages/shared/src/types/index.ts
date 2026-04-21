@@ -37,7 +37,7 @@ export interface PaginatedResult<T> {
 }
 
 /**
- * Core properties of a digital asset (image, video, etc.).
+ * Core properties of a digital assets (image, video, etc.).
  */
 
 export interface AssetsProps {
@@ -63,12 +63,12 @@ export interface AssetsProps {
 }
 
 /**
- * Metadata associated with an asset for search and classification.
+ * Metadata associated with an assets for search and classification.
  */
 
 export interface MetadataProps {
   id: number;
-  assetsId: string;
+  assetsId: number;
   tags: string[];
   department: string | null;
   analysisResults?: any;
@@ -77,19 +77,19 @@ export interface MetadataProps {
 }
 
 /**
- * Represents an entry in the asset usage logs.
+ * Represents an entry in the assets usage logs.
  */
 
 export interface UsageLogProps {
   id: number;
-  assetsId: string;
+  assetsId: number;
   action: string;
   context: any;
   loggedAt: Date;
 }
 
 /**
- * Data required for uploading or updating an asset's basic information.
+ * Data required for uploading or updating an assets's basic information.
  */
 
 export interface AssetData {
@@ -118,7 +118,7 @@ export interface CollectionProps {
 }
 
 /**
- * Represents a specific version of a digital asset.
+ * Represents a specific version of a digital assets.
  */
 
 export interface VersionProps {
@@ -132,16 +132,16 @@ export interface VersionProps {
 }
 
 /**
- * Data required for creating or updating an asset version.
+ * Data required for creating or updating an assets version.
  */
 
 export interface VersionData {
-  assetsId: string;
+  assetsId: number;
   versionNumber: number;
   storageKey: string;
   size: number;
   note?: string;
-  author: string;
+  author: number;
 }
 
 /**
