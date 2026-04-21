@@ -49,7 +49,7 @@ const startServer = async (): Promise<void> => {
     process.exit(0);
   }
 
-  httpServer.listen(dotEnv.serverPort, "0.0.0.0", () => {
+  httpServer.listen(dotEnv.serverPort, () => {
     logger.info(commonMsg.expressAppRunning(dotEnv.serverPort));
   });
 };

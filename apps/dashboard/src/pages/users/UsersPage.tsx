@@ -1,146 +1,209 @@
 import React, { useState, useEffect } from "react";
-import { Users, UserPlus, Trash2, Mail, Shield, ShieldAlert, Clock } from "lucide-react";
-import { userService } from "../../api";
-import { useToast } from "../../components/Providers/ToastProvider";
-import { Button } from "../../components/ui/Button";
-import { Card, CardContent } from "../../components/ui/Card";
-import { PageSkeleton } from "../../components/ui/Loader";
+import { Trash2, Edit2, X } from "lucide-react";
+import { userService } from "../../services";
+import { useToast } from "../../components/ui/ToastProvider";
 import type { UserProps } from "../../types";
+import { AppList } from "../../components/ui/AppList";
+import type { Column } from "../../types";
+import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
 
 const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<UserProps[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const { toast } = useToast();
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProps | null>(null);
+  const [editName, setEditName] = useState("");
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [currentPage, limit, searchTerm]);
 
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await userService.list();
-      setUsers(res.data.data.result || []);
-    } catch (error) {
-      toast("Failed to load user hub.", "error");
+      const res = await userService.list({
+        page: currentPage,
+        limit,
+        searchKey: searchTerm || undefined,
+      });
+      const userData = res.data?.data?.result || res.data?.data || [];
+      const count = res.data?.totalCount || 0;
+      setUsers(userData);
+      setTotalCount(count);
+    } catch (error: any) {
+      toast(error.response?.data?.message, "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to terminate this user?")) return;
+  const handleEditClick = (user: UserProps) => {
+    setEditingUser(user);
+    setEditName(user.name);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingUser) return;
     try {
-      await userService.remove(id);
-      toast("User terminated successfully", "success");
+      await userService.update(editingUser.id, { name: editName });
+      toast("User identity updated", "success");
+      setIsEditModalOpen(false);
       fetchUsers();
-    } catch (error) {
-      toast("Termination failed", "error");
+    } catch (error: any) {
+      toast(error.response?.data?.message, "error");
     }
   };
 
-  if (isLoading) return <PageSkeleton />;
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    try {
+      await userService.remove(id);
+      toast("User deleted successfully", "success");
+      fetchUsers();
+    } catch (error: any) {
+      toast(error.response?.data?.message, "error");
+    }
+  };
+
+  const columns: Column[] = [
+    { id: "name", label: "Name", width: 35, sortable: true },
+    { id: "email", label: "Email", width: 35, sortable: true },
+    { id: "status", label: "Status", width: 15, align: "center" },
+    { id: "actions", label: "Actions", width: 15, align: "right" },
+  ];
+
+  const renderRow = (user: UserProps, columnId: string) => {
+    switch (columnId) {
+      case "name":
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center text-[var(--primary)] font-bold text-xs border border-indigo-100">
+              {user.name?.charAt(0) || "U"}
+            </div>
+            <span className="font-bold text-[var(--text-color)]">{user.name}</span>
+          </div>
+        );
+      case "email":
+        return <span className="text-slate-500 font-medium">{user.email}</span>;
+      case "status": {
+        const isActive = user.roleId === 1;
+        return (
+          <div className="flex items-center justify-center">
+            <div
+              className={`
+              px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border
+              ${isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-500 border-slate-200"}
+            `}
+            >
+              {isActive ? "Administrator" : "Standard User"}
+            </div>
+          </div>
+        );
+      }
+      case "actions": {
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleEditClick(user)}
+              className="text-slate-400 hover:text-[var(--primary)]"
+            >
+              <Edit2 size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleDelete(user.id)}
+              className="text-slate-400 hover:text-rose-500"
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        );
+      }
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Team Management</h1>
-          <p className="text-slate-400 mt-1">Manage custodial roles and system access</p>
+          <h1 className="text-3xl font-bold text-[var(--text-color)] tracking-tight italic">
+            User Management
+          </h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Control access and system roles</p>
         </div>
-        <Button className="gap-2 px-6 shadow-lg shadow-blue-600/20">
-          <UserPlus size={20} /> Provision User
-        </Button>
       </div>
 
-      <Card className="border-white/5 bg-slate-900/40">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Identiy
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Role
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Joined
-                  </th>
-                  <th className="px-6 py-4 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {users.map((user) => (
-                  <tr key={user.id} className="group hover:bg-white/[0.02] transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
-                          <Users size={16} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white">{user.name}</p>
-                          <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                            <Mail size={12} /> {user.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {user.roleId === 1 ? (
-                          <span className="flex items-center gap-1.5 text-xs text-amber-400 font-bold uppercase tracking-wider">
-                            <Shield size={14} /> Admin
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5 text-xs text-slate-400 font-bold uppercase tracking-wider">
-                            <ShieldAlert size={14} /> Custodian
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border ${
-                          user.status === "active"
-                            ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
-                            : "text-slate-400 bg-slate-500/10 border-slate-500/20"
-                        }`}
-                      >
-                        {user.status || "active"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-500 font-medium">
-                      <span className="flex items-center gap-1.5">
-                        <Clock size={12} />{" "}
-                        {user.createdAt
-                          ? new Date(user.createdAt).toLocaleDateString()
-                          : "Just Now"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(user.id)}
-                        className="text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <AppList
+        columns={columns}
+        rows={users}
+        count={totalCount}
+        page={currentPage}
+        setPage={setCurrentPage}
+        limit={limit}
+        setLimit={setLimit}
+        loading={isLoading}
+        onSearch={setSearchTerm}
+        renderRow={renderRow}
+      />
+
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <Card className="w-full max-w-md">
+            <Card.Header className="flex items-center justify-between">
+              <Card.HeaderTitle>Edit User</Card.HeaderTitle>
+              <Button
+                variant="ghost"
+                onClick={() => setIsEditModalOpen(false)}
+                className="w-8 h-8 p-0"
+              >
+                <X size={18} />
+              </Button>
+            </Card.Header>
+            <Card.Body className="space-y-6">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
+                  Name <span className="text-red-500 ml-0.5">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[var(--primary)] focus:bg-white transition-all"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button className="flex-1 shadow-lg shadow-indigo-100" onClick={handleUpdate}>
+                  Update
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        </div>
+      )}
+
+      <div className="mt-10 pt-10 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
+        Identity Engine v1.0.4 · DAM Identity
+      </div>
     </div>
   );
 };

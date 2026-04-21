@@ -1,5 +1,5 @@
 import sequelize from "../config/sequelizeConnection";
-import Role from "./role";
+import { Role } from "./role";
 import { DataTypes, Model, Optional } from "sequelize";
 import { UserProps } from "../types/index";
 import { userMsg, modelName, regex } from "../utils/constant";
@@ -95,4 +95,4 @@ User.init(
 
 User.belongsTo(Role, { foreignKey: "roleId", as: modelName.role });
 
-export default User;
+export { User };

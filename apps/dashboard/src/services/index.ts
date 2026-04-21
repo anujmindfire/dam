@@ -3,7 +3,7 @@ import { apiUrl, baseRoute } from "@dam/shared/utils/constant";
 
 // Create Axios Instance
 const api = axios.create({
-  baseURL: baseRoute,
+  baseURL: (import.meta.env.VITE_API_URL as string) || baseRoute,
   headers: {
     "Content-Type": "application/json",
   },
@@ -104,11 +104,23 @@ export const authService = {
 
 // Assets
 export const assetsService = {
-  list: (params?: any) => api.get(apiUrl.assets, { params }),
+  list: (params?: any) => {
+    // Filter out undefined values to prevent axios from converting them to "undefined" string
+    const filteredParams = params
+      ? Object.fromEntries(Object.entries(params).filter(([_, value]) => value !== undefined))
+      : undefined;
+    return api.get(apiUrl.assets, { params: filteredParams });
+  },
   getById: (id: string) => api.get(`${apiUrl.assets}/${id}`),
-  upload: (formData: FormData) =>
+  upload: (formData: FormData, onProgress?: (percent: number) => void) =>
     api.post(`${apiUrl.assets}${apiUrl.upload}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      },
     }),
   update: (id: string, data: any) => api.patch(`${apiUrl.assets}/${id}`, data),
   delete: (id: string) => api.delete(`${apiUrl.assets}/${id}`),
@@ -129,7 +141,7 @@ export const analyticsService = {
 // Metadata
 export const metadataService = {
   getDuplicates: () => api.get(`${apiUrl.metadata}${apiUrl.duplicates}`),
-  getByAssets: (assetId: string) => api.get(`${apiUrl.metadata}/${assetId}`),
+  getByAssets: (assetsId: string) => api.get(`${apiUrl.metadata}/${assetsId}`),
 };
 
 // Usage
@@ -139,24 +151,25 @@ export const usageService = {
 
 // Approval
 export const approvalService = {
-  request: (data: { assetId: string; comments?: string }) => api.post(apiUrl.approval, data),
+  request: (data: { assetsId: string; comments?: string }) => api.post(apiUrl.approval, data),
   list: (params?: any) => api.get(apiUrl.approval, { params }),
   getById: (id: string) => api.get(`${apiUrl.approval}/${id}`),
   approve: (id: string) => api.patch(`${apiUrl.approval}/${id}${apiUrl.approve}`),
   reject: (id: string) => api.patch(`${apiUrl.approval}/${id}${apiUrl.reject}`),
-  history: (assetId: string) =>
-    api.get(`${apiUrl.approval}${apiUrl.assets}/${assetId}${apiUrl.history}`),
+  history: (assetsId: string) =>
+    api.get(`${apiUrl.approval}${apiUrl.assets}/${assetsId}${apiUrl.history}`),
 };
 
 // Collections
 export const collectionService = {
-  create: (data: { name: string; description?: string }) => api.post(apiUrl.collection, data),
+  create: (data: { name: string; description?: string; parentId?: string | number | null }) =>
+    api.post(apiUrl.collection, data),
   list: (params?: any) => api.get(apiUrl.collection, { params }),
   getById: (id: string) => api.get(`${apiUrl.collection}/${id}`),
   update: (id: string, data: any) => api.patch(`${apiUrl.collection}/${id}`, data),
   remove: (id: string) => api.delete(`${apiUrl.collection}/${id}`),
-  addAsset: (collectionId: string, assetId: string) =>
-    api.post(`${apiUrl.collection}/${collectionId}${apiUrl.assets}`, { assetId }),
+  addAsset: (collectionId: string, assetsId: string) =>
+    api.post(`${apiUrl.collection}/${collectionId}${apiUrl.assets}`, { assetsId }),
 };
 
 // Users

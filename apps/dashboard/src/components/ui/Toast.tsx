@@ -11,32 +11,28 @@ const Toast: React.FC<ToastProps> = ({ id, message, type = "info", onClose }) =>
   }, [id, type, onClose]);
 
   const icons = {
-    success: <CheckCircle2 className="text-emerald-500" size={20} />,
-    error: <AlertCircle className="text-rose-500" size={20} />,
-    info: <Info className="text-blue-500" size={20} />,
-    loading: <Loader2 className="text-blue-500 animate-spin" size={20} />,
-    warning: <AlertCircle className="text-amber-500" size={20} />,
-  };
-
-  const colors = {
-    success: "border-emerald-500/20 bg-emerald-500/5",
-    error: "border-rose-500/20 bg-rose-500/5",
-    info: "border-blue-500/20 bg-blue-500/5",
-    loading: "border-blue-500/20 bg-blue-500/5",
-    warning: "border-amber-500/20 bg-amber-500/5",
+    success: <CheckCircle2 className="text-emerald-400" size={18} />,
+    error: <AlertCircle className="text-rose-400" size={18} />,
+    info: <Info className="text-indigo-400" size={18} />,
+    loading: <Loader2 className="text-indigo-400 animate-spin" size={18} />,
+    warning: <AlertCircle className="text-amber-400" size={18} />,
   };
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl animate-in slide-in-from-right-full duration-300 ${colors[type]}`}
+      className={`
+        flex items-center gap-3 px-5 py-3.5 rounded-2xl border border-slate-800
+        bg-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.3)] 
+        animate-in slide-in-from-right-full duration-500
+      `}
     >
-      {icons[type]}
-      <p className="text-sm font-medium text-slate-200 min-w-[200px]">{message}</p>
+      <div className="flex-shrink-0">{icons[type]}</div>
+      <p className="text-sm font-semibold text-white min-w-[200px] tracking-tight">{message}</p>
       <button
         onClick={() => onClose(id)}
-        className="text-slate-500 hover:text-white transition-colors"
+        className="ml-2 p-1 rounded-md text-slate-500 hover:text-white hover:bg-slate-800 transition-all active:scale-90"
       >
-        <X size={16} />
+        <X size={14} />
       </button>
     </div>
   );

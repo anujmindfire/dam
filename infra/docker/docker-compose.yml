@@ -12,17 +12,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    ports:
-      - "8081:8081"
-    networks:
-      - dam_net
-    depends_on:
-      - redis
-
   rabbitmq:
     image: rabbitmq:3-management-alpine
     environment:

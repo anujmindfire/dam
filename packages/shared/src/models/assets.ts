@@ -4,13 +4,13 @@ import { AssetsProps } from "../types/index";
 import { enums, modelName } from "../utils/constant";
 import { capitalize } from "../utils/common";
 
-export interface AssetCreationAttributes extends Optional<AssetsProps, "id"> {}
+export interface AssetsCreationAttributes extends Optional<AssetsProps, "id"> {}
 
-class Asset extends Model<AssetsProps, AssetCreationAttributes> implements AssetsProps {
+class Assets extends Model<AssetsProps, AssetsCreationAttributes> implements AssetsProps {
   public id!: number;
   public filename!: string;
   public storageKey!: string;
-  public owner!: string | null;
+  public owner!: number | null;
   public size!: number | null;
   public mimetype!: string | null;
   public status!:
@@ -31,7 +31,7 @@ class Asset extends Model<AssetsProps, AssetCreationAttributes> implements Asset
   public readonly updatedAt!: Date;
 }
 
-Asset.init(
+Assets.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -47,8 +47,12 @@ Asset.init(
       allowNull: false,
     },
     owner: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: modelName.user,
+        key: "id",
+      },
     },
     size: {
       type: DataTypes.INTEGER,
@@ -103,4 +107,4 @@ Asset.init(
   },
 );
 
-export default Asset;
+export { Assets };

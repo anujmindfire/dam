@@ -1,372 +1,289 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Download,
-  History,
-  ShieldAlert,
-  Edit3,
-  FileVideo,
-  FileImage,
-  FileText,
-  Lock,
+  Calendar,
   User,
-  ExternalLink,
+  Type,
+  HardDrive,
+  Download,
+  Share2,
+  Trash2,
+  CheckCircle2,
   Clock,
-  Music,
-  FileSpreadsheet,
+  ShieldCheck,
+  History,
+  Tag,
+  FileText,
+  FileImage,
+  FileVideo,
 } from "lucide-react";
-import { useAuth } from "../../components/AuthContext";
-import { useNavigate, useParams } from "react-router-dom";
-import { useToast } from "../../components/Providers/ToastProvider";
+import { assetsService, metadataService, approvalService } from "../../services";
+import { useToast } from "../../components/ui/ToastProvider";
 import { Button } from "../../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
+import { Card } from "../../components/ui/Card";
 import { PageSkeleton } from "../../components/ui/Loader";
-import type { AssetsDetailProps, ActivityLogsProps } from "../../types";
-import { approvalService, assetsService, metadataService, usageService } from "../../api";
+import { formatBytes } from "../../utils/format";
+import type { AssetsProps, MetadataProps, ApprovalHistoryProps } from "../../types";
 
 const AssetsDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { id } = useParams();
   const { toast } = useToast();
-  const { user } = useAuth();
-  const [asset, setAsset] = useState<AssetsDetailProps | null>(null);
-  const [logs, setLogs] = useState<ActivityLogsProps[]>([]);
-  const [detailedMeta, setDetailedMeta] = useState<any>(null);
+  const [asset, setAsset] = useState<AssetsProps | null>(null);
+  const [metadata, setMetadata] = useState<MetadataProps | null>(null);
+  const [history, setHistory] = useState<ApprovalHistoryProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const fetchAssetDetails = async () => {
-      setIsLoading(true);
-      try {
-        const [assetRes, metaRes, logsRes] = await Promise.all([
-          assetsService.getById(id!),
-          metadataService.getByAssets(id!),
-          usageService.getLogs({ assetId: id, limit: 10 }),
-        ]);
+    if (id) fetchAssetDetails(id);
+  }, [id]);
 
-        setAsset(assetRes.data.data);
-        setDetailedMeta(metaRes.data.data);
-        setLogs(
-          logsRes.data.data.map((l: any) => ({
-            id: l.id,
-            action: l.action.replace("_", " "),
-            target: l.assetId ? `Assets ID: ${l.assetId}` : "System",
-            timestamp: new Date(l.loggedAt).toLocaleString(),
-          })),
-        );
-      } catch (error) {
-        toast("Failed to load assets intelligence", "error");
-        navigate("/assets");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAssetDetails();
-  }, [id, navigate]);
-
-  const metadataItems = useMemo(
-    () => [
-      { label: "Custodian", value: asset?.owner || "Unassigned", icon: User },
-      { label: "Status", value: asset?.status || "Pending", icon: ShieldAlert },
-      { label: "Usage Rights", value: asset?.usageRights || "Standard", icon: Lock },
-      { label: "Business Unit", value: asset?.department || "General", icon: FileText },
-      { label: "Resource Size", value: asset?.size || "Unknown", icon: ExternalLink },
-      {
-        label: "Chronology",
-        value: asset ? new Date(asset.createdAt).toLocaleDateString() : "",
-        icon: Clock,
-      },
-    ],
-    [asset],
-  );
-
-  const handleUpdate = async () => {
-    if (!asset) return;
+  const fetchAssetDetails = async (assetsId: string) => {
+    setIsLoading(true);
     try {
-      await assetsService.update(id!, {
-        filename: asset.filename,
-        status: asset.status,
-      });
-      toast("Asset hub synchronized", "success");
-      setIsEditing(false);
+      const [assetRes, metaRes, historyRes] = await Promise.all([
+        assetsService.getById(assetsId),
+        metadataService.getByAssets(assetsId),
+        approvalService.history(assetsId),
+      ]);
+      setAsset(assetRes.data.data);
+      setMetadata(metaRes.data.data);
+      setHistory(historyRes.data.data.result || historyRes.data.data);
     } catch (error) {
-      toast("Failed to update asset integrity", "error");
+      toast("Failed to load asset dossier", "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusTransition = async (newStatus: string) => {
+    if (!id) return;
     try {
-      await assetsService.transitionStatus(id!, newStatus);
-      toast(`Asset transitioned to ${newStatus}`, "success");
-      setAsset((prev) => (prev ? { ...prev, status: newStatus } : null));
+      await assetsService.transitionStatus(id, newStatus);
+      toast(`Status updated to ${newStatus}`, "success");
+      fetchAssetDetails(id);
     } catch (error) {
       toast("Status transition failed", "error");
     }
   };
 
-  const handleRequestApproval = async () => {
-    try {
-      await approvalService.request({ assetId: id! });
-      toast("Approval request dispatched", "success");
-      handleStatusChange("under_review");
-    } catch (error) {
-      toast("Failed to dispatch approval request", "error");
-    }
+  const handleDownload = () => {
+    if (!id) return;
+    const token = localStorage.getItem("accessToken");
+    window.open(`http://localhost:3004/api/v1/assets/${id}/download?token=${token}`, "_blank");
   };
 
-  if (isLoading) return <PageSkeleton />;
-  if (!asset) return null;
+  const getFileIcon = (type?: string) => {
+    if (!type) return <FileText size={48} className="text-indigo-500" />;
+    if (type.includes("image")) return <FileImage size={48} className="text-indigo-500" />;
+    if (type.includes("video")) return <FileVideo size={48} className="text-indigo-500" />;
+    return <FileText size={48} className="text-indigo-500" />;
+  };
+
+  if (isLoading || !asset) return <PageSkeleton />;
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Assets Details</h1>
-          <p className="text-slate-400 mt-1">Preview Area | Metadata</p>
-        </div>
-        <div className="flex gap-2">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header & Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
           <Button
-            variant="ghost"
-            onClick={() => navigate("/assets")}
-            className="gap-2 text-slate-400 hover:text-white"
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 p-0 rounded-xl"
           >
-            <ArrowLeft size={20} /> Library
+            <ArrowLeft size={18} />
           </Button>
-          <Button variant="outline" size="icon" className="rounded-xl">
-            <Download size={18} />
-          </Button>
-          <Button
-            className={`gap-2 px-6 rounded-xl shadow-lg transition-all ${isEditing ? "bg-emerald-600 shadow-emerald-600/20" : "bg-blue-600 shadow-blue-600/20"}`}
-            onClick={isEditing ? handleUpdate : () => setIsEditing(true)}
-          >
-            <Edit3 size={18} /> {isEditing ? "Save Hub" : "Edit Hub"}
-          </Button>
-        </div>
-      </div>
-
-      {/* Top Section: Preview & Metadata */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Preview Area */}
-        <Card className="lg:col-span-2 overflow-hidden border-white/5 bg-slate-900/40 shadow-2xl flex flex-col">
-          <div className="aspect-video flex items-center justify-center relative bg-gradient-to-br from-slate-900 to-black p-12">
-            <div className="flex flex-col items-center gap-6">
-              <div className="w-24 h-24 rounded-3xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20 shadow-2xl">
-                {asset.mimetype.toLowerCase().includes("video") ? (
-                  <FileVideo size={48} />
-                ) : asset.mimetype.toLowerCase().includes("image") ? (
-                  <FileImage size={48} />
-                ) : asset.mimetype.toLowerCase().includes("audio") ? (
-                  <Music size={48} />
-                ) : asset.mimetype.toLowerCase().includes("sheet") ||
-                  asset.mimetype.toLowerCase().includes("csv") ? (
-                  <FileSpreadsheet size={48} />
-                ) : (
-                  <FileText size={48} />
-                )}
-              </div>
-              {isEditing ? (
-                <div className="flex flex-col gap-4 w-full max-w-sm">
-                  <input
-                    className="bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-white text-center font-bold outline-none focus:ring-2 focus:ring-blue-500/50"
-                    value={asset.filename}
-                    onChange={(e) => setAsset({ ...asset, filename: e.target.value })}
-                  />
-                </div>
-              ) : (
-                <h2 className="text-xl font-bold text-white text-center px-6">{asset.filename}</h2>
-              )}
-            </div>
-          </div>
-
-          <div className="p-6 bg-white/[0.02] border-t border-white/5 flex flex-wrap items-center gap-4">
-            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mr-2">
-              Lifecycle Actions
+          <div>
+            <h1 className="text-3xl font-bold text-[var(--text-color)] tracking-tight">Assets</h1>
+            <p className="text-slate-500 text-sm font-medium">
+              Ref ID: {String(asset.id).slice(0, 8)}
             </p>
-            {asset.status === "pending" && (
-              <Button
-                size="sm"
-                onClick={handleRequestApproval}
-                className="bg-amber-600/20 hover:bg-amber-600 text-amber-500 hover:text-white border-none h-8 px-4 rounded-lg text-[10px] uppercase font-bold tracking-widest"
-              >
-                Request Review
-              </Button>
-            )}
-            {user?.roleId === 1 &&
-              ["pending", "under_review", "reviewed"].includes(asset.status) && (
-                <div className="flex gap-2 ml-4 pl-4 border-l border-white/10">
-                  <Button
-                    size="sm"
-                    onClick={() => handleStatusChange("approved")}
-                    className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-500 hover:text-white border-none h-8 px-4 rounded-lg text-[10px] uppercase font-bold tracking-widest"
-                  >
-                    Quick Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleStatusChange("rejected")}
-                    variant="danger"
-                    className="h-8 px-4 rounded-lg text-[10px] uppercase font-bold tracking-widest"
-                  >
-                    Reject
-                  </Button>
-                </div>
-              )}
-            {["pending", "approved"].includes(asset.status) && (
-              <Button
-                size="sm"
-                onClick={() => handleStatusChange("archived")}
-                variant="ghost"
-                className="h-8 px-4 rounded-lg text-[10px] uppercase font-bold tracking-widest text-slate-500 hover:text-white"
-              >
-                Archive Hub
-              </Button>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              <input
-                type="file"
-                id="version-upload"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const fd = new FormData();
-                    fd.append("file", file);
-                    try {
-                      await assetsService.uploadVersion(id!, fd);
-                      toast("New version synchronized", "success");
-                      window.location.reload();
-                    } catch (err) {
-                      toast("Version synchronization failed", "error");
-                    }
-                  }
-                }}
-              />
-              <Button
-                size="sm"
-                onClick={() => document.getElementById("version-upload")?.click()}
-                variant="outline"
-                className="h-8 px-4 rounded-lg text-[10px] uppercase font-bold tracking-widest border-white/10 text-slate-400"
-              >
-                Spawn New Version
-              </Button>
-            </div>
           </div>
-        </Card>
-
-        {/* Metadata Sidebar */}
-        <Card className="border-white/5 bg-slate-900/40">
-          <CardHeader>
-            <CardTitle className="text-lg">Metadata</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="flex flex-col">
-              {metadataItems.map((item, i) => (
-                <div
-                  key={i}
-                  className={`px-6 py-4 flex items-center justify-between group hover:bg-white/[0.02] ${i < metadataItems.length - 1 ? "border-b border-white/5" : ""}`}
-                >
-                  <div className="flex items-center gap-3 text-slate-500 group-hover:text-slate-400">
-                    <item.icon size={16} />
-                    <span className="text-sm">{item.label}</span>
-                  </div>
-                  <span className="text-sm text-white font-semibold">{item.value}</span>
-                </div>
-              ))}
-            </div>
-            {detailedMeta?.tags && detailedMeta.tags.length > 0 && (
-              <div className="p-6 border-t border-white/5 bg-white/[0.01]">
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">
-                  System Tags
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {detailedMeta.tags.map((tag: string, i: number) => (
-                    <span
-                      key={i}
-                      className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold border border-blue-500/20"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="gap-2">
+            <Share2 size={16} /> Share
+          </Button>
+          <Button className="gap-2" onClick={handleDownload}>
+            <Download size={16} /> Download
+          </Button>
+        </div>
       </div>
 
-      {/* Bottom Section: Versions | Activity | Usage History */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        {/* Versions */}
-        <Card className="border-white/5 bg-slate-900/40">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Assets Versions</CardTitle>
-            <History className="text-slate-500" size={18} />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="flex flex-col">
-              {asset.versions.map((v, i) => (
-                <div
-                  key={v.id}
-                  className={`p-4 flex items-center gap-4 hover:bg-white/[0.03] ${i < asset.versions.length - 1 ? "border-b border-white/5" : ""}`}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-slate-950 border border-white/10 flex items-center justify-center text-[10px] font-bold text-slate-400">
-                    V{v.versionNumber}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-200 font-medium truncate">
-                      {v.note || "No comments"}
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      {v.author} • {new Date(v.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="sm" className="text-blue-400 text-xs">
-                    Restore
-                  </Button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Preview & Status */}
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="overflow-hidden">
+            <div className="aspect-video bg-slate-50 flex items-center justify-center border-b border-slate-100 relative overflow-hidden">
+              {asset.type?.includes("image") || asset.mimetype?.includes("image") ? (
+                <img
+                  src={`http://localhost:3004/api/v1/assets/${asset.id}/download?token=${localStorage.getItem("accessToken")}`}
+                  alt={asset.filename}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-4">
+                  {getFileIcon(asset.type || asset.mimetype)}
+                  <h2 className="text-xl font-bold text-[var(--text-color)] text-center px-6">
+                    {asset.filename}
+                  </h2>
                 </div>
-              ))}
+              )}
             </div>
-          </CardContent>
-        </Card>
+            <Card.Body className="flex flex-wrap items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100">
+                  <ShieldCheck size={24} className="text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Current Status
+                  </p>
+                  <p className="text-lg font-bold text-amber-600 uppercase tracking-tight">
+                    {asset.status.replace("_", " ")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" onClick={() => handleStatusTransition("archived")}>
+                  Archive
+                </Button>
+                <Button onClick={() => handleStatusTransition("approved")}>Verify & Approve</Button>
+              </div>
+            </Card.Body>
+          </Card>
 
-        {/* Activity & Usage History */}
-        <Card className="border-white/5 bg-slate-900/40">
-          <CardHeader>
-            <CardTitle className="text-lg">Activity & Usage History</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="flex flex-col">
-              {logs.length > 0 ? (
-                logs.map((log, i) => (
-                  <div
-                    key={log.id}
-                    className={`p-4 flex items-center justify-between group hover:bg-white/[0.02] ${i < logs.length - 1 ? "border-b border-white/5" : ""}`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                      <div>
-                        <p className="text-sm font-bold text-slate-200 capitalize">{log.action}</p>
-                        <p className="text-[11px] text-slate-500">{log.target}</p>
-                      </div>
+          {/* Activity History */}
+          <Card>
+            <Card.Header className="flex items-center gap-3">
+              <History size={18} className="text-[var(--primary)]" />
+              <Card.HeaderTitle>Asset History</Card.HeaderTitle>
+            </Card.Header>
+            <Card.Body className="space-y-6">
+              {history.length > 0 ? (
+                history.map((item, idx) => (
+                  <div key={idx} className="flex gap-4 relative">
+                    {idx !== history.length - 1 && (
+                      <div className="absolute left-[17px] top-10 bottom-0 w-0.5 bg-slate-100" />
+                    )}
+                    <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 z-10">
+                      {item.status === "approved" ? (
+                        <CheckCircle2 size={16} className="text-emerald-500" />
+                      ) : (
+                        <Clock size={16} className="text-amber-500" />
+                      )}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                      {log.timestamp}
-                    </span>
+                    <div className="flex-1 pb-6 border-b border-slate-50 last:border-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="font-bold text-[var(--text-color)] capitalize">
+                          {item.status}
+                        </p>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-500 font-medium">
+                        {item.comments || "No remarks provided"}
+                      </p>
+                    </div>
                   </div>
                 ))
               ) : (
-                <div className="h-48 flex items-center justify-center p-6 text-center">
-                  <p className="text-slate-500 text-sm italic">
-                    No recent activity detected for this asset hub.
-                  </p>
+                <div className="py-10 text-center text-slate-400 font-medium">
+                  No governance events recorded
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </Card.Body>
+          </Card>
+        </div>
+
+        {/* Right Column: Metadata */}
+        <div className="space-y-8">
+          <Card>
+            <Card.Header className="flex items-center gap-3">
+              <Tag size={18} className="text-[var(--primary)]" />
+              <Card.HeaderTitle>File Details</Card.HeaderTitle>
+            </Card.Header>
+            <Card.Body className="space-y-5">
+              {[
+                { icon: Type, label: "File Type", value: asset.mimetype },
+                { icon: HardDrive, label: "File Size", value: formatBytes(asset.size || 0) },
+                {
+                  icon: Calendar,
+                  label: "Upload Date",
+                  value: new Date(asset.createdAt).toLocaleDateString(),
+                },
+                {
+                  icon: User,
+                  label: "Uploaded By",
+                  value: (asset as any).uploader?.name || "Unknown",
+                },
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col gap-1.5 group p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <item.icon size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">
+                      {item.label}
+                    </span>
+                  </div>
+                  <span className="text-sm text-[var(--text-color)] font-bold">{item.value}</span>
+                </div>
+              ))}
+
+              {/* Tags Section */}
+              {metadata?.tags && metadata.tags.length > 0 && (
+                <div className="pt-4 border-t border-slate-50">
+                  <div className="flex items-center gap-2 text-slate-400 mb-3">
+                    <Tag size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">
+                      Smart Tags
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {metadata.tags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold border border-indigo-100"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+
+          <Card className="bg-rose-50 border-rose-100">
+            <Card.Body className="flex flex-col items-center gap-4 py-8">
+              <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+                <Trash2 size={28} />
+              </div>
+              <div className="text-center">
+                <h4 className="font-bold text-rose-900">Danger Zone</h4>
+                <p className="text-rose-600/80 text-xs font-medium mt-1">
+                  Permanently delete this asset from the repository
+                </p>
+              </div>
+              <Button
+                variant="danger"
+                className="w-full mt-2 shadow-rose-200"
+                onClick={() => {
+                  if (confirm("Terminate this asset?")) {
+                    assetsService.delete(asset.id).then(() => navigate("/assets"));
+                  }
+                }}
+              >
+                Terminate Assets
+              </Button>
+            </Card.Body>
+          </Card>
+        </div>
       </div>
     </div>
   );

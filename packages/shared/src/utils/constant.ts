@@ -108,17 +108,18 @@ export const modelName = {
   assets: "assets",
   collection: "collection",
   metadata: "metadata",
-  usageLog: "usageLog",
-  assetVersion: "assetVersion",
+  usage: "usage",
+  version: "version",
   role: "role",
   user: "user",
   approval: "approval",
   approvalComment: "approvalComment",
+  jobs: "jobs",
 };
 
 export const commonMsg = {
   expressAppRunning: (port: number) => `🚀 API Service running on port ${port}`,
-  assetServiceRunning: (port: number) => `🚀 Asset Service running on port ${port}`,
+  assetsServiceRunning: (port: number) => `🚀  Service running on port ${port}`,
   metadataServiceRunning: (port: number) => `🚀 Metadata Service running on port ${port}`,
   usageServiceRunning: (port: number) => `🚀 Usage Service running on port ${port}`,
   serviceFailed: (serviceName: string) => `${serviceName} Service failed to start:`,
@@ -188,18 +189,18 @@ export const collectionMsg = {
   updateSuccess: "Collection updated successfully",
   deleted: "Collection deleted successfully",
   notFound: "Collection not found",
-  assetAdded: "Asset added to collection successfully",
-  assetNotFound: "Asset not found",
+  assetAdded: "Assets added to collection successfully",
+  assetNotFound: "Assets not found",
 };
 
 export const assetMsg = {
-  createSuccess: "Asset created successfully",
+  createSuccess: "Assets created successfully",
   listSuccess: "Assets retrieved successfully",
-  getSuccess: "Asset details retrieved successfully",
-  updateSuccess: "Asset metadata updated successfully",
-  statusUpdateSuccess: "Asset status updated successfully",
-  deleted: "Asset deleted successfully",
-  notFound: "Asset not found",
+  getSuccess: "Assets details retrieved successfully",
+  updateSuccess: "Assets metadata updated successfully",
+  statusUpdateSuccess: "Assets status updated successfully",
+  deleted: "Assets deleted successfully",
+  notFound: "Assets not found",
   invalidStatus: "Invalid lifecycle status transition",
   noFile: "No file provided",
 };
@@ -228,47 +229,47 @@ export const approvalMsg = {
   listSuccess: "Approvals retrieved successfully",
   getSuccess: "Approval retrieved successfully",
   historySuccess: "Approval history retrieved successfully",
-  approveSuccess: "Asset approved successfully",
-  rejectSuccess: "Asset rejected successfully",
-  assetNotFound: "Asset not found",
+  approveSuccess: " approved successfully",
+  rejectSuccess: " rejected successfully",
+  assetNotFound: " not found",
   notFound: "Approval not found",
   createFailed: "Failed to create approval request",
   rejectionRequired: "Rejection reason is required",
 };
 
 export const consumerMsg = {
-  metadataAnalyzedProcessing: (assetId: number) =>
-    `[Metadata Consumer] Processing analysis for asset ${assetId}`,
-  metadataAnalyzedSuccess: (assetId: number) =>
-    `[Metadata Consumer] Metadata updated for asset ${assetId}`,
-  metadataAnalyzedError: (assetId: number) =>
-    `[Metadata Consumer] Error processing asset ${assetId}:`,
-  assetCreatedMetadata: (assetId: number) =>
-    `[Metadata Consumer] Initializing metadata for new asset ${assetId}`,
-  assetCreatedMetadataReady: (assetId: number) =>
-    `[Metadata Consumer] Asset ${assetId} ready for enrichment`,
-  assetCreatedMetadataError: "[Metadata Consumer] Error on asset_created:",
-  assetDeletedMetadata: (assetId: number) =>
-    `[Metadata Consumer] Cleaning metadata for deleted asset ${assetId}`,
-  assetDeletedMetadataCleanup: (assetId: number) =>
-    `[Metadata Consumer] Metadata cleanup done for asset ${assetId}`,
-  assetDeletedMetadataError: "[Metadata Consumer] Error on asset_deleted:",
+  metadataAnalyzedProcessing: (assetsId: number) =>
+    `[Metadata Consumer] Processing analysis for asset ${assetsId}`,
+  metadataAnalyzedSuccess: (assetsId: number) =>
+    `[Metadata Consumer] Metadata updated for asset ${assetsId}`,
+  metadataAnalyzedError: (assetsId: number) =>
+    `[Metadata Consumer] Error processing asset ${assetsId}:`,
+  assetCreatedMetadata: (assetsId: number) =>
+    `[Metadata Consumer] Initializing metadata for new asset ${assetsId}`,
+  assetCreatedMetadataReady: (assetsId: number) =>
+    `[Metadata Consumer]  ${assetsId} ready for enrichment`,
+  assetCreatedMetadataError: "[Metadata Consumer] Error on assets_created:",
+  assetDeletedMetadata: (assetsId: number) =>
+    `[Metadata Consumer] Cleaning metadata for deleted asset ${assetsId}`,
+  assetDeletedMetadataCleanup: (assetsId: number) =>
+    `[Metadata Consumer] Metadata cleanup done for asset ${assetsId}`,
+  assetDeletedMetadataError: "[Metadata Consumer] Error on assets_deleted:",
   allMetadataConsumersStarted: "✅ All metadata consumers started",
   metadataConsumersError: "Failed to start metadata consumers:",
 
-  usageAssetCreated: (assetId: number) =>
-    `[Usage Consumer] Initializing tracking for new asset ${assetId}`,
-  usageAssetCreatedSuccess: (assetId: number) =>
-    `[Usage Consumer] Tracking initialized for asset ${assetId}`,
-  usageAssetCreatedError: "[Usage Consumer] Error on asset_created:",
-  usageAssetApproved: (assetId: number) =>
-    `[Usage Consumer] Asset ${assetId} approved - usage tracking active`,
-  usageAssetApprovedError: "[Usage Consumer] Error on asset_approved:",
-  usageAssetDeleted: (assetId: number) =>
-    `[Usage Consumer] Archiving usage data for asset ${assetId}`,
-  usageAssetDeletedSuccess: (assetId: number) =>
-    `[Usage Consumer] Usage data archived for asset ${assetId}`,
-  usageAssetDeletedError: "[Usage Consumer] Error on asset_deleted:",
+  usageAssetCreated: (assetsId: number) =>
+    `[Usage Consumer] Initializing tracking for new asset ${assetsId}`,
+  usageAssetCreatedSuccess: (assetsId: number) =>
+    `[Usage Consumer] Tracking initialized for asset ${assetsId}`,
+  usageAssetCreatedError: "[Usage Consumer] Error on assets_created:",
+  usageAssetApproved: (assetsId: number) =>
+    `[Usage Consumer]  ${assetsId} approved - usage tracking active`,
+  usageAssetApprovedError: "[Usage Consumer] Error on assets_approved:",
+  usageAssetDeleted: (assetsId: number) =>
+    `[Usage Consumer] Archiving usage data for asset ${assetsId}`,
+  usageAssetDeletedSuccess: (assetsId: number) =>
+    `[Usage Consumer] Usage data archived for asset ${assetsId}`,
+  usageAssetDeletedError: "[Usage Consumer] Error on assets_deleted:",
   allUsageConsumersStarted: "✅ All usage consumers started",
   usageConsumersError: "Failed to start usage consumers:",
 };
@@ -276,8 +277,8 @@ export const consumerMsg = {
 export const ui = {
   dashboardTitle: "Dashboard Overview",
   dashboardSubtitle: "Monitor your digital assets and system health",
-  assetListTitle: "Asset Library",
-  uploadAsset: "Upload Asset",
+  assetListTitle: " Library",
+  uploadAsset: "Upload ",
   cancel: "Cancel",
   save: "Save Changes",
   edit: "Edit",
@@ -299,8 +300,8 @@ export const ui = {
   noAssetsFound: "No assets found",
   tryAdjustingFilters: "Try adjusting your search or filters to find what you're looking for.",
 
-  approve: "Approve Asset",
-  reject: "Reject Asset",
+  approve: "Approve ",
+  reject: "Reject ",
 
   complianceTitle: "Compliance & Governance",
   complianceSubtitle: "Track asset usage and regulatory adherence",

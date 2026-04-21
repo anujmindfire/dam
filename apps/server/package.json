@@ -1,7 +1,7 @@
 {
   "name": "@dam/server",
   "version": "1.0.0",
-  "description": "Premium API Service for Digital Asset Management (API, Seed, Verify)",
+  "description": "Premium API Service for Digital Assets Management (API, Seed, Verify)",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc -b && copyfiles -u 1 src/templates/*.html src/swagger.json dist/",
@@ -36,6 +36,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "9.0.10",
     "@types/multer": "^1.4.12",
     "@types/node": "^24.12.2",

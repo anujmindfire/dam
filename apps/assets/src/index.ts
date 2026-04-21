@@ -34,7 +34,9 @@ app.use(requestLogger as unknown as express.RequestHandler);
 app.use(rateLimit() as unknown as express.RequestHandler);
 
 app.get(`${baseRoute}/health`, (_req, res) => {
-  res.status(200).json({ status: "healthy", service: "Asset", timestamp: new Date().toISOString() });
+  res
+    .status(200)
+    .json({ status: "healthy", service: "Assets", timestamp: new Date().toISOString() });
 });
 
 // Mount asset routes
@@ -55,11 +57,11 @@ const bootstrap = async (): Promise<void> => {
     // Redis is initialized lazily on first use
     redis.on("ready", () => logger.info(commonMsg.redisReady));
 
-    app.listen(PORT, "0.0.0.0", () => {
-      logger.info(commonMsg.assetServiceRunning(PORT));
+    app.listen(PORT, () => {
+      logger.info(commonMsg.assetsServiceRunning(PORT));
     });
   } catch (error) {
-    logger.error(commonMsg.serviceFailed("Asset"), error);
+    logger.error(commonMsg.serviceFailed("Assets"), error);
     process.exit(1);
   }
 };

@@ -9,7 +9,7 @@ import {
   deleteAsset,
   uploadVersion as uploadVersionService,
 } from "../services/assets";
-import { sendSuccessResponse, CustomError, statusCode, assetMsg } from "@dam/shared";
+import { sendSuccessResponse, CustomError, statusCode, assetMsg, minioClient } from "@dam/shared";
 
 /**
  * POST /upload — Handles multipart file upload → MinIO → DB records → RabbitMQ event.
@@ -167,7 +167,11 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
 /**
  * POST /:id/version — Uploads a new version of an existing asset.
  */
-export const uploadVersion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const uploadVersion = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await uploadVersionService(req);
 
@@ -181,6 +185,29 @@ export const uploadVersion = async (req: Request, res: Response, next: NextFunct
       message: assetMsg.updateSuccess,
       data: result,
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * GET /:id/download — Streams the asset file to the client.
+ */
+export const download = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await getAsset(req);
+
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
+
+    const asset = result as any;
+    const stream = await minioClient.getObject("assets", asset.storageKey);
+
+    res.setHeader("Content-Type", asset.mimetype);
+    res.setHeader("Content-Disposition", `attachment; filename="${asset.filename}"`);
+
+    stream.pipe(res);
   } catch (error) {
     return next(error);
   }

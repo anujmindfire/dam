@@ -44,7 +44,7 @@ export const loginUsers = async (req: RequestWithUser) => {
         tokenVersion: userData.tokenVersion,
       },
       dotEnv.accessToken as string,
-      { expiresIn: "15m" }, // Shorter expiry for accessToken
+      { expiresIn: "24h" },
     );
 
     const refreshToken = jwt.sign(
@@ -87,7 +87,7 @@ export const logoutUsers = async (req: RequestWithUser) => {
       userModel,
       { id: req?.user?.id },
       {
-        tokenVersion: sequelize.literal("tokenVersion + 1"),
+        tokenVersion: sequelize.literal('"tokenVersion" + 1'),
         refreshToken: null,
       },
     );

@@ -2,7 +2,7 @@
   "name": "@dam/dashboard",
   "private": true,
   "version": "1.0.0",
-  "description": "Digital Asset Management UI (Assets, Dashboard, Auth)",
+  "description": "Digital Assets Management UI (Assets, Dashboard, Auth)",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,19 +13,23 @@
   "dependencies": {
     "@dam/shared": "workspace:*",
     "axios": "^1.14.0",
+    "formik": "^2.4.9",
     "framer-motion": "^11.15.0",
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",
-    "recharts": "^2.15.0"
+    "recharts": "^2.15.0",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^24.12.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
     "tailwindcss": "^4.0.0",
+    "typescript": "^5.4.5",
     "vite": "^6.0.4"
   }
 }

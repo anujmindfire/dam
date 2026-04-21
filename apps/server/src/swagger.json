@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Digital Asset Management (DAM) API",
+    "title": "Digital Assets Management (DAM) API",
     "version": "1.0.0",
     "description": "Comprehensive REST API for managing digital assets, collections, usage tracking, and analytics."
   },
@@ -34,7 +34,7 @@
           "message": { "type": "string" }
         }
       },
-      "Asset": {
+      "Assets": {
         "type": "object",
         "properties": {
           "id": { "type": "integer" },
@@ -67,7 +67,7 @@
         "type": "object",
         "properties": {
           "id": { "type": "integer" },
-          "assetId": { "type": "string" },
+          "assetsId": { "type": "string" },
           "action": { "type": "string" },
           "context": { "type": "object" },
           "loggedAt": { "type": "string", "format": "date-time" }
@@ -80,9 +80,9 @@
     { "name": "Auth", "description": "Authentication endpoints" },
     { "name": "Users", "description": "User management" },
     { "name": "Assets", "description": "Digital asset lifecycle management" },
-    { "name": "Collections", "description": "Asset grouping and organization" },
-    { "name": "Approval", "description": "Asset approval workflow and history" },
-    { "name": "Metadata", "description": "Asset metadata enrichment and management" },
+    { "name": "Collections", "description": " grouping and organization" },
+    { "name": "Approval", "description": " approval workflow and history" },
+    { "name": "Metadata", "description": " metadata enrichment and management" },
     { "name": "System", "description": "Global health and diagnostic endpoints" }
   ],
   "paths": {
@@ -189,7 +189,7 @@
           }
         },
         "responses": {
-          "201": { "description": "Asset uploaded and record created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Asset" } } } },
+          "201": { "description": " uploaded and record created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/" } } } },
           "400": { "description": "No file provided" }
         }
       }
@@ -220,7 +220,7 @@
           }
         },
         "responses": {
-          "201": { "description": "Asset created" }
+          "201": { "description": " created" }
         }
       },
       "get": {
@@ -246,8 +246,8 @@
         "summary": "Get asset by ID with metadata and versions",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "responses": {
-          "200": { "description": "Asset found" },
-          "404": { "description": "Asset not found" }
+          "200": { "description": " found" },
+          "404": { "description": " not found" }
         }
       },
       "patch": {
@@ -270,7 +270,7 @@
           }
         },
         "responses": {
-          "200": { "description": "Asset updated" }
+          "200": { "description": " updated" }
         }
       },
       "delete": {
@@ -278,8 +278,8 @@
         "summary": "Delete an asset",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "responses": {
-          "200": { "description": "Asset deleted" },
-          "404": { "description": "Asset not found" }
+          "200": { "description": " deleted" },
+          "404": { "description": " not found" }
         }
       }
     },
@@ -388,8 +388,8 @@
         "tags": ["Collections"],
         "summary": "Add an asset to a collection",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["assetId"], "properties": { "assetId": { "type": "integer" } } } } } },
-        "responses": { "200": { "description": "Asset added to collection" } }
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["assetsId"], "properties": { "assetsId": { "type": "integer" } } } } } },
+        "responses": { "200": { "description": " added to collection" } }
       }
     },
     "/api/v1/stats/overview": {
@@ -416,9 +416,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["assetId", "action"],
+                "required": ["assetsId", "action"],
                 "properties": {
-                  "assetId": { "type": "integer" },
+                  "assetsId": { "type": "integer" },
                   "action": { "type": "string", "enum": ["view","download","share","update"] },
                   "context": { "type": "object" }
                 }
@@ -451,9 +451,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["assetId"],
+                "required": ["assetsId"],
                 "properties": {
-                  "assetId": { "type": "integer" },
+                  "assetsId": { "type": "integer" },
                   "priority": { "type": "string", "enum": ["low", "normal", "high"], "default": "normal" },
                   "assignedTo": { "type": "array", "items": { "type": "integer" } }
                 }
@@ -490,7 +490,7 @@
         "requestBody": {
           "content": { "application/json": { "schema": { "type": "object", "properties": { "comments": { "type": "string" } } } } }
         },
-        "responses": { "200": { "description": "Asset approved" } }
+        "responses": { "200": { "description": " approved" } }
       }
     },
     "/api/v1/approval/{id}/reject": {
@@ -502,15 +502,15 @@
           "required": true,
           "content": { "application/json": { "schema": { "type": "object", "required": ["reason"], "properties": { "reason": { "type": "string" } } } } }
         },
-        "responses": { "200": { "description": "Asset rejected" } }
+        "responses": { "200": { "description": " rejected" } }
       }
     },
-    "/api/v1/approval/assets/{assetId}/history": {
+    "/api/v1/approval/assets/{assetsId}/history": {
       "get": {
         "tags": ["Approval"],
         "summary": "Get approval history for an asset",
         "parameters": [
-          { "name": "assetId", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "assetsId", "in": "path", "required": true, "schema": { "type": "integer" } },
           { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
           { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } }
         ],
@@ -536,13 +536,13 @@
       "get": {
         "tags": ["Metadata"],
         "summary": "Get metadata for an asset",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Asset ID", "schema": { "type": "integer" } }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": " ID", "schema": { "type": "integer" } }],
         "responses": { "200": { "description": "Metadata found" } }
       },
       "patch": {
         "tags": ["Metadata"],
         "summary": "Update asset metadata",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Asset ID", "schema": { "type": "integer" } }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": " ID", "schema": { "type": "integer" } }],
         "requestBody": {
           "content": { "application/json": { "schema": { "type": "object", "properties": { "tags": { "type": "array", "items": { "type": "string" } }, "description": { "type": "string" } } } } }
         },
@@ -559,9 +559,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["assetId", "action"],
+                "required": ["assetsId", "action"],
                 "properties": {
-                  "assetId": { "type": "integer" },
+                  "assetsId": { "type": "integer" },
                   "action": { "type": "string", "enum": ["view","download","share","update"] },
                   "context": { "type": "object" }
                 }
@@ -587,7 +587,7 @@
       "get": {
         "tags": ["Statistics"],
         "summary": "Get usage logs for a specific asset",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "Asset ID", "schema": { "type": "integer" } }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": " ID", "schema": { "type": "integer" } }],
         "responses": { "200": { "description": "Usage logs retrieved" } }
       }
     },

@@ -70,7 +70,7 @@ describe("Statistics & Analytics API", () => {
     it("should reject unauthenticated usage tracking", async () => {
       const res = await request(app)
         .post("/api/v1/stats/track")
-        .send({ assetId: 1, action: "view" });
+        .send({ assetsId: 1, action: "view" });
       expect([401, 403]).toContain(res.statusCode);
     });
 
@@ -78,7 +78,7 @@ describe("Statistics & Analytics API", () => {
       const res = await request(app)
         .post("/api/v1/stats/track")
         .set("Authorization", MOCK_TOKEN)
-        .send({ assetId: 1, action: "view", context: { source: "dashboard" } });
+        .send({ assetsId: 1, action: "view", context: { source: "dashboard" } });
       // 401/403 in unit tests (token not valid); 201 in integration
       expect([201, 401, 403, 500]).toContain(res.statusCode);
     });

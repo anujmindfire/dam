@@ -25,6 +25,7 @@ export default [
         ...globals.browser,
         ...globals.node,
         ...globals.es2021,
+        ...globals.jest,
       },
     },
     settings: {
@@ -99,7 +100,7 @@ export default [
       ],
       "no-useless-catch": "off",
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "react/no-unescaped-entities": "off",
       "react/react-in-jsx-scope": "off",
     },

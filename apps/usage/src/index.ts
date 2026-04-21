@@ -37,7 +37,9 @@ app.use(requestLogger as unknown as express.RequestHandler);
 app.use(rateLimit() as unknown as express.RequestHandler);
 
 app.get(`${baseRoute}/health`, (_req, res) => {
-  res.status(200).json({ status: "healthy", service: "Usage", timestamp: new Date().toISOString() });
+  res
+    .status(200)
+    .json({ status: "healthy", service: "Usage", timestamp: new Date().toISOString() });
 });
 
 // Mount routes
@@ -56,10 +58,10 @@ const startConsumers = async (): Promise<void> => {
     logger.info(commonMsg.rmqConnected);
 
     // Consumer for asset creation - initialize usage tracking
-    await consumeMessage("asset_created", async (payload: any) => {
+    await consumeMessage("assets_created", async (payload: any) => {
       try {
-        logger.info(consumerMsg.usageAssetCreated(payload.assetId));
-        logger.info(consumerMsg.usageAssetCreatedSuccess(payload.assetId));
+        logger.info(consumerMsg.usageAssetCreated(payload.assetsId));
+        logger.info(consumerMsg.usageAssetCreatedSuccess(payload.assetsId));
       } catch (error) {
         logger.error(consumerMsg.usageAssetCreatedError, error);
         throw error;
@@ -67,19 +69,19 @@ const startConsumers = async (): Promise<void> => {
     });
 
     // Consumer for asset approval
-    await consumeMessage("asset_approved", async (payload: any) => {
+    await consumeMessage("assets_approved", async (payload: any) => {
       try {
-        logger.info(consumerMsg.usageAssetApproved(payload.assetId));
+        logger.info(consumerMsg.usageAssetApproved(payload.assetsId));
       } catch (error) {
         logger.error(consumerMsg.usageAssetApprovedError, error);
       }
     });
 
     // Consumer for asset deletion
-    await consumeMessage("asset_deleted", async (payload: any) => {
+    await consumeMessage("assets_deleted", async (payload: any) => {
       try {
-        logger.info(consumerMsg.usageAssetDeleted(payload.assetId));
-        logger.info(consumerMsg.usageAssetDeletedSuccess(payload.assetId));
+        logger.info(consumerMsg.usageAssetDeleted(payload.assetsId));
+        logger.info(consumerMsg.usageAssetDeletedSuccess(payload.assetsId));
       } catch (error) {
         logger.error(consumerMsg.usageAssetDeletedError, error);
       }
@@ -102,7 +104,7 @@ const bootstrap = async (): Promise<void> => {
     // Start consuming messages
     await startConsumers();
 
-    app.listen(PORT, "0.0.0.0", () => {
+    app.listen(PORT, () => {
       logger.info(commonMsg.usageServiceRunning(PORT));
     });
   } catch (error) {

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import type { ToastContextTypeProps, ToastItemProps, ToastTypeProps } from "../../types/index";
-import Toast from "../ui/Toast";
+import Toast from "./Toast";
 
 const ToastContext = createContext<ToastContextTypeProps | undefined>(undefined);
 

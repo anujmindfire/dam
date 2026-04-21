@@ -8,6 +8,7 @@ import {
   transitionStatus,
   remove,
   uploadVersion,
+  download,
 } from "../controllers/assets";
 import { upload } from "../config/upload";
 import { verifyToken } from "../config/verifyToken";
@@ -30,6 +31,7 @@ apiRoutes.get(updateRoute, getById);
 apiRoutes.patch(updateRoute, update);
 apiRoutes.patch(`${updateRoute}${apiUrl.status}`, validateStatusTransition, transitionStatus);
 apiRoutes.post(`${updateRoute}${apiUrl.version}`, upload.single("file"), uploadVersion);
+apiRoutes.get(`${updateRoute}/download`, download);
 apiRoutes.delete(updateRoute, remove);
 
 export default apiRoutes;

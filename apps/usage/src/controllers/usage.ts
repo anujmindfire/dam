@@ -1,7 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { trackUsage, getAssetUsage, getAllUsage } from "../services/usage";
 import { getSystemOverview, getComplianceReport } from "../services/analytics";
-import { sendSuccessResponse, CustomError, statusCode, commonMsg, usageMsg, publishMessage, redis } from "@dam/shared";
+import {
+  sendSuccessResponse,
+  CustomError,
+  statusCode,
+  commonMsg,
+  usageMsg,
+  publishMessage,
+  redis,
+} from "@dam/shared";
 
 /**
  * POST /usage/track — Logs an asset usage event.
@@ -22,7 +30,7 @@ export const track = async (req: Request, res: Response, next: NextFunction): Pr
 };
 
 /**
- * GET /usage/:assetId — Returns paginated usage logs for a specific asset.
+ * GET /usage/:assetsId — Returns paginated usage logs for a specific asset.
  */
 export const getByAsset = async (
   req: Request,
@@ -113,8 +121,13 @@ export const report = async (req: Request, res: Response, next: NextFunction): P
 
     if (!cachedReport) {
       // If no report cached, trigger one and inform user
-      await publishMessage("report_generation", { requestedBy: req.user?.id });
-      return next(new CustomError("Report is being generated. Please try again in a few moments.", statusCode.accepted));
+      await publishMessage("report_generation", { requestedBy: (req as any).user?.id });
+      return next(
+        new CustomError(
+          "Report is being generated. Please try again in a few moments.",
+          statusCode.accepted,
+        ),
+      );
     }
 
     sendSuccessResponse({
@@ -131,9 +144,13 @@ export const report = async (req: Request, res: Response, next: NextFunction): P
 /**
  * POST /analytics/report/trigger — Manually triggers a background report generation jobs.
  */
-export const triggerReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const triggerReport = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
-    await publishMessage("report_generation", { requestedBy: req.user?.id });
+    await publishMessage("report_generation", { requestedBy: (req as any).user?.id });
 
     sendSuccessResponse({
       res,

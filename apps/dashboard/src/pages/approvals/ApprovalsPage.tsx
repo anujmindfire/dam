@@ -1,136 +1,171 @@
-import React, { useState, useEffect } from "react";
-import { CheckSquare, Check, X, Eye, Clock } from "lucide-react";
-import { approvalService } from "../../api";
-import { useToast } from "../../components/Providers/ToastProvider";
+import React, { useEffect, useState } from "react";
+import { CheckCircle2, XCircle, Clock, Eye, RefreshCcw } from "lucide-react";
+import { approvalService } from "../../services";
+import { useToast } from "../../components/ui/ToastProvider";
 import { Button } from "../../components/ui/Button";
-import { Card, CardContent } from "../../components/ui/Card";
-import { PageSkeleton } from "../../components/ui/Loader";
-import type { ApprovalRequestProps } from "../../types";
+import { useNavigate } from "react-router-dom";
+import { AppList } from "../../components/ui/AppList";
+import type { Column, ApprovalRequestProps } from "../../types";
 
 const ApprovalsPage: React.FC = () => {
   const [requests, setRequests] = useState<ApprovalRequestProps[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
+
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [page, limit, search]);
 
   const fetchRequests = async () => {
     setIsLoading(true);
     try {
-      const res = await approvalService.list();
-      setRequests(res.data.data.result || []);
+      const res = await approvalService.list({
+        status: "pending",
+        page,
+        limit,
+        search: search || undefined,
+      });
+      const data = res.data?.data?.result || res.data?.data || [];
+      const count = res.data?.totalCount || 0;
+      setRequests(data);
+      setTotalCount(count);
     } catch (error) {
-      toast("Failed to load approval requests", "error");
+      toast("Failed to load review queue", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAction = async (id: string, action: "approve" | "reject") => {
+  const handleApprove = async (id: string) => {
     try {
-      if (action === "approve") await approvalService.approve(id);
-      else await approvalService.reject(id);
-
-      toast(`Asset ${action}d successfully`, "success");
+      await approvalService.approve(id);
+      toast("Review verified and approved", "success");
       fetchRequests();
     } catch (error) {
-      toast(`Action failed. Please try again.`, "error");
+      toast("Verification failed", "error");
     }
   };
 
-  if (isLoading) return <PageSkeleton />;
+  const handleReject = async (id: string) => {
+    try {
+      await approvalService.reject(id);
+      toast("Review rejected", "success");
+      fetchRequests();
+    } catch (error) {
+      toast("Rejection failed", "error");
+    }
+  };
+
+  const columns: Column[] = [
+    { id: "id", label: "Request ID", width: 25 },
+    { id: "assetsId", label: "Assets", width: 25 },
+    { id: "requesterName", label: "Requested by", width: 20 },
+    { id: "status", label: "Status", width: 15, align: "center" },
+    { id: "actions", label: "Actions", width: 15, align: "center" },
+  ];
+
+  const renderRow = (req: ApprovalRequestProps, columnId: string) => {
+    switch (columnId) {
+      case "id":
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100 shrink-0">
+              <Clock size={16} />
+            </div>
+            <span className="font-bold text-[var(--text-color)]">#{req.id.slice(0, 8)}</span>
+          </div>
+        );
+      case "assetsId":
+        return (
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            ID: {req.assetsId.slice(0, 8)}
+          </span>
+        );
+      case "requesterName":
+        return (
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">
+            {req.requesterName || "Internal System"}
+          </span>
+        );
+      case "status":
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">
+              Pending
+            </span>
+          </div>
+        );
+      case "actions":
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(`/assets/${req.assetsId}`)}
+              className="w-9 h-9 p-0 text-slate-400 hover:text-[var(--primary)]"
+            >
+              <Eye size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => handleApprove(req.id)}
+              className="w-9 h-9 p-0 text-slate-400 hover:text-emerald-500"
+            >
+              <CheckCircle2 size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => handleReject(req.id)}
+              className="w-9 h-9 p-0 text-slate-400 hover:text-rose-500"
+            >
+              <XCircle size={16} />
+            </Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const syncButton = (
+    <Button variant="outline" onClick={fetchRequests} className="gap-2">
+      <RefreshCcw size={16} /> Sync Queue
+    </Button>
+  );
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Review Inbox</h1>
-        <p className="text-slate-400 mt-1">Pending approvals and lifecycle transitions</p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-[var(--text-color)] tracking-tight italic">
+            Review Inbox
+          </h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">
+            Approve or reject assets pending verification
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {requests.length > 0 ? (
-          requests.map((req) => (
-            <Card
-              key={req.id}
-              className="border-white/5 bg-slate-900/40 hover:bg-white/[0.05] transition-all overflow-hidden"
-            >
-              <CardContent className="p-0">
-                <div className="grid grid-cols-1 lg:grid-cols-6 items-center">
-                  <div className="p-6 lg:col-span-2 flex items-center gap-4 border-r border-white/5">
-                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
-                      <CheckSquare size={24} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-white font-bold truncate">Request #{req.id.slice(0, 8)}</p>
-                      <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1.5 line-clamp-1">
-                        <Clock size={12} /> {new Date(req.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-6 lg:col-span-2 border-r border-white/5">
-                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">
-                      Status
-                    </p>
-                    <div
-                      className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                        req.status === "approved"
-                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                          : req.status === "rejected"
-                            ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                            : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                      }`}
-                    >
-                      {req.status}
-                    </div>
-                  </div>
-
-                  <div className="p-6 lg:col-span-2 flex items-center justify-end gap-3 bg-white/[0.01]">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-slate-400 hover:text-white gap-2"
-                    >
-                      <Eye size={16} /> Preview
-                    </Button>
-                    {req.status === "pending" && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAction(req.id, "approve")}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white border-none h-9 px-4 rounded-xl gap-2 font-bold uppercase tracking-widest text-[9px]"
-                        >
-                          <Check size={14} /> Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleAction(req.id, "reject")}
-                          className="h-9 px-4 rounded-xl gap-2 font-bold uppercase tracking-widest text-[9px]"
-                        >
-                          <X size={14} /> Reject
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Card className="py-20 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-slate-950 flex items-center justify-center text-emerald-500/20 mb-4 border border-white/5 shadow-inner">
-              <Check size={32} />
-            </div>
-            <h3 className="text-white font-bold">Review Queue Clear</h3>
-            <p className="text-slate-500 text-sm mt-1 max-w-xs">
-              All assets have been successfully moved through the governance pipeline.
-            </p>
-          </Card>
-        )}
-      </div>
+      <AppList
+        columns={columns}
+        rows={requests}
+        count={totalCount}
+        page={page}
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
+        loading={isLoading}
+        onSearch={setSearch}
+        addButton={syncButton}
+        renderRow={renderRow}
+      />
     </div>
   );
 };

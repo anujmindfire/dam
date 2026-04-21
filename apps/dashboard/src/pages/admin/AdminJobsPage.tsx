@@ -1,191 +1,190 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Zap, Search, RefreshCw } from "lucide-react";
-import { useToast } from "../../components/Providers/ToastProvider";
+import React, { useEffect, useState } from "react";
+import { Zap, Clock, CheckCircle2, AlertCircle, RefreshCcw } from "lucide-react";
+import { useToast } from "../../components/ui/ToastProvider";
+import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
-import { Card, CardContent } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
 import { PageSkeleton } from "../../components/ui/Loader";
-import { usageService } from "../../api";
-import type { SystemTasksProps } from "../../types";
+import api from "../../services";
 
 const AdminJobsPage: React.FC = () => {
-  const [selectedJob, setSelectedJob] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [jobs, setJobs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [jobs, setJobs] = useState<SystemTasksProps[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      setIsLoading(true);
-      try {
-        const res = await usageService.getLogs();
-        const realJobs: SystemTasksProps[] = res.data.data.map((log: any, i: number) => ({
-          id: `JOB-${log.id}`,
-          type: log.action.toUpperCase().replace("_", " "),
-          asset: log.assetId || "All Systems",
-          status: i % 2 === 0 ? "Completed" : "Running",
-          started: new Date(log.loggedAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          duration: i % 2 === 0 ? "15m" : "--",
-          progress: i % 2 === 0 ? 100 : 45,
-          details: `System event: ${log.action} performed. Context: ${JSON.stringify(log.context)}`,
-        }));
-        setJobs(realJobs);
-      } catch (error) {
-        toast("Failed to load system tasks", "error");
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchJobs();
   }, []);
 
-  const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
-      const matchesSearch =
-        job.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.asset.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.type.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = filterStatus === "all" || job.status.toLowerCase() === filterStatus;
-      return matchesSearch && matchesStatus;
-    });
-  }, [jobs, searchQuery, filterStatus]);
+  const fetchJobs = async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.get("/jobs");
+      setJobs(res.data.data || []);
+    } catch (error) {
+      toast("Failed to load background operations", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const getStatusStyles = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Running":
-        return "text-blue-400 bg-blue-500/10 border-blue-500/20";
-      case "Completed":
-        return "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
-      case "Failed":
-        return "text-rose-400 bg-rose-500/10 border-rose-500/20";
+      case "completed":
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-600 border border-emerald-100">
+            Success
+          </span>
+        );
+      case "processing":
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-50 text-blue-600 border border-blue-100 animate-pulse">
+            Active
+          </span>
+        );
+      case "queued":
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-600 border border-amber-100">
+            Queued
+          </span>
+        );
       default:
-        return "text-slate-500 bg-slate-500/5";
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-50 text-slate-500 border border-slate-100">
+            Unknown
+          </span>
+        );
     }
   };
 
   if (isLoading) return <PageSkeleton />;
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Background Processing</h1>
-          <p className="text-slate-400 mt-1">Job Type | Assets | Status | Started | Duration</p>
+          <h1 className="text-3xl font-bold text-[var(--text-color)] tracking-tight italic">
+            Background Processing
+          </h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">
+            System workers and event-driven operations
+          </p>
         </div>
-        <Button
-          variant="outline"
-          className="gap-2 shrink-0 border-white/10"
-          onClick={() => window.location.reload()}
-        >
-          <RefreshCw size={18} /> Refresh Pipeline
+        <Button variant="outline" onClick={fetchJobs} className="gap-2">
+          <RefreshCcw size={16} /> Refresh Tasks
         </Button>
       </div>
 
-      {/* Control Bar */}
-      <Card className="border-none bg-white/5 shadow-none">
-        <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-full md:max-w-md">
-            <Search
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
-              size={18}
-            />
-            <Input
-              placeholder="Filter by Type or Assets..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11"
-            />
-          </div>
-          <select
-            className="bg-slate-900/50 border border-white/5 text-slate-300 text-sm rounded-xl px-4 py-2.5 outline-none w-full md:w-[200px]"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="running">Running</option>
-            <option value="completed">Done</option>
-            <option value="failed">Failed</option>
-          </select>
-        </CardContent>
-      </Card>
-
-      {/* Jobs Table Layout */}
-      <Card className="border-white/5 bg-slate-900/40">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Job Type
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Assets
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Started
-                  </th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">
-                    Duration
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredJobs.length > 0 ? (
-                  filteredJobs.map((job) => (
-                    <tr
-                      key={job.id}
-                      className="group hover:bg-white/[0.02] cursor-pointer"
-                      onClick={() => setSelectedJob(selectedJob === job.id ? null : job.id)}
-                    >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <Card>
+            <Card.Header className="flex items-center gap-3">
+              <Clock size={18} className="text-[var(--primary)]" />
+              <Card.HeaderTitle>Active Tasks Queue</Card.HeaderTitle>
+            </Card.Header>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 border-b border-slate-100">
+                  <tr>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Operation
+                    </th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Target Assets
+                    </th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">
+                      Age
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {jobs.map((job) => (
+                    <tr key={job.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-slate-950 border border-white/5 text-slate-500 group-hover:text-blue-400 group-hover:border-blue-500/20 transition-all">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-[var(--primary)] border border-indigo-100">
                             <Zap size={14} />
                           </div>
-                          <span className="text-sm font-bold text-white uppercase tracking-tight">
+                          <span className="text-sm font-bold text-[var(--text-color)]">
                             {job.type}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span className="text-sm text-slate-400 font-medium">{job.asset}</span>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">
+                          {job.target}
+                        </span>
                       </td>
-                      <td className="px-6 py-5">
-                        <div
-                          className={`inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${getStatusStyles(job.status)}`}
-                        >
-                          {job.status}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-sm text-slate-400">{job.started}</td>
-                      <td className="px-6 py-5 text-sm text-white text-right font-medium">
-                        {job.duration}
+                      <td className="px-6 py-5">{getStatusBadge(job.status)}</td>
+                      <td className="px-6 py-5 text-right">
+                        <span className="text-xs font-bold text-slate-400 uppercase">
+                          {job.time}
+                        </span>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-20 text-center">
-                      <Zap size={32} className="text-slate-800 mx-auto mb-3" />
-                      <p className="text-slate-500 text-sm">No active pipeline events found.</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+
+        <div className="space-y-8">
+          <Card className="bg-indigo-600 border-none shadow-xl shadow-indigo-200 overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Zap size={120} />
+            </div>
+            <Card.Body className="relative z-10 text-white">
+              <h3 className="text-xl font-bold mb-2">Worker Status</h3>
+              <p className="text-indigo-100 text-sm font-medium mb-6">
+                Internal systems operating at peak efficiency
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-white/10 rounded-xl border border-white/10">
+                  <span className="text-xs font-bold uppercase tracking-widest">Throughput</span>
+                  <span className="text-lg font-bold">1.2 GB/s</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white/10 rounded-xl border border-white/10">
+                  <span className="text-xs font-bold uppercase tracking-widest">Active nodes</span>
+                  <span className="text-lg font-bold">8 / 12</span>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+
+          <Card>
+            <Card.Header>
+              <Card.HeaderTitle>Health Overview</Card.HeaderTitle>
+            </Card.Header>
+            <Card.Body className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+                  <CheckCircle2 size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Message Queue
+                  </p>
+                  <p className="text-sm font-bold text-emerald-600 uppercase">Operational</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100">
+                  <AlertCircle size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Cache Layer
+                  </p>
+                  <p className="text-sm font-bold text-amber-600 uppercase">Warning (Memory)</p>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

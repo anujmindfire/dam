@@ -3,6 +3,7 @@ import auth from "./auth";
 import user from "./user";
 import collection from "./collection";
 import approval from "./approval";
+import job from "./job";
 import { proxyRequest } from "../utils/proxy";
 import { apiUrl, baseRoute, sendSuccessResponse, statusCode, dotEnv, commonMsg } from "@dam/shared";
 
@@ -34,6 +35,7 @@ router.all(`${baseRoute}${apiUrl.assets}*`, proxyRequest(dotEnv.assetsHost, dotE
 
 /****** APPROVAL (Gateway Local) ******/
 router.use(`${baseRoute}${apiUrl.approval}`, approval);
+router.use(`${baseRoute}/jobs`, job);
 
 /****** METADATA (Proxy to Microservice) ******/
 router.all(

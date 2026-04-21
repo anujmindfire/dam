@@ -13,7 +13,7 @@ class Collection
   public id!: number;
   public name!: string;
   public description!: string | null;
-  public owner!: string;
+  public owner!: number;
   public parentId!: number | null;
 
   public readonly createdAt!: Date;
@@ -36,7 +36,7 @@ Collection.init(
       allowNull: true,
     },
     owner: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     parentId: {
@@ -58,4 +58,4 @@ Collection.init(
   },
 );
 
-export default Collection;
+export { Collection };

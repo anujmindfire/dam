@@ -44,7 +44,7 @@ export interface AssetsProps {
   id: number;
   filename: string;
   storageKey: string;
-  owner: string | null;
+  owner: number | null;
   size: number | null;
   mimetype: string | null;
   status:
@@ -68,7 +68,7 @@ export interface AssetsProps {
 
 export interface MetadataProps {
   id: number;
-  assetId: string;
+  assetsId: string;
   tags: string[];
   department: string | null;
   analysisResults?: any;
@@ -82,7 +82,7 @@ export interface MetadataProps {
 
 export interface UsageLogProps {
   id: number;
-  assetId: string;
+  assetsId: string;
   action: string;
   context: any;
   loggedAt: Date;
@@ -96,7 +96,7 @@ export interface AssetData {
   id: number;
   filename: string;
   storageKey: string;
-  owner: string;
+  owner: number;
   size: number;
   mimetype: string;
   department?: string;
@@ -113,7 +113,7 @@ export interface CollectionProps {
   id: number;
   name: string;
   description: string | null;
-  owner: string;
+  owner: number;
   parentId: number | null;
 }
 
@@ -121,14 +121,14 @@ export interface CollectionProps {
  * Represents a specific version of a digital asset.
  */
 
-export interface AssetVersionProps {
+export interface VersionProps {
   id: number;
-  assetId: number;
+  assetsId: number;
   versionNumber: number;
   storageKey: string;
   size: number;
   note: string | null;
-  author: string;
+  author: number;
 }
 
 /**
@@ -136,7 +136,7 @@ export interface AssetVersionProps {
  */
 
 export interface VersionData {
-  assetId: string;
+  assetsId: string;
   versionNumber: number;
   storageKey: string;
   size: number;
@@ -197,9 +197,9 @@ export interface TokenPayloadProps {
 
 export interface ApprovalProps {
   id: number;
-  assetId: number;
-  requestedBy: string;
-  approvedBy?: string | null;
+  assetsId: number;
+  requestedBy: number;
+  approvedBy?: number | null;
   status: "pending" | "approved" | "rejected";
   reason?: string | null;
   priority: "low" | "normal" | "high";
@@ -211,7 +211,7 @@ export interface ApprovalProps {
 export interface ApprovalCommentProps {
   id: number;
   approvalId: number;
-  userId: string;
+  userId: number;
   message: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -238,9 +238,23 @@ export interface SystemReportProps {
  */
 export interface RequestWithUser extends Request {
   user?: {
-    id: string;
+    id: number;
     email: string;
     tokenVersion: number;
     roleId: number;
   };
+}
+
+/**
+ * Represents a job in the system.
+ */
+export interface JobProps {
+  id: string;
+  type: string;
+  target: string;
+  status: "queued" | "processing" | "completed" | "failed";
+  progress: number;
+  message?: string;
+  startedAt?: Date;
+  completedAt?: Date;
 }

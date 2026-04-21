@@ -1,5 +1,4 @@
-import assetModel from "../models/assets";
-import metadataModel from "../models/metadata";
+import { assetsModel, metadataModel } from "../models";
 import sequelize from "../config/sequelizeConnection";
 import { ModelStatic, Model } from "sequelize";
 import { findAll } from "../repositories";
@@ -15,17 +14,17 @@ import { Op } from "sequelize";
 export const generateSystemReport = async (): Promise<SystemReportProps> => {
   try {
     // 1. Fetch raw data for aggregation
-    const totalAssets = await assetModel.count();
+    const totalAssets = await assetsModel.count();
 
     const { totalCount: duplicates } = await findAll(metadataModel as ModelStatic<Model<any>>, {
       where: { isDuplicate: true },
     });
 
-    const { totalCount: expired } = await findAll(assetModel as ModelStatic<Model<any>>, {
+    const { totalCount: expired } = await findAll(assetsModel as ModelStatic<Model<any>>, {
       where: { status: "expired" },
     });
 
-    const { result: statusDistribution } = await findAll(assetModel as ModelStatic<Model<any>>, {
+    const { result: statusDistribution } = await findAll(assetsModel as ModelStatic<Model<any>>, {
       attributes: ["status", [sequelize.fn("COUNT", sequelize.col("id")), "count"]],
       group: ["status"],
       raw: true,
@@ -34,7 +33,7 @@ export const generateSystemReport = async (): Promise<SystemReportProps> => {
     // 2. Freshness check: Assets uploaded in the last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const { totalCount: freshAssets } = await findAll(assetModel as ModelStatic<Model<any>>, {
+    const { totalCount: freshAssets } = await findAll(assetsModel as ModelStatic<Model<any>>, {
       where: { createdAt: { [Op.gte]: thirtyDaysAgo } },
     });
 

@@ -43,18 +43,24 @@ export interface AssetsDetailProps extends AssetsProps {
   department: string;
   usageRights?: string;
   expiryDate?: string;
-  metadata?: {
-    tags?: string[];
-    department?: string;
-    [key: string]: any;
-  };
+  metadata?: MetadataProps;
   versions: AssetsVersionProps[];
+}
+
+export interface MetadataProps {
+  id?: string;
+  assetsId?: string;
+  tags?: string[];
+  department?: string;
+  [key: string]: any;
 }
 
 // --- Analytics & Dashboard Types ---
 
 export interface DashboardStatsProps {
   totalAssets: number;
+  totalStorage: number;
+  activeJobsCount: number;
   duplicateCount: number;
   expiredCount: number;
   complianceScore: number;
@@ -98,13 +104,21 @@ export interface SystemTasksProps {
 }
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "success" | "outline" | "ghost";
   size?: "sm" | "md" | "lg" | "icon";
+  fullWidth?: boolean;
   isLoading?: boolean;
 }
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
+  icon?: React.ReactNode;
+  label?: string;
+}
+
+export interface HeaderProps {
+  onMenuClick: () => void;
+  collapsed?: boolean;
 }
 
 export type ToastTypeProps = "success" | "error" | "info" | "warning" | "loading";
@@ -133,14 +147,11 @@ export interface LoaderProps {
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export interface LayoutProps {
   children: React.ReactNode;
-}
-
-export interface HeaderProps {
-  onMenuClick: () => void;
 }
 
 export interface SidebarProps {
@@ -151,6 +162,7 @@ export interface SidebarProps {
 export interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 // --- Collection Types ---
@@ -158,18 +170,59 @@ export interface CollectionsProps {
   id: string;
   name: string;
   description?: string;
+  parentId?: string | number | null;
   ownerId: number;
   assetCount?: number;
+  subCollections?: CollectionsProps[];
+  assets?: AssetsProps[];
   createdAt: string;
 }
 
 // --- Approval Types ---
 export interface ApprovalRequestProps {
   id: string;
-  assetId: string;
+  assetsId: string;
   requesterId: number;
   status: "pending" | "approved" | "rejected";
   comments?: string;
   createdAt: string;
   asset?: AssetsProps;
+  requesterName?: string;
+}
+
+export interface ApprovalHistoryProps {
+  id: string;
+  assetsId: string;
+  status: string;
+  comments?: string;
+  createdAt: string;
+}
+
+// --- AppList Types ---
+export interface Column {
+  id: string;
+  label: string;
+  width?: number;
+  align?: "left" | "center" | "right";
+  sortable?: boolean;
+}
+
+export interface AppListProps<T> {
+  columns: Column[];
+  rows: T[];
+  count: number;
+  page: number;
+  setPage: (page: number) => void;
+  limit: number;
+  setLimit: (limit: number) => void;
+  loading?: boolean;
+  onSearch?: (query: string) => void;
+  addButton?: React.ReactNode;
+  renderRow: (row: T, columnId: string) => React.ReactNode;
+}
+
+export interface AddToCollectionModalProps {
+  assetsId: string;
+  isOpen: boolean;
+  onClose: () => void;
 }

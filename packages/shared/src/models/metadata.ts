@@ -11,7 +11,7 @@ export interface MetadataCreationAttributes extends Optional<
 
 class Metadata extends Model<MetadataProps, MetadataCreationAttributes> implements MetadataProps {
   public id!: number;
-  public assetId!: string;
+  public assetsId!: string;
   public tags!: string[];
   public department!: string | null;
   public analysisResults?: any;
@@ -29,7 +29,7 @@ Metadata.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    assetId: {
+    assetsId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -63,7 +63,7 @@ Metadata.init(
     indexes: [
       {
         unique: true,
-        fields: ["assetId"],
+        fields: ["assetsId"],
       },
       {
         fields: ["hash"],
@@ -72,4 +72,4 @@ Metadata.init(
   },
 );
 
-export default Metadata;
+export { Metadata };

@@ -48,7 +48,22 @@ export const connectRabbitMQ = async (retries = 5, delay = 2000): Promise<void> 
 export const publishMessage = async (queue: string, message: any): Promise<boolean> => {
   try {
     if (!channel) await connectRabbitMQ();
-    await channel!.assertQueue(queue, { durable: true });
+
+    const dlxExchange = `${queue}.dlx`;
+    const dlQueue = `${queue}.dlq`;
+
+    await channel!.assertExchange(dlxExchange, "direct", { durable: true });
+    await channel!.assertQueue(dlQueue, { durable: true });
+    await channel!.bindQueue(dlQueue, dlxExchange, queue);
+
+    await channel!.assertQueue(queue, {
+      durable: true,
+      arguments: {
+        "x-dead-letter-exchange": dlxExchange,
+        "x-dead-letter-routing-key": queue,
+      },
+    });
+
     return channel!.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
       persistent: true,
     });
