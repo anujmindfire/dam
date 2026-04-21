@@ -8,9 +8,9 @@ export interface ApprovalCreationAttributes extends Optional<ApprovalProps, "id"
 
 class Approval extends Model<ApprovalProps, ApprovalCreationAttributes> implements ApprovalProps {
   public id!: number;
-  public assetId!: number;
-  public requestedBy!: string;
-  public approvedBy?: string | null;
+  public assetsId!: number;
+  public requestedBy!: number;
+  public approvedBy?: number | null;
   public status!: "pending" | "approved" | "rejected";
   public reason?: string | null;
   public priority!: "low" | "normal" | "high";
@@ -26,7 +26,7 @@ Approval.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    assetId: {
+    assetsId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -35,11 +35,11 @@ Approval.init(
       },
     },
     requestedBy: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     approvedBy: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     status: {
@@ -67,7 +67,7 @@ Approval.init(
     freezeTableName: true,
     timestamps: true,
     indexes: [
-      { fields: ["assetId"] },
+      { fields: ["assetsId"] },
       { fields: ["status"] },
       { fields: ["requestedBy"] },
       { fields: ["approvedBy"] },
@@ -75,4 +75,4 @@ Approval.init(
   },
 );
 
-export default Approval;
+export { Approval };

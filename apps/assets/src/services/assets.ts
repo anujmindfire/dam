@@ -1,11 +1,11 @@
-import { Request } from "express";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import {
-  Asset,
-  assetModel,
+  Assets,
+  assetsModel,
   metadataModel,
   versionModel,
+  userModel,
   create,
   findAll,
   findOne,
@@ -21,15 +21,16 @@ import {
   globalFilter,
   globalPagination,
   cacheMsg as cacheKeys,
+  RequestWithUser,
 } from "@dam/shared";
 
 const BUCKET = "assets";
 
 /**
- * Internal helper to save Asset, Metadata, and Version records,
+ * Internal helper to save Assets, Metadata, and Version records,
  * and publish the asset_uploaded event.
  */
-const registerAsset = async (req: Request, data: any) => {
+const registerAsset = async (req: RequestWithUser, data: any) => {
   const {
     filename,
     storageKey,
@@ -41,8 +42,8 @@ const registerAsset = async (req: Request, data: any) => {
     collectionId,
   } = data;
 
-  // 1. Create Asset record
-  const newAsset = await create<Asset>(assetModel, {
+  // 1. Create Assets record
+  const newAsset = await create<Assets>(assetsModel, {
     filename,
     storageKey,
     owner: req.user?.id,
@@ -58,14 +59,14 @@ const registerAsset = async (req: Request, data: any) => {
 
   // 2. Create Metadata record
   await create(metadataModel, {
-    assetId: String(newAsset.id),
+    assetsId: String(newAsset.id),
     tags: [],
     department: department || "unassigned",
   });
 
   // 3. Create initial Version record
   await create(versionModel, {
-    assetId: newAsset.id,
+    assetsId: newAsset.id,
     versionNumber: 1,
     storageKey,
     size,
@@ -75,7 +76,7 @@ const registerAsset = async (req: Request, data: any) => {
 
   // 4. Publish event for async worker processing
   await publishMessage("asset_uploaded", {
-    assetId: newAsset.id,
+    assetsId: newAsset.id,
     filename,
     storageKey,
     type: mimetype,
@@ -83,17 +84,17 @@ const registerAsset = async (req: Request, data: any) => {
     timestamp: new Date().toISOString(),
   });
 
-  // 5. Invalidate asset list cache
+  // 5. Invalidate assets list cache
   await cache.delByPattern(`${cacheKeys.assetCacheKeyPrefix}*`);
 
   return newAsset;
 };
 
 /**
- * Uploads file buffer to MinIO, then registers asset records.
+ * Uploads file buffer to MinIO, then registers assets records.
  * @param {Request} req - Express request with `req.file` from multer.
  */
-export const uploadAsset = async (req: Request) => {
+export const uploadAsset = async (req: RequestWithUser) => {
   try {
     if (!req.file) {
       return new CustomError(assetMsg.noFile, statusCode.badRequest);
@@ -125,10 +126,11 @@ export const uploadAsset = async (req: Request) => {
 };
 
 /**
- * Creates an asset record from existing storageKey (no file upload).
+ * Creates an assets record from existing storageKey (no file upload).
  * Used when file is pre-uploaded externally.
  */
-export const createAsset = async (req: Request) => {
+
+export const createAsset = async (req: RequestWithUser) => {
   try {
     return await registerAsset(req, req.body);
   } catch (error) {
@@ -140,11 +142,11 @@ export const createAsset = async (req: Request) => {
  * Lists assets with search, filter, sort, and pagination.
  * Results are cached in Redis with a unique key per query.
  */
-export const listAsset = async (req: Request) => {
+export const listAsset = async (req: RequestWithUser) => {
   try {
     const filterCondition = globalFilter(req, ["status", "owner", "department", "collectionId"]);
     const { limit, offset } = globalPagination(req);
-    const searchConditions = globalSearch(req.query.searchKey as string, assetModel);
+    const searchConditions = globalSearch(req.query.searchKey as string, assetsModel);
     const sortKey = (req.query.sortKey as string) || "createdAt";
     const sortOrder = (req.query.sortOrder as string) === "DESC" ? "DESC" : "ASC";
 
@@ -152,12 +154,15 @@ export const listAsset = async (req: Request) => {
     const cached = await cache.get(cacheKey);
     if (cached) return cached;
 
-    const { result, totalCount } = await findAll(assetModel, {
+    const { result, totalCount } = await findAll(assetsModel, {
       where: { ...searchConditions, ...filterCondition },
       limit: limit ?? 20,
       offset: offset ?? 0,
       order: [[sortKey, sortOrder]],
-      include: [{ model: metadataModel, as: "metadata" }],
+      include: [
+        { model: metadataModel, as: "metadata" },
+        { model: userModel, as: "uploader", attributes: ["id", "name", "email"] },
+      ],
     });
 
     const response = { result, totalCount };
@@ -169,10 +174,10 @@ export const listAsset = async (req: Request) => {
 };
 
 /**
- * Retrieves a single asset with metadata and version history.
- * Caches result per asset ID.
+ * Retrieves a single assets with metadata and version history.
+ * Caches result per assets ID.
  */
-export const getAsset = async (req: Request) => {
+export const getAsset = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
 
@@ -181,37 +186,38 @@ export const getAsset = async (req: Request) => {
     const cached = await cache.get(cacheKey);
     if (cached) return cached;
 
-    const asset = await findOne(
-      assetModel,
+    const assetsData = await findOne(
+      assetsModel,
       { id },
       {
         include: [
           { model: metadataModel, as: "metadata" },
           { model: versionModel, as: "versions" },
+          { model: userModel, as: "uploader", attributes: ["id", "name", "email"] },
         ],
         raw: false,
       },
     );
 
-    if (!asset) return new CustomError(assetMsg.notFound, statusCode.notFound);
+    if (!assetsData) return new CustomError(assetMsg.notFound, statusCode.notFound);
 
-    await cache.set(cacheKey, asset);
-    return asset;
+    await cache.set(cacheKey, assetsData);
+    return assetsData;
   } catch (error) {
     return new CustomError((error as Error).message, statusCode.badRequest);
   }
 };
 
 /**
- * Updates mutable metadata fields of an asset and invalidates cache.
+ * Updates mutable metadata fields of an assets and invalidates cache.
  */
-export const updateAsset = async (req: Request) => {
+export const updateAsset = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
     const { department, usageRights, expiryDate, collectionId } = req.body;
 
     const updated = await findOneAndUpdate(
-      assetModel,
+      assetsModel,
       { id: Number(id) },
       { department, usageRights, expiryDate, collectionId },
       undefined,
@@ -229,15 +235,15 @@ export const updateAsset = async (req: Request) => {
 };
 
 /**
- * Transitions the asset through its lifecycle states and invalidates cache.
+ * Transitions the assets through its lifecycle states and invalidates cache.
  */
-export const updateStatus = async (req: Request) => {
+export const updateStatus = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
     const updated = await findOneAndUpdate(
-      assetModel,
+      assetsModel,
       { id: Number(id) },
       { status },
       undefined,
@@ -255,13 +261,13 @@ export const updateStatus = async (req: Request) => {
 };
 
 /**
- * Permanently deletes an asset record and clears its cache entries.
+ * Permanently deletes an assets record and clears its cache entries.
  */
-export const deleteAsset = async (req: Request) => {
+export const deleteAsset = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
 
-    const count = await deleteRecord(assetModel, { id: Number(id) });
+    const count = await deleteRecord(assetsModel, { id: Number(id) });
     if (count === 0) return new CustomError(assetMsg.notFound, statusCode.notFound);
 
     await cache.del(`${cacheKeys.assetCacheKeyPrefix}${id}`);
@@ -271,22 +277,23 @@ export const deleteAsset = async (req: Request) => {
     return new CustomError((error as Error).message, statusCode.badRequest);
   }
 };
+
 /**
- * Uploads a new version of an existing asset.
+ * Uploads a new version of an existing assets.
  * Increments the version number and stores the new file.
  */
-export const uploadVersion = async (req: Request) => {
+export const uploadVersion = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
     if (!req.file) {
       return new CustomError(assetMsg.noFile, statusCode.badRequest);
     }
 
-    const asset = await findOne(assetModel, { id: Number(id) });
-    if (!asset) return new CustomError(assetMsg.notFound, statusCode.notFound);
+    const assetsData = await findOne(assetsModel, { id: Number(id) });
+    if (!assetsData) return new CustomError(assetMsg.notFound, statusCode.notFound);
 
     const { buffer, mimetype, originalname, size } = req.file;
-    const nextVersion = asset.currentVersion + 1;
+    const nextVersion = assetsData.currentVersion + 1;
 
     const ext = path.extname(originalname);
     const storageKey = `versions/${id}_v${nextVersion}${ext}`;
@@ -296,7 +303,7 @@ export const uploadVersion = async (req: Request) => {
 
     // 2. Create version record
     await create(versionModel, {
-      assetId: asset.id,
+      assetsId: assetsData.id,
       versionNumber: nextVersion,
       storageKey,
       size,
@@ -304,13 +311,13 @@ export const uploadVersion = async (req: Request) => {
       author: String(req.user?.id || "system"),
     });
 
-    // 3. Update main asset record
+    // 3. Update main assets record
     const updated = await findOneAndUpdate(
-      assetModel,
-      { id: asset.id },
+      assetsModel,
+      { id: assetsData.id },
       {
         currentVersion: nextVersion,
-        storageKey, // Point main asset to latest version
+        storageKey, // Point main assets to latest version
         size,
         mimetype,
       },
@@ -320,7 +327,7 @@ export const uploadVersion = async (req: Request) => {
 
     // 4. Trigger async processing for the new version
     await publishMessage("asset_uploaded", {
-      assetId: asset.id,
+      assetsId: assetsData.id,
       filename: originalname,
       storageKey,
       type: mimetype,

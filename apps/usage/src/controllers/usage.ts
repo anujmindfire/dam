@@ -1,12 +1,27 @@
 import { Request, Response, NextFunction } from "express";
 import { trackUsage, getAssetUsage, getAllUsage } from "../services/usage";
 import { getSystemOverview, getComplianceReport } from "../services/analytics";
-import { sendSuccessResponse, CustomError, statusCode, commonMsg, usageMsg, publishMessage, redis } from "@dam/shared";
+import {
+  sendSuccessResponse,
+  CustomError,
+  statusCode,
+  commonMsg,
+  usageMsg,
+  publishMessage,
+  redis,
+  RequestWithUser,
+  generateSystemReport,
+  logger,
+} from "@dam/shared";
 
 /**
- * POST /usage/track — Logs an asset usage event.
+ * POST /usage/track — Logs an assets usage event.
  */
-export const track = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const track = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await trackUsage(req);
 
@@ -22,10 +37,10 @@ export const track = async (req: Request, res: Response, next: NextFunction): Pr
 };
 
 /**
- * GET /usage/:assetId — Returns paginated usage logs for a specific asset.
+ * GET /usage/:assetsId — Returns paginated usage logs for a specific assets.
  */
 export const getByAsset = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -47,7 +62,11 @@ export const getByAsset = async (
 /**
  * GET /usage — Returns all usage logs across all assets.
  */
-export const list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const list = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await getAllUsage(req);
 
@@ -68,7 +87,7 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
  */
 export const overview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const result = await getSystemOverview();
+    const result = await getSystemOverview(req.query);
 
     sendSuccessResponse({
       res,
@@ -113,8 +132,13 @@ export const report = async (req: Request, res: Response, next: NextFunction): P
 
     if (!cachedReport) {
       // If no report cached, trigger one and inform user
-      await publishMessage("report_generation", { requestedBy: req.user?.id });
-      return next(new CustomError("Report is being generated. Please try again in a few moments.", statusCode.accepted));
+      await publishMessage("report_generation", { requestedBy: (req as any).user?.id });
+      return next(
+        new CustomError(
+          "Report is being generated. Please try again in a few moments.",
+          statusCode.accepted,
+        ),
+      );
     }
 
     sendSuccessResponse({
@@ -130,15 +154,32 @@ export const report = async (req: Request, res: Response, next: NextFunction): P
 
 /**
  * POST /analytics/report/trigger — Manually triggers a background report generation jobs.
+ * Returns the latest report or generates a new one synchronously if missing.
  */
-export const triggerReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const triggerReport = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
-    await publishMessage("report_generation", { requestedBy: req.user?.id });
+    // Try to get latest existing report
+    let cachedReport = await redis.get("system:report:latest");
+    let data = cachedReport ? JSON.parse(cachedReport) : null;
+
+    if (!data) {
+      // If no report exists at all, generate it NOW synchronously
+      logger.info("[Usage API] No cached report found. Generating synchronously...");
+      data = await generateSystemReport();
+    } else {
+      // If it exists, return it but also trigger a refresh in background for NEXT time
+      await publishMessage("report_generation", { requestedBy: (req as any).user?.id });
+    }
 
     sendSuccessResponse({
       res,
-      statusCode: statusCode.accepted,
-      message: "Report generation triggered successfully",
+      statusCode: statusCode.success,
+      message: "Intelligence report generated and ready for download.",
+      data,
     });
   } catch (error) {
     return next(error);

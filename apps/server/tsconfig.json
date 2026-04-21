@@ -3,9 +3,11 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": true
+    "declaration": true,
+    "ignoreDeprecations": "5.0",
+    "types": ["jest", "node"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "src/tests", "**/*.test.ts"],
+  "include": ["src/**/*.ts", "src/tests/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
   "references": [{ "path": "../../packages/shared" }]
 }

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { loginUsers, logoutUsers } from "../services/auth";
+import { loginUsers, logoutUsers, refreshAuthToken } from "../services/auth";
+import { createUser } from "../services/user";
 import {
   sendSuccessResponse,
   CustomError,
@@ -7,6 +8,7 @@ import {
   authMsg,
   defaultRoute,
   dotEnv,
+  userMsg,
 } from "@dam/shared";
 
 /**
@@ -80,6 +82,70 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
       res,
       statusCode: statusCode.success,
       message: authMsg.logoutSuccess,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * API Endpoint: User Signup.
+ * Registers a new user and returns a success message.
+ * Roles are assigned automatically (default: User).
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @param {NextFunction} next - Express next function.
+ */
+
+export const signup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await createUser(req);
+
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.successCreated,
+      message: userMsg.createSuccess,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * API Endpoint: Refresh Token.
+ * Rotates tokens using the provided refreshToken.
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @param {NextFunction} next - Express next function.
+ */
+export const refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { refreshToken: oldRefreshToken } = req.body;
+    const response: any = await refreshAuthToken(oldRefreshToken);
+
+    if (response instanceof CustomError) {
+      return next(new CustomError(response.message, response.statusCode));
+    }
+
+    const appDomain = dotEnv.appDomain;
+    if (appDomain) {
+      res.cookie(appDomain, response.accessToken, {
+        domain: appDomain,
+        path: defaultRoute,
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    }
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.success,
+      message: authMsg.tokenRefreshSuccess,
+      data: response,
     });
   } catch (error) {
     return next(error);

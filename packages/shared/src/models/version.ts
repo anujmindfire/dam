@@ -1,33 +1,30 @@
 import sequelize from "../config/sequelizeConnection";
 import { DataTypes, Model, Optional } from "sequelize";
-import { AssetVersionProps } from "../types/index";
+import { VersionProps } from "../types/index";
 import { modelName } from "../utils/constant";
 import { capitalize } from "../utils/common";
 
-export interface AssetVersionCreationAttributes extends Optional<AssetVersionProps, "id"> {}
+export interface VersionCreationAttributes extends Optional<VersionProps, "id"> {}
 
-class AssetVersion
-  extends Model<AssetVersionProps, AssetVersionCreationAttributes>
-  implements AssetVersionProps
-{
+class Version extends Model<VersionProps, VersionCreationAttributes> implements VersionProps {
   public id!: number;
-  public assetId!: number;
+  public assetsId!: number;
   public versionNumber!: number;
   public storageKey!: string;
   public size!: number;
   public note!: string | null;
-  public author!: string;
+  public author!: number;
   public readonly createdAt!: Date;
 }
 
-AssetVersion.init(
+Version.init(
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    assetId: {
+    assetsId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -47,22 +44,22 @@ AssetVersion.init(
       allowNull: true,
     },
     author: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   },
   {
     sequelize,
-    modelName: capitalize(modelName.assetVersion),
-    tableName: modelName.assetVersion,
+    modelName: capitalize(modelName.version),
+    tableName: modelName.version,
     freezeTableName: true,
     timestamps: true,
     indexes: [
       {
-        fields: ["assetId"],
+        fields: ["assetsId"],
       },
     ],
   },
 );
 
-export default AssetVersion;
+export { Version };

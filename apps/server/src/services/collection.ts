@@ -1,7 +1,6 @@
-import { Request } from "express";
 import {
   collectionModel,
-  assetModel,
+  assetsModel,
   create,
   findAll,
   findOne,
@@ -12,6 +11,7 @@ import {
   commonMsg,
   collectionMsg,
   RequestWithUser,
+  Op,
 } from "@dam/shared";
 
 /**
@@ -55,15 +55,22 @@ export const createCollection = async (req: RequestWithUser) => {
 
 export const listCollection = async (req: RequestWithUser) => {
   try {
-    const parentId = req.query.parentId === "null" ? null : req.query.parentId;
+    const { parentId: rawParentId, page = "1", limit = "10", searchKey = "" } = req.query;
+
+    const parentId = rawParentId === undefined || rawParentId === "null" ? null : rawParentId;
     const owner = req.user?.id;
+    const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
     const queryOptions = {
       where: {
-        ...(parentId !== undefined ? { parentId } : {}),
         owner: owner,
+        ...(parentId !== undefined ? { parentId } : {}),
+        ...(searchKey ? { name: { [Op.iLike]: `%${searchKey}%` } } : {}),
       },
       include: [{ model: collectionModel, as: "subCollections" }],
+      limit: parseInt(limit as string),
+      offset,
+      order: [["name", "ASC"]] as any,
     };
 
     const collections = await findAll(collectionModel, queryOptions);
@@ -93,7 +100,7 @@ export const getCollectionById = async (req: RequestWithUser) => {
       {
         include: [
           { model: collectionModel, as: "subCollections" },
-          { model: assetModel, as: "assets" },
+          { model: assetsModel, as: "assets" },
         ],
         raw: false,
       },
@@ -143,8 +150,9 @@ export const updateCollection = async (req: RequestWithUser) => {
 };
 
 /**
- * Deletes a collection from the system.
- * Performs a hard delete based on the ID and validates user ownership.
+ * Deletes a collection from the system recursively.
+ * Deletes the collection and all its sub-collections.
+ * Assets within these collections are unlinked (collectionId set to null) but not deleted.
  * @param {Request} req - The Express request object containing the collection ID in params.
  * @returns {Promise<boolean | CustomError>} A promise resolving to true on success or a CustomError.
  */
@@ -152,14 +160,13 @@ export const updateCollection = async (req: RequestWithUser) => {
 export const deleteCollection = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
-
     const owner = req.user?.id;
 
-    const deletedCount = await deleteRecord(collectionModel, { id: Number(id), owner: owner });
-
-    if (deletedCount === 0) {
-      return new CustomError(collectionMsg.notFound, statusCode.notFound);
+    if (!owner) {
+      return new CustomError(commonMsg.unAuthorized, statusCode.unAuthorize);
     }
+
+    await performRecursiveDelete(Number(id), owner);
 
     return true;
   } catch (error) {
@@ -168,21 +175,45 @@ export const deleteCollection = async (req: RequestWithUser) => {
 };
 
 /**
- * Associates an asset with a specific collection.
- * Updates the asset record's collectionId column to link it to the group.
- * @param {Request} req - The Express request object with collection ID in params and assetId in body.
- * @returns {Promise<any | CustomError>} A promise resolving to the updated asset or a CustomError.
+ * Helper function to perform recursive deletion of collections and unlinking of assets.
+ */
+async function performRecursiveDelete(id: number, owner: number) {
+  // 1. Find all sub-collections
+  const subCollections = await findAll(collectionModel, {
+    where: { parentId: id, owner: owner },
+  });
+
+  // 2. Recursively delete sub-collections
+  if (subCollections.result && subCollections.result.length > 0) {
+    for (const sub of subCollections.result) {
+      await performRecursiveDelete(sub.id, owner);
+    }
+  }
+
+  // 3. Unlink assets in this collection (set collectionId to null)
+  // Note: Using direct model update for efficiency
+  await assetsModel.update({ collectionId: null }, { where: { collectionId: id } });
+
+  // 4. Delete the collection record itself
+  await deleteRecord(collectionModel, { id, owner });
+}
+
+/**
+ * Associates an assets with a specific collection.
+ * Updates the assets record's collectionId column to link it to the group.
+ * @param {Request} req - The Express request object with collection ID in params and assetsId in body.
+ * @returns {Promise<any | CustomError>} A promise resolving to the updated assets or a CustomError.
  */
 
 export const addAssetToCollection = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
 
-    const { assetId } = req.body;
+    const { assetsId } = req.body;
 
     const updatedAsset = await findOneAndUpdate(
-      assetModel,
-      { id: Number(assetId) },
+      assetsModel,
+      { id: Number(assetsId) },
       { collectionId: Number(id) },
       undefined,
       true,

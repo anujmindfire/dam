@@ -35,6 +35,9 @@ export interface DotEnvConfig {
   rabbitmqURL: string;
   redisHost: string;
   redisPort: number;
+  assetsHost: string;
+  metadataHost: string;
+  usageHost: string;
 }
 
 const config: DotEnvConfig = {
@@ -62,6 +65,9 @@ const config: DotEnvConfig = {
   rabbitmqURL: process.env.RABBITMQ_URL as string,
   redisHost: process.env.REDIS_HOST as string,
   redisPort: Number(process.env.REDIS_PORT),
+  assetsHost: process.env.ASSETS_SERVICE_HOST || "localhost",
+  metadataHost: process.env.METADATA_SERVICE_HOST || "localhost",
+  usageHost: process.env.USAGE_SERVICE_HOST || "localhost",
 };
 
 export default config;

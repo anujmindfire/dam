@@ -1,7 +1,6 @@
-import { Request } from "express";
 import {
   metadataModel,
-  assetModel,
+  assetsModel,
   findOne,
   findAll,
   findOneAndUpdate,
@@ -10,25 +9,26 @@ import {
   CustomError,
   metadataMsg,
   Op,
+  RequestWithUser,
 } from "@dam/shared";
 
 const META_CACHE_KEY = "metadata:";
 
 /**
- * Retrieves metadata for a given asset ID.
+ * Retrieves metadata for a given assets ID.
  * Uses Redis cache-aside pattern to reduce DB load.
- * @param {Request} req - Express request with assetId in params.
+ * @param {Request} req - Express request with assetsId in params.
  */
 
-export const getMetadata = async (req: Request) => {
+export const getMetadata = async (req: RequestWithUser) => {
   try {
-    const { assetId } = req.params;
-    const cacheKey = `${META_CACHE_KEY}${assetId}`;
+    const { assetsId } = req.params;
+    const cacheKey = `${META_CACHE_KEY}${assetsId}`;
 
     const cached = await cache.get(cacheKey);
     if (cached) return cached;
 
-    const metadata = await findOne(metadataModel, { assetId: String(assetId) });
+    const metadata = await findOne(metadataModel, { assetsId: String(assetsId) });
 
     if (!metadata) {
       return new CustomError(metadataMsg.notFound, statusCode.notFound);
@@ -42,19 +42,19 @@ export const getMetadata = async (req: Request) => {
 };
 
 /**
- * Updates tags, department, or analysis results for an asset's metadata.
+ * Updates tags, department, or analysis results for an assets metadata.
  * Invalidates the cache entry on every update.
- * @param {Request} req - Express request with assetId in params and metadata fields in body.
+ * @param {Request} req - Express request with assetsId in params and metadata fields in body.
  */
 
-export const updateMetadata = async (req: Request) => {
+export const updateMetadata = async (req: RequestWithUser) => {
   try {
-    const { assetId } = req.params;
+    const { assetsId } = req.params;
     const { tags, department, analysisResults, isDuplicate } = req.body;
 
     const updated = await findOneAndUpdate(
       metadataModel,
-      { assetId: String(assetId) },
+      { assetsId: String(assetsId) },
       { tags, department, analysisResults, isDuplicate },
       undefined,
       true,
@@ -64,7 +64,7 @@ export const updateMetadata = async (req: Request) => {
       return new CustomError(metadataMsg.notFound, statusCode.notFound);
     }
 
-    await cache.del(`${META_CACHE_KEY}${assetId}`);
+    await cache.del(`${META_CACHE_KEY}${assetsId}`);
     return updated;
   } catch (error) {
     return new CustomError((error as Error).message, statusCode.badRequest);
@@ -77,7 +77,7 @@ export const updateMetadata = async (req: Request) => {
  * @param {Request} req - Express request with tags query param.
  */
 
-export const searchByTags = async (req: Request) => {
+export const searchByTags = async (req: RequestWithUser) => {
   try {
     const { tags, page = "0", limit = "20" } = req.query;
 
@@ -91,7 +91,7 @@ export const searchByTags = async (req: Request) => {
       where: {
         tags: { [Op.contains]: tagList },
       },
-      include: [{ model: assetModel, as: "asset" }],
+      include: [{ model: assetsModel, as: "assets" }],
       limit: parseInt(limit as string),
       offset: parseInt(page as string) * parseInt(limit as string),
     });
@@ -107,13 +107,13 @@ export const searchByTags = async (req: Request) => {
  * @param {Request} req - Express request.
  */
 
-export const getDuplicates = async (req: Request) => {
+export const getDuplicates = async (req: RequestWithUser) => {
   try {
     const { limit = "50", offset = "0" } = req.query;
 
     const { result, totalCount } = await findAll(metadataModel, {
       where: { isDuplicate: true },
-      include: [{ model: assetModel, as: "asset" }],
+      include: [{ model: assetsModel, as: "assets" }],
       limit: parseInt(limit as string),
       offset: parseInt(offset as string),
     });

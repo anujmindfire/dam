@@ -18,7 +18,8 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@dam/shared": ["../../packages/shared/src"]
+      "@dam/shared": ["../../packages/shared/src"],
+      "@dam/shared/*": ["../../packages/shared/src/*"]
     },
 
     /* Linting */

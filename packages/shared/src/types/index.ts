@@ -37,14 +37,14 @@ export interface PaginatedResult<T> {
 }
 
 /**
- * Core properties of a digital asset (image, video, etc.).
+ * Core properties of a digital assets (image, video, etc.).
  */
 
 export interface AssetsProps {
   id: number;
   filename: string;
   storageKey: string;
-  owner: string | null;
+  owner: number | null;
   size: number | null;
   mimetype: string | null;
   status:
@@ -63,12 +63,12 @@ export interface AssetsProps {
 }
 
 /**
- * Metadata associated with an asset for search and classification.
+ * Metadata associated with an assets for search and classification.
  */
 
 export interface MetadataProps {
   id: number;
-  assetId: string;
+  assetsId: number;
   tags: string[];
   department: string | null;
   analysisResults?: any;
@@ -77,26 +77,26 @@ export interface MetadataProps {
 }
 
 /**
- * Represents an entry in the asset usage logs.
+ * Represents an entry in the assets usage logs.
  */
 
 export interface UsageLogProps {
   id: number;
-  assetId: string;
+  assetsId: number;
   action: string;
   context: any;
   loggedAt: Date;
 }
 
 /**
- * Data required for uploading or updating an asset's basic information.
+ * Data required for uploading or updating an assets's basic information.
  */
 
 export interface AssetData {
   id: number;
   filename: string;
   storageKey: string;
-  owner: string;
+  owner: number;
   size: number;
   mimetype: string;
   department?: string;
@@ -113,35 +113,35 @@ export interface CollectionProps {
   id: number;
   name: string;
   description: string | null;
-  owner: string;
+  owner: number;
   parentId: number | null;
 }
 
 /**
- * Represents a specific version of a digital asset.
+ * Represents a specific version of a digital assets.
  */
 
-export interface AssetVersionProps {
+export interface VersionProps {
   id: number;
-  assetId: number;
+  assetsId: number;
   versionNumber: number;
   storageKey: string;
   size: number;
   note: string | null;
-  author: string;
+  author: number;
 }
 
 /**
- * Data required for creating or updating an asset version.
+ * Data required for creating or updating an assets version.
  */
 
 export interface VersionData {
-  assetId: string;
+  assetsId: number;
   versionNumber: number;
   storageKey: string;
   size: number;
   note?: string;
-  author: string;
+  author: number;
 }
 
 /**
@@ -164,6 +164,7 @@ export interface UserProps {
   password?: string | null;
   roleId: number;
   tokenVersion: number;
+  refreshToken?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -196,9 +197,9 @@ export interface TokenPayloadProps {
 
 export interface ApprovalProps {
   id: number;
-  assetId: number;
-  requestedBy: string;
-  approvedBy?: string | null;
+  assetsId: number;
+  requestedBy: number;
+  approvedBy?: number | null;
   status: "pending" | "approved" | "rejected";
   reason?: string | null;
   priority: "low" | "normal" | "high";
@@ -210,7 +211,7 @@ export interface ApprovalProps {
 export interface ApprovalCommentProps {
   id: number;
   approvalId: number;
-  userId: string;
+  userId: number;
   message: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -232,9 +233,12 @@ export interface SystemReportProps {
   };
 }
 
+/**
+ * Extends the global Express Request interface to include the authenticated user object.
+ */
 export interface RequestWithUser extends Request {
   user?: {
-    id: string;
+    id: number;
     email: string;
     tokenVersion: number;
     roleId: number;
@@ -242,19 +246,15 @@ export interface RequestWithUser extends Request {
 }
 
 /**
- * Extends the global Express Request interface to include the authenticated user object.
+ * Represents a job in the system.
  */
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        tokenVersion: number;
-        roleId: number;
-      };
-    }
-  }
+export interface JobProps {
+  id: string;
+  type: string;
+  target: string;
+  status: "queued" | "processing" | "completed" | "failed";
+  progress: number;
+  message?: string;
+  startedAt?: Date;
+  completedAt?: Date;
 }

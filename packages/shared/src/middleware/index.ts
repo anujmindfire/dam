@@ -48,7 +48,7 @@ export const errorHandler: ErrorRequestHandler = async (
   logError(req.originalUrl, error.message);
 
   if (error instanceof CustomError) {
-    sendSuccessResponse({
+    return sendSuccessResponse({
       res,
       statusCode: error.statusCode,
       message: error.message,
@@ -169,7 +169,10 @@ export const verifyTokenFactory = (
         return next(new CustomError(authMsg.appConfiguration, statusCode.unAuthorize));
       }
 
-      const sessionToken = req.cookies?.[domain] || req.headers?.authorization?.split(" ")[1];
+      const sessionToken =
+        req.cookies?.[domain] ||
+        req.headers?.authorization?.split(" ")[1] ||
+        (req.query?.token as string);
 
       if (!sessionToken) {
         return next(new CustomError(authMsg.tokenNotFound, statusCode.unAuthorize));
@@ -196,7 +199,7 @@ export const verifyTokenFactory = (
       }
 
       req.user = {
-        id: userExist.id.toString(),
+        id: userExist.id,
         email: userExist.email,
         roleId: userExist.roleId,
         tokenVersion: userExist.tokenVersion,

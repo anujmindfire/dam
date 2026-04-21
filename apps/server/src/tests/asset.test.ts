@@ -3,8 +3,8 @@ import express from "express";
 import router from "../routes/index";
 
 /**
- * Asset API Test Suite
- * Tests asset CRUD, lifecycle transitions, and file upload validation.
+ *  API Test Suite
+ * Tests assets CRUD, lifecycle transitions, and file upload validation.
  */
 
 const app = express();
@@ -14,9 +14,9 @@ app.use(router);
 // Mock token for authenticated tests (replace with actual seeded token in integration)
 const MOCK_TOKEN = "Bearer test-token";
 
-describe("Asset API", () => {
-  describe("POST /api/v1/assets (Create Asset Record)", () => {
-    it("should reject unauthenticated asset creation", async () => {
+describe(" API", () => {
+  describe("POST /api/v1/assets (Create  Record)", () => {
+    it("should reject unauthenticated assets creation", async () => {
       const res = await request(app).post("/api/v1/assets").send({
         filename: "test.jpg",
         storageKey: "uploads/test.jpg",
@@ -26,7 +26,7 @@ describe("Asset API", () => {
       expect([401, 403]).toContain(res.statusCode);
     });
 
-    it("should reject asset creation with missing required fields", async () => {
+    it("should reject assets creation with missing required fields", async () => {
       const res = await request(app)
         .post("/api/v1/assets")
         .set("Authorization", MOCK_TOKEN)
@@ -87,14 +87,14 @@ describe("Asset API", () => {
     });
   });
 
-  describe("GET /api/v1/assets/:id (Get Asset by ID)", () => {
-    it("should return 404 for non-existent asset", async () => {
+  describe("GET /api/v1/assets/:id (Get  by ID)", () => {
+    it("should return 404 for non-existent assets", async () => {
       const res = await request(app).get("/api/v1/assets/99999").set("Authorization", MOCK_TOKEN);
       expect([404, 401, 403, 500]).toContain(res.statusCode);
     });
   });
 
-  describe("DELETE /api/v1/assets/:id (Delete Asset)", () => {
+  describe("DELETE /api/v1/assets/:id (Delete )", () => {
     it("should reject delete without authentication", async () => {
       const res = await request(app).delete("/api/v1/assets/1");
       expect([401, 403]).toContain(res.statusCode);

@@ -9,12 +9,23 @@ import {
   deleteAsset,
   uploadVersion as uploadVersionService,
 } from "../services/assets";
-import { sendSuccessResponse, CustomError, statusCode, assetMsg } from "@dam/shared";
+import {
+  sendSuccessResponse,
+  CustomError,
+  statusCode,
+  assetMsg,
+  minioClient,
+  RequestWithUser,
+} from "@dam/shared";
 
 /**
  * POST /upload — Handles multipart file upload → MinIO → DB records → RabbitMQ event.
  */
-export const upload = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const upload = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await uploadAsset(req);
 
@@ -34,9 +45,13 @@ export const upload = async (req: Request, res: Response, next: NextFunction): P
 };
 
 /**
- * POST / — Creates asset from existing storageKey without file upload.
+ * POST / — Creates assets from existing storageKey without file upload.
  */
-export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const create = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await createAsset(req);
 
@@ -79,7 +94,7 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
 };
 
 /**
- * GET /:id — Returns asset with metadata and version history.
+ * GET /:id — Returns assets with metadata and version history.
  */
 export const getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -101,7 +116,7 @@ export const getById = async (req: Request, res: Response, next: NextFunction): 
 };
 
 /**
- * PATCH /:id — Updates asset metadata fields.
+ * PATCH /:id — Updates assets metadata fields.
  */
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -123,7 +138,7 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
 };
 
 /**
- * PATCH /:id/status — Transitions asset lifecycle state.
+ * PATCH /:id/status — Transitions assets lifecycle state.
  */
 export const transitionStatus = async (
   req: Request,
@@ -149,7 +164,7 @@ export const transitionStatus = async (
 };
 
 /**
- * DELETE /:id — Deletes asset record.
+ * DELETE /:id — Deletes assets record.
  */
 export const remove = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -164,10 +179,15 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
     return next(error);
   }
 };
+
 /**
- * POST /:id/version — Uploads a new version of an existing asset.
+ * POST /:id/version — Uploads a new version of an existing assets.
  */
-export const uploadVersion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const uploadVersion = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await uploadVersionService(req);
 
@@ -181,6 +201,51 @@ export const uploadVersion = async (req: Request, res: Response, next: NextFunct
       message: assetMsg.updateSuccess,
       data: result,
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * GET /:id/download — Streams the assets file to the client.
+ */
+export const download = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await getAsset(req);
+
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
+
+    const assets = result;
+    const stream = await minioClient.getObject("assets", assets.storageKey);
+
+    const disposition = req.query.disposition === "inline" ? "inline" : "attachment";
+    res.setHeader("Content-Type", assets.mimetype);
+    res.setHeader("Content-Disposition", `${disposition}; filename="${assets.filename}"`);
+
+    stream.pipe(res);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * GET /:id/thumbnail — Streams the assets thumbnail to the client.
+ */
+export const thumbnail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const thumbKey = `thumbnails/${id}.webp`;
+
+    try {
+      const stream = await minioClient.getObject("assets", thumbKey);
+      res.setHeader("Content-Type", "image/webp");
+      res.setHeader("Content-Disposition", `inline; filename="thumb_${id}.webp"`);
+      stream.pipe(res);
+    } catch (e) {
+      return next(new CustomError("Thumbnail not available", statusCode.notFound));
+    }
   } catch (error) {
     return next(error);
   }

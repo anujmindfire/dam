@@ -38,7 +38,9 @@ app.use(requestLogger as unknown as express.RequestHandler);
 app.use(rateLimit() as unknown as express.RequestHandler);
 
 app.get(`${baseRoute}/health`, (_req, res) => {
-  res.status(200).json({ status: "healthy", service: "Metadata", timestamp: new Date().toISOString() });
+  res
+    .status(200)
+    .json({ status: "healthy", service: "Metadata", timestamp: new Date().toISOString() });
 });
 
 app.use(`${baseRoute}${apiUrl.metadata}`, metadataRoutes);
@@ -47,7 +49,7 @@ app.use(notFoundHandler as unknown as express.RequestHandler);
 app.use(errorHandler as unknown as express.ErrorRequestHandler);
 
 /**
- * Starts consuming asset lifecycle events
+ * Starts consuming assets lifecycle events
  */
 const startConsumers = async (): Promise<void> => {
   try {
@@ -56,37 +58,37 @@ const startConsumers = async (): Promise<void> => {
 
     await consumeMessage("metadata_analyzed", async (payload: any) => {
       try {
-        logger.info(consumerMsg.metadataAnalyzedProcessing(payload.assetId));
+        logger.info(consumerMsg.metadataAnalyzedProcessing(payload.assetsId));
 
         await findOneAndUpdate(
           metadataModel,
-          { assetId: payload.assetId },
+          { assetsId: payload.assetsId },
           {
             analysisResults: payload.analysisResults,
             tags: payload.analysisResults?.objects || [],
           },
         );
 
-        logger.info(consumerMsg.metadataAnalyzedSuccess(payload.assetId));
+        logger.info(consumerMsg.metadataAnalyzedSuccess(payload.assetsId));
       } catch (error) {
-        logger.error(consumerMsg.metadataAnalyzedError(payload.assetId), error);
+        logger.error(consumerMsg.metadataAnalyzedError(payload.assetsId), error);
         throw error;
       }
     });
 
-    await consumeMessage("asset_created", async (payload: any) => {
+    await consumeMessage("assets_created", async (payload: any) => {
       try {
-        logger.info(consumerMsg.assetCreatedMetadata(payload.assetId));
-        logger.info(consumerMsg.assetCreatedMetadataReady(payload.assetId));
+        logger.info(consumerMsg.assetCreatedMetadata(payload.assetsId));
+        logger.info(consumerMsg.assetCreatedMetadataReady(payload.assetsId));
       } catch (error) {
         logger.error(consumerMsg.assetCreatedMetadataError, error);
       }
     });
 
-    await consumeMessage("asset_deleted", async (payload: any) => {
+    await consumeMessage("assets_deleted", async (payload: any) => {
       try {
-        logger.info(consumerMsg.assetDeletedMetadata(payload.assetId));
-        logger.info(consumerMsg.assetDeletedMetadataCleanup(payload.assetId));
+        logger.info(consumerMsg.assetDeletedMetadata(payload.assetsId));
+        logger.info(consumerMsg.assetDeletedMetadataCleanup(payload.assetsId));
       } catch (error) {
         logger.error(consumerMsg.assetDeletedMetadataError, error);
       }
@@ -108,7 +110,7 @@ const bootstrap = async (): Promise<void> => {
 
     await startConsumers();
 
-    app.listen(PORT, "0.0.0.0", () => {
+    app.listen(PORT, () => {
       logger.info(commonMsg.metadataServiceRunning(PORT));
     });
   } catch (error) {

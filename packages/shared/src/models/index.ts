@@ -1,9 +1,13 @@
-import Asset from "./assets";
-import Collection from "./collection";
-import Metadata from "./metadata";
-import AssetVersion from "./version";
-import Approval from "./approval";
-import ApprovalComment from "./approvalComment";
+import { Assets } from "./assets";
+import { Collection } from "./collection";
+import { Metadata } from "./metadata";
+import { Approval } from "./approval";
+import { ApprovalComment } from "./approvalComment";
+import { Job } from "./job";
+import { Version } from "./version";
+import { Role } from "./role";
+import { User } from "./user";
+import { UsageLog } from "./usage";
 
 // Collection self-associations (Hierarchy)
 Collection.hasMany(Collection, {
@@ -17,47 +21,47 @@ Collection.belongsTo(Collection, {
 });
 
 // Asset and Collection associations
-Collection.hasMany(Asset, {
+Collection.hasMany(Assets, {
   as: "assets",
   foreignKey: "collectionId",
 });
 
-Asset.belongsTo(Collection, {
+Assets.belongsTo(Collection, {
   as: "collection",
   foreignKey: "collectionId",
 });
 
 // Asset and Metadata associations
-Asset.hasOne(Metadata, {
+Assets.hasOne(Metadata, {
   as: "metadata",
-  foreignKey: "assetId",
+  foreignKey: "assetsId",
 });
 
-Metadata.belongsTo(Asset, {
-  as: "asset",
-  foreignKey: "assetId",
+Metadata.belongsTo(Assets, {
+  as: "assets",
+  foreignKey: "assetsId",
 });
 
 // Asset and Version associations
-Asset.hasMany(AssetVersion, {
+Assets.hasMany(Version, {
   as: "versions",
-  foreignKey: "assetId",
+  foreignKey: "assetsId",
 });
 
-AssetVersion.belongsTo(Asset, {
-  as: "asset",
-  foreignKey: "assetId",
+Version.belongsTo(Assets, {
+  as: "assets",
+  foreignKey: "assetsId",
 });
 
 // Asset and Approval associations
-Asset.hasMany(Approval, {
+Assets.hasMany(Approval, {
   as: "approvals",
-  foreignKey: "assetId",
+  foreignKey: "assetsId",
 });
 
-Approval.belongsTo(Asset, {
-  as: "asset",
-  foreignKey: "assetId",
+Approval.belongsTo(Assets, {
+  as: "assets",
+  foreignKey: "assetsId",
 });
 
 // Approval and ApprovalComment associations
@@ -71,4 +75,47 @@ ApprovalComment.belongsTo(Approval, {
   foreignKey: "approvalId",
 });
 
-export { Asset, Collection, Metadata, AssetVersion, Approval, ApprovalComment };
+// Asset and User associations
+Assets.belongsTo(User, {
+  as: "uploader",
+  foreignKey: "owner",
+});
+
+User.hasMany(Assets, {
+  as: "assets",
+  foreignKey: "owner",
+});
+
+// UsageLog and Asset associations
+UsageLog.belongsTo(Assets, {
+  as: "assets",
+  foreignKey: "assetsId",
+});
+
+Assets.hasMany(UsageLog, {
+  as: "usageLogs",
+  foreignKey: "assetsId",
+});
+
+export {
+  Assets as assetsModel,
+  Assets,
+  Collection as collectionModel,
+  Collection,
+  Metadata as metadataModel,
+  Metadata,
+  Version as versionModel,
+  Version,
+  Approval as approvalModel,
+  Approval,
+  ApprovalComment as approvalCommentModel,
+  ApprovalComment,
+  Job as jobModel,
+  Job,
+  Role as roleModel,
+  Role,
+  User as userModel,
+  User,
+  UsageLog as usageModel,
+  UsageLog,
+};

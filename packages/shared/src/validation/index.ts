@@ -16,12 +16,7 @@ export const loginValidator: RequestHandler = validatedRequest(
         "string.pattern.base": userMsg.invalidEmail,
       }),
 
-    password: Joi.string().required().trim().min(8).max(15).pattern(regex.password).messages({
-      "string.empty": "Password is required",
-      "string.min": "Password must be at least 8 characters long",
-      "string.max": "Password must be at most 15 characters long",
-      "string.pattern.base": userMsg.invalidPassword,
-    }),
+    password: Joi.string().required(),
   }),
 );
 
@@ -86,6 +81,7 @@ export const validateList: RequestHandler = validatedRequest(
     sortOrder: Joi.string().valid("ASC", "DESC").optional(),
     page: Joi.number().integer().min(0).optional(),
     limit: Joi.number().integer().min(0).optional(),
+    parentId: Joi.number().integer().optional().allow(null),
   }),
 );
 
@@ -101,6 +97,7 @@ export const validateAssetUpload: RequestHandler = validatedRequest(
 
 export const validateVersionUpload: RequestHandler = validatedRequest(
   Joi.object({
+    id: Joi.any().optional(),
     author: Joi.string().required(),
     note: Joi.string().optional().allow(null, ""),
     versionNumber: Joi.number().integer().min(1).required(),
@@ -109,6 +106,7 @@ export const validateVersionUpload: RequestHandler = validatedRequest(
 
 export const validateStatusTransition: RequestHandler = validatedRequest(
   Joi.object({
+    id: Joi.any().optional(),
     status: Joi.string().valid("pending", "reviewed", "approved", "expired", "archived").required(),
   }),
 );
@@ -124,7 +122,7 @@ export const validateMetadataUpdate: RequestHandler = validatedRequest(
 
 export const validateUsageTrack: RequestHandler = validatedRequest(
   Joi.object({
-    assetId: Joi.string().uuid().required(),
+    assetsId: Joi.number().integer().required(),
     action: Joi.string().required(),
     userContext: Joi.object().optional(),
   }),

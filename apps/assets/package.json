@@ -1,10 +1,10 @@
 {
-  "name": "@dam/asset",
+  "name": "@dam/assets",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
-    "build": "tsc",
+    "build": "tsc -b && copyfiles -u 1 src/templates/*.html src/swagger.json dist/",
     "start": "node dist/index.js"
   },
   "dependencies": {

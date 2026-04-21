@@ -14,9 +14,8 @@
     "noEmitOnError": false,
     "baseUrl": ".",
     "paths": {
-      "@dam/shared": ["packages/shared/src/index.ts"],
-      "@dam/shared/*": ["packages/shared/src/*"],
-      "minio": ["packages/shared/src/types/minio.d.ts"]
+      "@dam/shared": ["packages/shared/src"],
+      "@dam/shared/*": ["packages/shared/src/*"]
     }
   }
 }

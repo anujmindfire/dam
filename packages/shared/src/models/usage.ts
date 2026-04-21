@@ -8,7 +8,7 @@ export interface UsageLogCreationAttributes extends Optional<UsageLogProps, "id"
 
 class UsageLog extends Model<UsageLogProps, UsageLogCreationAttributes> implements UsageLogProps {
   public id!: number;
-  public assetId!: string;
+  public assetsId!: number;
   public action!: string;
   public context!: any;
 
@@ -24,7 +24,7 @@ UsageLog.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    assetId: {
+    assetsId: {
       type: DataTypes.INTEGER,
     },
     action: {
@@ -41,12 +41,12 @@ UsageLog.init(
   },
   {
     sequelize,
-    modelName: capitalize(modelName.usageLog),
-    tableName: modelName.usageLog,
+    modelName: capitalize(modelName.usage),
+    tableName: modelName.usage,
     freezeTableName: true,
     timestamps: true,
-    indexes: [{ fields: ["assetId"] }, { fields: ["action"] }, { fields: ["loggedAt"] }],
+    indexes: [{ fields: ["assetsId"] }, { fields: ["action"] }, { fields: ["loggedAt"] }],
   },
 );
 
-export default UsageLog;
+export { UsageLog };

@@ -3,7 +3,7 @@ import { getMetadata, updateMetadata, searchByTags, getDuplicates } from "../ser
 import { sendSuccessResponse, CustomError, statusCode, commonMsg, metadataMsg } from "@dam/shared";
 
 /**
- * GET /metadata/:assetId — Returns metadata for an asset (Redis cached).
+ * GET /metadata/:assetsId — Returns metadata for an assets (Redis cached).
  */
 export const getByAsset = async (
   req: Request,
@@ -27,7 +27,7 @@ export const getByAsset = async (
 };
 
 /**
- * PATCH /metadata/:assetId — Updates tags, department, or analysis results.
+ * PATCH /metadata/:assetsId — Updates tags, department, or analysis results.
  */
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -47,7 +47,7 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
 };
 
 /**
- * GET /metadata/search?tags=brand,product — Tag-based asset search.
+ * GET /metadata/search?tags=brand,product — Tag-based assets search.
  */
 export const search = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

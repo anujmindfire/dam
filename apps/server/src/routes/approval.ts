@@ -11,6 +11,6 @@ apiRoutes.get(defaultRoute, list);
 apiRoutes.get(updateRoute, getById);
 apiRoutes.patch(`${updateRoute}${apiUrl.approve}`, authorizeRoles(roleId.admin), approve);
 apiRoutes.patch(`${updateRoute}${apiUrl.reject}`, authorizeRoles(roleId.admin), reject);
-apiRoutes.get(`${apiUrl.assets}/:assetId${apiUrl.history}`, history);
+apiRoutes.get(`${apiUrl.assets}/:assetsId${apiUrl.history}`, history);
 
 export default apiRoutes;

@@ -1,0 +1,79 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-main: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+  
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+}
+
+:root {
+  /* New Premium Indigo & Slate Theme */
+  --background: #f8fafc;
+  --card-background: #ffffff;
+  --border: #e2e8f0;
+  --text-color: #0f172a;
+  
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --secondary: #64748b;
+  --secondary-hover: #475569;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --success: #10b981;
+  --success-hover: #059669;
+  --button-text: #ffffff;
+
+  --heading-font-size: 25px;
+  --subheading-font-size: 18px;
+  --input-font-size: 14px;
+  --button-font-size: 14px;
+  --input-height: 44px;
+  --button-height: 44px;
+  --card-padding: 32px;
+
+  --header-height: 64px;
+  --sidebar-width: 260px;
+  
+  --font-main: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--text-color);
+  font-family: var(--font-main);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Transitions */
+.transition-all {
+  transition-duration: 200ms;
+}

@@ -1,5 +1,5 @@
 import sequelize from "../config/sequelizeConnection";
-import Role from "./role";
+import { Role } from "./role";
 import { DataTypes, Model, Optional } from "sequelize";
 import { UserProps } from "../types/index";
 import { userMsg, modelName, regex } from "../utils/constant";
@@ -14,6 +14,7 @@ class User extends Model<UserProps, UserCreationAttributes> implements UserProps
   public password!: string | null;
   public roleId!: number;
   public tokenVersion!: number;
+  public refreshToken!: string | null;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -69,6 +70,10 @@ User.init(
       allowNull: false,
       defaultValue: 0,
     },
+    refreshToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {
     sequelize,
@@ -90,4 +95,4 @@ User.init(
 
 User.belongsTo(Role, { foreignKey: "roleId", as: modelName.role });
 
-export default User;
+export { User };

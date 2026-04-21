@@ -33,4 +33,4 @@ Role.init(
   },
 );
 
-export default Role;
+export { Role };

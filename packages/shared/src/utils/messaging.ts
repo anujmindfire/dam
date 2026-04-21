@@ -1,27 +1,39 @@
-import amqplib from "amqplib";
+import amqp, { ChannelModel, Channel } from "amqplib";
 import dotEnv from "../config/dotEnv";
 import logger from "./logger";
 import { commonMsg } from "./constant";
 
-let connection: amqplib.ChannelModel | null = null;
-let channel: amqplib.Channel | null = null;
+let connection: ChannelModel | null = null;
+let channel: Channel | null = null;
 
 /**
  * Establishes a connection to the RabbitMQ broker and creates a communication channel.
  * Uses the RABBITMQ_URL from the shared dotEnv configuration.
+ * Includes a retry mechanism to handle startup delays.
  *
+ * @param {number} retries - Number of connection attempts (default: 5).
+ * @param {number} delay - Delay between attempts in ms (default: 2000).
  * @returns {Promise<void>}
  */
-export const connectRabbitMQ = async (): Promise<void> => {
-  try {
-    if (!connection) {
-      connection = await amqplib.connect(dotEnv.rabbitmqURL);
+export const connectRabbitMQ = async (retries = 5, delay = 2000): Promise<void> => {
+  if (connection) return;
+
+  for (let i = 0; i < retries; i++) {
+    try {
+      connection = await amqp.connect(dotEnv.rabbitmqURL);
       channel = await connection.createChannel();
       logger.info(commonMsg.rmqConnected);
+      return;
+    } catch (error) {
+      if (i === retries - 1) {
+        logger.error("Failed to connect to RabbitMQ broker after max retries:", error);
+        throw error;
+      }
+      logger.warn(
+        `RabbitMQ connection attempt ${i + 1}/${retries} failed. Retrying in ${delay}ms...`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
-  } catch (error) {
-    logger.error("Failed to connect to RabbitMQ broker:", error);
-    throw error;
   }
 };
 
@@ -36,7 +48,22 @@ export const connectRabbitMQ = async (): Promise<void> => {
 export const publishMessage = async (queue: string, message: any): Promise<boolean> => {
   try {
     if (!channel) await connectRabbitMQ();
-    await channel!.assertQueue(queue, { durable: true });
+
+    const dlxExchange = `${queue}.dlx`;
+    const dlQueue = `${queue}.dlq`;
+
+    await channel!.assertExchange(dlxExchange, "direct", { durable: true });
+    await channel!.assertQueue(dlQueue, { durable: true });
+    await channel!.bindQueue(dlQueue, dlxExchange, queue);
+
+    await channel!.assertQueue(queue, {
+      durable: true,
+      arguments: {
+        "x-dead-letter-exchange": dlxExchange,
+        "x-dead-letter-routing-key": queue,
+      },
+    });
+
     return channel!.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
       persistent: true,
     });

@@ -12,7 +12,7 @@ class ApprovalComment
 {
   public id!: number;
   public approvalId!: number;
-  public userId!: string;
+  public userId!: number;
   public message!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -34,7 +34,7 @@ ApprovalComment.init(
       },
     },
     userId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     message: {
@@ -56,4 +56,4 @@ ApprovalComment.init(
   },
 );
 
-export default ApprovalComment;
+export { ApprovalComment };

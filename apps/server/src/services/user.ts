@@ -1,4 +1,3 @@
-import { Request } from "express";
 import {
   findOne,
   update,
@@ -16,6 +15,7 @@ import {
   userModel,
   CustomError,
   encryptPassword,
+  RequestWithUser,
 } from "@dam/shared";
 
 /**
@@ -25,7 +25,7 @@ import {
  * @returns {Promise<any | CustomError>} A promise resolving to the created user record or a CustomError.
  */
 
-export const createUser = async (req: Request) => {
+export const createUser = async (req: RequestWithUser) => {
   try {
     const targetRoleId = roleId.user;
 
@@ -67,7 +67,7 @@ export const createUser = async (req: Request) => {
  * @returns {Promise<{result: any[], totalCount: number} | CustomError>} A promise resolving to the user list and count.
  */
 
-export const listUser = async (req: Request) => {
+export const listUser = async (req: RequestWithUser) => {
   try {
     const filterCondition = globalFilter(req, ["id", "name", "email", "createdAt"]);
 
@@ -103,7 +103,7 @@ export const listUser = async (req: Request) => {
  * @returns {Promise<boolean | CustomError>} A promise resolving to true on success or a CustomError.
  */
 
-export const updateUser = async (req: Request) => {
+export const updateUser = async (req: RequestWithUser) => {
   try {
     const userData = await findOne(
       userModel,
@@ -142,7 +142,7 @@ export const updateUser = async (req: Request) => {
  * @returns {Promise<boolean | CustomError>} A promise resolving to true on success or a CustomError.
  */
 
-export const deleteUser = async (req: Request) => {
+export const deleteUser = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
 

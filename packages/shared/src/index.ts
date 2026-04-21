@@ -1,14 +1,5 @@
 // Models
 export * from "./models";
-export { default as assetModel } from "./models/assets";
-export { default as metadataModel } from "./models/metadata";
-export { default as usageModel } from "./models/usage";
-export { default as versionModel } from "./models/version";
-export { default as collectionModel } from "./models/collection";
-export { default as roleModel } from "./models/role";
-export { default as userModel } from "./models/user";
-export { default as approvalModel } from "./models/approval";
-export { default as approvalCommentModel } from "./models/approvalComment";
 
 // Config & Core
 export { default as sequelize } from "./config/sequelizeConnection";
@@ -31,3 +22,4 @@ export * from "./utils/common";
 export * from "./utils/response";
 export * from "./utils/customError";
 export * from "./utils/report";
+export * from "./utils/governance";

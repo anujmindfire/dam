@@ -7,12 +7,22 @@ import {
   rejectAsset,
   getApprovalHistory,
 } from "../services/approval";
-import { sendSuccessResponse, CustomError, statusCode, approvalMsg, RequestWithUser } from "@dam/shared";
+import {
+  sendSuccessResponse,
+  CustomError,
+  statusCode,
+  approvalMsg,
+  RequestWithUser,
+} from "@dam/shared";
 
 /**
- * Controller: Request approval for an asset
+ * Controller: Request approval for an assets
  */
-export const request = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const request = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await requestApproval(req);
 
@@ -34,7 +44,11 @@ export const request = async (req: RequestWithUser, res: Response, next: NextFun
 /**
  * Controller: List approval requests
  */
-export const list = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const list = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await listApproval(req);
 
@@ -57,7 +71,11 @@ export const list = async (req: RequestWithUser, res: Response, next: NextFuncti
 /**
  * Controller: Get approval by ID
  */
-export const getById = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const getById = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await getApprovalById(req);
 
@@ -77,9 +95,13 @@ export const getById = async (req: RequestWithUser, res: Response, next: NextFun
 };
 
 /**
- * Controller: Approve an asset
+ * Controller: Approve an assets
  */
-export const approve = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const approve = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await approveAsset(req);
 
@@ -99,9 +121,13 @@ export const approve = async (req: RequestWithUser, res: Response, next: NextFun
 };
 
 /**
- * Controller: Reject an asset
+ * Controller: Reject an assets
  */
-export const reject = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const reject = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await rejectAsset(req);
 
@@ -121,9 +147,13 @@ export const reject = async (req: RequestWithUser, res: Response, next: NextFunc
 };
 
 /**
- * Controller: Get approval history for an asset
+ * Controller: Get approval history for an assets
  */
-export const history = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+export const history = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const result = await getApprovalHistory(req);
 
