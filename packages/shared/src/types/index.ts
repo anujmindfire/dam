@@ -115,6 +115,7 @@ export interface CollectionProps {
   description: string | null;
   owner: number;
   parentId: number | null;
+  assetCount?: number;
 }
 
 /**

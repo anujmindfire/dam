@@ -1,7 +1,6 @@
 import express, { Router } from "express";
 import {
   upload as uploadController,
-  create,
   list,
   getById,
   update,
@@ -10,11 +9,12 @@ import {
   uploadVersion,
   download,
   thumbnail,
+  getUploadUrl,
+  completeUpload,
 } from "../controllers/assets";
 import { upload } from "../config/upload";
 import { verifyToken } from "../config/verifyToken";
 import {
-  validateAssetUpload,
   validateStatusTransition,
   validateList,
   defaultRoute,
@@ -26,7 +26,8 @@ const apiRoutes: Router = express.Router();
 
 apiRoutes.use(verifyToken);
 apiRoutes.post(apiUrl.upload, upload.single("file"), uploadController);
-apiRoutes.post(defaultRoute, validateAssetUpload, create);
+apiRoutes.post(`${apiUrl.upload}${apiUrl.presignedUrl}`, getUploadUrl);
+apiRoutes.post(`${apiUrl.upload}${apiUrl.complete}`, completeUpload);
 apiRoutes.get(defaultRoute, validateList, list);
 apiRoutes.get(updateRoute, getById);
 apiRoutes.patch(updateRoute, update);

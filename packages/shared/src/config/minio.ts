@@ -83,3 +83,45 @@ export const getObject = async (bucketName: string, objectName: string): Promise
     throw error;
   }
 };
+
+/**
+ * Generates a presigned URL for downloading an object from MinIO.
+ *
+ * @param {string} bucketName - Name of the MinIO bucket.
+ * @param {string} objectName - Name (path) of the object.
+ * @param {number} expiry - URL expiration time in seconds (default: 3600).
+ * @returns {Promise<string>} - The presigned URL.
+ */
+export const getPresignedUrl = async (
+  bucketName: string,
+  objectName: string,
+  expiry: number = 3600,
+): Promise<string> => {
+  try {
+    return await minioClient.presignedGetObject(bucketName, objectName, expiry);
+  } catch (error) {
+    logger.error(`Failed to generate presigned URL:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Generates a presigned URL for uploading an object to MinIO.
+ *
+ * @param {string} bucketName - Name of the MinIO bucket.
+ * @param {string} objectName - Name (path) of the object.
+ * @param {number} expiry - URL expiration time in seconds (default: 3600).
+ * @returns {Promise<string>} - The presigned PUT URL.
+ */
+export const getPresignedPutUrl = async (
+  bucketName: string,
+  objectName: string,
+  expiry: number = 3600,
+): Promise<string> => {
+  try {
+    return await minioClient.presignedPutObject(bucketName, objectName, expiry);
+  } catch (error) {
+    logger.error(`Failed to generate presigned upload URL:`, error);
+    throw error;
+  }
+};

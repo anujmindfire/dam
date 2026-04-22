@@ -50,6 +50,8 @@ export const apiUrl = {
   report: "/report",
   version: "/version",
   refresh: "/refresh",
+  presignedUrl: "/presigned-url",
+  complete: "/complete",
 };
 
 export const enums = {
@@ -203,6 +205,9 @@ export const assetMsg = {
   notFound: "Assets not found",
   invalidStatus: "Invalid lifecycle status transition",
   noFile: "No file provided",
+  downloadSuccess: "Download URL generated successfully",
+  uploadUrlSuccess: "Presigned upload URL generated successfully",
+  directUploadSuccess: "Assets uploaded and registered successfully",
 };
 
 export const cacheMsg = {
