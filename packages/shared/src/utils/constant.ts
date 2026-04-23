@@ -25,6 +25,13 @@ export const method = {
   put: "PUT",
 };
 
+export const storage = {
+  bucket: "assets",
+  uploadsPrefix: "uploads/",
+  versionsPrefix: "versions/",
+  thumbnailsPrefix: "thumbnails/",
+};
+
 export const apiUrl = {
   collection: "/collection",
   auth: "/auth",
@@ -119,6 +126,16 @@ export const modelName = {
   jobs: "jobs",
 };
 
+export const queue = {
+  assetUploaded: "asset_uploaded",
+  systemMaintenance: "system_maintenance",
+  reportGeneration: "report_generation",
+};
+
+export const cacheKey = {
+  latestReport: "system:report:latest",
+};
+
 export const commonMsg = {
   expressAppRunning: (port: number) => `🚀 API Service running on port ${port}`,
   assetsServiceRunning: (port: number) => `🚀  Service running on port ${port}`,
@@ -144,6 +161,38 @@ export const commonMsg = {
   redisReady: "Redis client is ready",
   badGateway: "Bad Gateway: Service temporarily unavailable",
   reportSuccess: "Report generated successfully",
+  reportPrecomputed: "✅ System report precomputed and cached.",
+};
+
+export const workerMsg = {
+  processingAsset: (id: number, filename: string) =>
+    `[Worker] Processing asset [ID: ${id}] — ${filename}`,
+  analysisStart: (id: number, filename: string) =>
+    `[Worker] [ID: ${id}] Starting analysis for ${filename}...`,
+  analysisComplete: (id: number, hash: string) =>
+    `[Worker] [ID: ${id}] Analysis complete. Hash: ${hash}`,
+  metadataUpdated: (id: number) => `[Worker] [ID: ${id}] Metadata updated in DB.`,
+  duplicateDetected: (id: number) =>
+    `[Worker] [ID: ${id}] is a DUPLICATE — skipping lifecycle transition`,
+  assetExpired: (id: number) => `[Worker] [ID: ${id}] is EXPIRED — skipping lifecycle transition`,
+  statusUpdated: (id: number, status: string) =>
+    `[Worker] [ID: ${id}] Status updated to "${status}".`,
+  creatingApproval: (id: number) => `[Worker] [ID: ${id}] Creating approval request...`,
+  transitionComplete: (id: number, status: string) =>
+    `[Worker] asset [ID: ${id}] transitioned to "${status}" and approval initiated.`,
+  processingFailed: (id: number) => `[Worker] Failed to process asset [ID: ${id}]:`,
+  maintenanceStart: "[Worker] Starting periodic system maintenance scan...",
+  maintenanceComplete: (count: number) =>
+    `[Worker] Maintenance scan complete. ${count} assets flagged as expired.`,
+  reportStart: "[Worker] 📊 Starting background report generation...",
+  reportError: "[Worker] Failed to generate background report:",
+  listening:
+    "Worker ✅ Listening for jobs on queues: asset_uploaded, system_maintenance, report_generation",
+  healthCheckRunning: (port: number) => `[Worker] Health monitor running on port ${port}`,
+  triggeringExpiry: "[Worker] 🕒 Triggering automated expiry validation...",
+  assetExpiredShort: "Asset is expired.",
+  duplicateDetectedShort: "Duplicate detected.",
+  jobMessageSuccess: "Analyzed, duplicates checked, and approval workflow initiated.",
 };
 
 export const databaseMsg = {
@@ -208,6 +257,8 @@ export const assetMsg = {
   downloadSuccess: "Download URL generated successfully",
   uploadUrlSuccess: "Presigned upload URL generated successfully",
   directUploadSuccess: "Assets uploaded and registered successfully",
+  initialUploadNote: "Initial upload",
+  systemAuthor: "system",
 };
 
 export const cacheMsg = {

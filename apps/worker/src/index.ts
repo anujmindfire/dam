@@ -19,23 +19,17 @@ import {
   dotEnv,
   redis,
   baseRoute,
+  queue,
+  cacheKey,
+  workerMsg,
+  enums,
+  generateSystemReport,
+  AssetsProps,
 } from "@dam/shared";
+import type { AssetUploadedPayloadProps } from "@dam/shared";
 import express, { Request, Response } from "express";
 import { analyzeAsset } from "./services/analysis";
 import { validateAssetExpiry } from "./services/governance";
-import { generateSystemReport } from "@dam/shared";
-
-/**
- * Payload shape published by the  Service on upload.
- */
-interface AssetUploadedPayload {
-  assetsId: number;
-  filename: string;
-  storageKey: string;
-  type: string;
-  owner: string;
-  timestamp: string;
-}
 
 /**
  * Flags an assets as expired if its expiryDate is in the past.
@@ -46,8 +40,8 @@ const flagExpiryIfNeeded = async (assetsId: number): Promise<boolean> => {
   if (!assetData) return false;
 
   if (assetData.expiryDate && new Date(assetData.expiryDate) < new Date()) {
-    await findOneAndUpdate(assetsModel, { id: assetsId }, { status: "expired" });
-    logger.warn(`[Worker]  [ID: ${assetsId}] flagged as EXPIRED`);
+    await findOneAndUpdate(assetsModel, { id: assetsId }, { status: enums.expired });
+    logger.warn(workerMsg.assetExpired(assetsId));
     return true;
   }
   return false;
@@ -62,11 +56,11 @@ const detectDuplicate = async (assetsId: number, hash: string): Promise<boolean>
   const existing = await findOne(metadataModel, {
     hash,
     assetsId: { [Op.ne]: assetsId },
-  } as any);
+  } as Record<string, unknown>);
 
   if (existing) {
     await findOneAndUpdate(metadataModel, { assetsId }, { isDuplicate: true });
-    logger.warn(`[Worker] Duplicate detected for [ID: ${assetsId}] — matches hash ${hash}`);
+    logger.warn(workerMsg.duplicateDetected(assetsId));
     return true;
   }
   return false;
@@ -85,8 +79,8 @@ const bootstrap = async (): Promise<void> => {
     logger.info(commonMsg.rmqConnected);
 
     // 2. Start consuming assets upload events
-    await consumeMessage("asset_uploaded", async (payload: AssetUploadedPayload) => {
-      logger.info(`[Worker] Processing  [ID: ${payload.assetsId}] — ${payload.filename}`);
+    await consumeMessage(queue.assetUploaded, async (payload: AssetUploadedPayloadProps) => {
+      logger.info(workerMsg.processingAsset(payload.assetsId, payload.filename));
 
       // Create a background job log
       const job = await create(jobModel, {
@@ -98,16 +92,14 @@ const bootstrap = async (): Promise<void> => {
       });
 
       try {
-        logger.info(
-          `[Worker] [ID: ${payload.assetsId}] Starting analysis for ${payload.filename}...`,
-        );
+        logger.info(workerMsg.analysisStart(payload.assetsId, payload.filename));
         // A. Run media analysis — thumbnails, hash extraction, classification
         const { hash, analysisResults } = await analyzeAsset(
           payload.assetsId.toString(),
           payload.storageKey,
           payload.type,
         );
-        logger.info(`[Worker] [ID: ${payload.assetsId}] Analysis complete. Hash: ${hash}`);
+        logger.info(workerMsg.analysisComplete(payload.assetsId, hash));
 
         // B. Persist hash and analysis results using repository
         await findOneAndUpdate(
@@ -119,18 +111,16 @@ const bootstrap = async (): Promise<void> => {
             tags: analysisResults?.objects || [],
           },
         );
-        logger.info(`[Worker] [ID: ${payload.assetsId}] Metadata updated in DB.`);
+        logger.info(workerMsg.metadataUpdated(payload.assetsId));
 
         // C. Check for duplicate assets
         const isDuplicate = await detectDuplicate(payload.assetsId, hash);
         if (isDuplicate) {
-          logger.warn(
-            `[Worker] [ID: ${payload.assetsId}] is a DUPLICATE — skipping lifecycle transition`,
-          );
+          logger.warn(workerMsg.duplicateDetected(payload.assetsId));
           await findOneAndUpdate(
             jobModel,
             { id: job.id },
-            { status: "completed", message: "Duplicate detected." },
+            { status: "completed", message: workerMsg.duplicateDetectedShort },
           );
           return;
         }
@@ -138,27 +128,25 @@ const bootstrap = async (): Promise<void> => {
         // D. Flag expiry if past expiryDate
         const isExpired = await flagExpiryIfNeeded(payload.assetsId);
         if (isExpired) {
-          logger.warn(
-            `[Worker] [ID: ${payload.assetsId}] is EXPIRED — skipping lifecycle transition`,
-          );
+          logger.warn(workerMsg.assetExpired(payload.assetsId));
           await findOneAndUpdate(
             jobModel,
             { id: job.id },
-            { status: "completed", message: "Asset is expired." },
+            { status: "completed", message: workerMsg.assetExpiredShort },
           );
           return;
         }
 
         // E. Lifecycle transition: pending → reviewed
-        await findOneAndUpdate(assetsModel, { id: payload.assetsId }, { status: "reviewed" });
-        logger.info(`[Worker] [ID: ${payload.assetsId}] Status updated to "reviewed".`);
+        await findOneAndUpdate(assetsModel, { id: payload.assetsId }, { status: enums.reviewed });
+        logger.info(workerMsg.statusUpdated(payload.assetsId, enums.reviewed));
 
         // F. Create automatic approval request
-        logger.info(`[Worker] [ID: ${payload.assetsId}] Creating approval request...`);
+        logger.info(workerMsg.creatingApproval(payload.assetsId));
         await create(approvalModel, {
           assetsId: payload.assetsId,
           requestedBy: payload.owner,
-          status: "pending",
+          status: enums.pending,
           priority: "normal",
         });
 
@@ -170,15 +158,13 @@ const bootstrap = async (): Promise<void> => {
             status: "completed",
             progress: 100,
             completedAt: new Date(),
-            message: "Analyzed, duplicates checked, and approval workflow initiated.",
+            message: workerMsg.jobMessageSuccess,
           },
         );
 
-        logger.info(
-          `[Worker]  [ID: ${payload.assetsId}] transitioned to "reviewed" and approval initiated.`,
-        );
+        logger.info(workerMsg.transitionComplete(payload.assetsId, enums.reviewed));
       } catch (err) {
-        logger.error(`[Worker] Failed to process assets [ID: ${payload.assetsId}]:`, err);
+        logger.error(workerMsg.processingFailed(payload.assetsId), err);
 
         // 1. Mark the background job as failed
         await findOneAndUpdate(
@@ -197,38 +183,36 @@ const bootstrap = async (): Promise<void> => {
     });
 
     // 3. Start consuming system maintenance events (Bulk scanning)
-    await consumeMessage("system_maintenance", async () => {
-      logger.info("[Worker] Starting periodic system maintenance scan...");
+    await consumeMessage(queue.systemMaintenance, async () => {
+      logger.info(workerMsg.maintenanceStart);
 
       const { result: assets } = await findAll(assetsModel, {
-        where: { status: { [Op.not]: "expired" } },
+        where: { status: { [Op.not]: enums.expired } },
       });
 
       let flaggedCount = 0;
       for (const assetsData of assets) {
-        const isExpired = await flagExpiryIfNeeded((assetsData as any).id);
+        const isExpired = await flagExpiryIfNeeded((assetsData as AssetsProps).id);
         if (isExpired) flaggedCount++;
       }
 
-      logger.info(`[Worker] Maintenance scan complete. ${flaggedCount} assets flagged as expired.`);
+      logger.info(workerMsg.maintenanceComplete(flaggedCount));
     });
 
     // 4. Start consuming report generation events
-    await consumeMessage("report_generation", async () => {
-      logger.info("[Worker] 📊 Starting background report generation...");
+    await consumeMessage(queue.reportGeneration, async () => {
+      logger.info(workerMsg.reportStart);
       try {
         const report = await generateSystemReport();
         // Save to Redis for fast retrieval by the API
-        await redis.set("system:report:latest", JSON.stringify(report), "EX", 3600); // 1 hour TTL
-        logger.info("[Worker] ✅ System report precomputed and cached.");
+        await redis.set(cacheKey.latestReport, JSON.stringify(report), "EX", 3600); // 1 hour TTL
+        logger.info(commonMsg.reportPrecomputed);
       } catch (err) {
-        logger.error("[Worker] Failed to generate background report:", err);
+        logger.error(workerMsg.reportError, err);
       }
     });
 
-    logger.info(
-      "[Worker] ✅ Listening for jobs on queues: asset_uploaded, system_maintenance, report_generation",
-    );
+    logger.info(workerMsg.listening);
 
     // 5. Minimal health check server for worker
     const healthApp = express();
@@ -242,7 +226,7 @@ const bootstrap = async (): Promise<void> => {
     // 6. Automated Governance Trigger (Run every 5 minutes)
     setInterval(
       async () => {
-        logger.info("[Worker] 🕒 Triggering automated expiry validation...");
+        logger.info(workerMsg.triggeringExpiry);
         await validateAssetExpiry();
       },
       5 * 60 * 1000,

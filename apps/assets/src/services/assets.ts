@@ -24,15 +24,18 @@ import {
   RequestWithUser,
   getPresignedUrl,
   getPresignedPutUrl,
+  queue,
+  enums,
+  storage,
 } from "@dam/shared";
 
-const BUCKET = "assets";
+const BUCKET = storage.bucket;
 
 /**
  * Internal helper to save Assets, Metadata, and Version records,
  * and publish the asset_uploaded event.
  */
-const registerAsset = async (req: RequestWithUser, data: any) => {
+const registerAsset = async (req: RequestWithUser, data: Record<string, unknown>) => {
   const {
     filename,
     storageKey,
@@ -55,7 +58,7 @@ const registerAsset = async (req: RequestWithUser, data: any) => {
     usageRights,
     expiryDate: expiryDate || null,
     collectionId: collectionId ? Number(collectionId) : null,
-    status: "pending",
+    status: enums.pending,
     currentVersion: 1,
   });
 
@@ -72,12 +75,12 @@ const registerAsset = async (req: RequestWithUser, data: any) => {
     versionNumber: 1,
     storageKey,
     size,
-    note: "Initial upload",
-    author: String(req.user?.id || "system"),
+    note: assetMsg.initialUploadNote,
+    author: String(req.user?.id),
   });
 
   // 4. Publish event for async worker processing
-  await publishMessage("asset_uploaded", {
+  await publishMessage(queue.assetUploaded, {
     assetsId: newAsset.id,
     filename,
     storageKey,
@@ -106,7 +109,7 @@ export const uploadAsset = async (req: RequestWithUser) => {
     const { department, usageRights, expiryDate, collectionId } = req.body;
 
     const ext = path.extname(originalname);
-    const storageKey = `uploads/${uuidv4()}${ext}`;
+    const storageKey = `${storage.uploadsPrefix}${uuidv4()}${ext}`;
 
     // 1. Store in MinIO
     await uploadFile(BUCKET, storageKey, buffer, mimetype);
@@ -285,7 +288,7 @@ export const uploadVersion = async (req: RequestWithUser) => {
     const nextVersion = assetsData.currentVersion + 1;
 
     const ext = path.extname(originalname);
-    const storageKey = `versions/${id}_v${nextVersion}${ext}`;
+    const storageKey = `${storage.versionsPrefix}${id}_v${nextVersion}${ext}`;
 
     // 1. Store in MinIO
     await uploadFile(BUCKET, storageKey, buffer, mimetype);
@@ -297,7 +300,7 @@ export const uploadVersion = async (req: RequestWithUser) => {
       storageKey,
       size,
       note: req.body.note || `Update to version ${nextVersion}`,
-      author: String(req.user?.id || "system"),
+      author: String(req.user?.id),
     });
 
     // 3. Update main assets record
@@ -315,7 +318,7 @@ export const uploadVersion = async (req: RequestWithUser) => {
     );
 
     // 4. Trigger async processing for the new version
-    await publishMessage("asset_uploaded", {
+    await publishMessage(queue.assetUploaded, {
       assetsId: assetsData.id,
       filename: originalname,
       storageKey,
@@ -361,7 +364,7 @@ export const getPresignedUploadUrl = async (req: RequestWithUser) => {
     }
 
     const ext = path.extname(filename);
-    const storageKey = `uploads/${uuidv4()}${ext}`;
+    const storageKey = `${storage.uploadsPrefix}${uuidv4()}${ext}`;
 
     const url = await getPresignedPutUrl(BUCKET, storageKey);
     return { uploadUrl: url, storageKey };

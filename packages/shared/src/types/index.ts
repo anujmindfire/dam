@@ -71,7 +71,7 @@ export interface MetadataProps {
   assetsId: number;
   tags: string[];
   department: string | null;
-  analysisResults?: any;
+  analysisResults?: Record<string, unknown>;
   isDuplicate?: boolean;
   hash: string;
 }
@@ -84,7 +84,7 @@ export interface UsageLogProps {
   id: number;
   assetsId: number;
   action: string;
-  context: any;
+  context: Record<string, unknown>;
   loggedAt: Date;
 }
 
@@ -227,7 +227,7 @@ export interface SystemReportProps {
     expired: number;
     complianceRate: string;
   };
-  statusBreakdown: any[];
+  statusBreakdown: Record<string, unknown>[];
   failingAssets: {
     expiredCount: number;
     duplicateProbability: string;
@@ -258,4 +258,16 @@ export interface JobProps {
   message?: string;
   startedAt?: Date;
   completedAt?: Date;
+}
+
+/**
+ * Payload shape published by the Asset Service on upload.
+ */
+export interface AssetUploadedPayloadProps {
+  assetsId: number;
+  filename: string;
+  storageKey: string;
+  type: string;
+  owner: number;
+  timestamp: string;
 }
