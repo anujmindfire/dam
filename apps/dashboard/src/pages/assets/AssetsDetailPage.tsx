@@ -88,6 +88,31 @@ const AssetsDetailPage: React.FC = () => {
     }
   };
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleVersionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("note", "New system revision");
+
+    try {
+      toast("Uploading new version...", "loading");
+      await assetsService.uploadVersion(id, formData);
+      toast(
+        "Revision v" + ((assets?.versions?.length || 0) + 2) + " successfully committed",
+        "success",
+      );
+      fetchAssetDetails(id);
+    } catch (error) {
+      toast("Version upload failed", "error");
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleDownload = () => {
     if (!id) return;
     const token = localStorage.getItem("accessToken");
@@ -354,6 +379,35 @@ const AssetsDetailPage: React.FC = () => {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-6"
               >
+                <div className="flex items-center justify-between bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                      <History size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-indigo-900">Version Management</p>
+                      <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+                        Total Revisions: {assets.versions?.length || 0}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      onChange={handleVersionUpload}
+                    />
+                    <Button
+                      variant="outline"
+                      className="text-xs py-1.5 h-auto"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Upload New Version
+                    </Button>
+                  </div>
+                </div>
+
                 {assets.versions && assets.versions.length > 0 ? (
                   assets.versions.map((v, idx) => (
                     <div

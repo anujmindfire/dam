@@ -1,13 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import {
   uploadAsset,
-  createAsset,
   listAsset,
   getAsset,
   updateAsset,
   updateStatus,
   deleteAsset,
   uploadVersion as uploadVersionService,
+  getDownloadUrl,
+  getPresignedUploadUrl,
+  registerDirectUpload,
 } from "../services/assets";
 import {
   sendSuccessResponse,
@@ -16,6 +18,7 @@ import {
   assetMsg,
   minioClient,
   RequestWithUser,
+  getPresignedUrl,
 } from "@dam/shared";
 
 /**
@@ -28,32 +31,6 @@ export const upload = async (
 ): Promise<void> => {
   try {
     const result = await uploadAsset(req);
-
-    if (result instanceof CustomError) {
-      return next(new CustomError(result.message, result.statusCode));
-    }
-
-    sendSuccessResponse({
-      res,
-      statusCode: statusCode.successCreated,
-      message: assetMsg.createSuccess,
-      data: result,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-/**
- * POST / — Creates assets from existing storageKey without file upload.
- */
-export const create = async (
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const result = await createAsset(req);
 
     if (result instanceof CustomError) {
       return next(new CustomError(result.message, result.statusCode));
@@ -207,31 +184,33 @@ export const uploadVersion = async (
 };
 
 /**
- * GET /:id/download — Streams the assets file to the client.
+ * GET /:id/download — Returns a presigned URL for downloading the asset.
  */
-export const download = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const download = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
-    const result = await getAsset(req);
+    const result = await getDownloadUrl(req);
 
     if (result instanceof CustomError) {
       return next(new CustomError(result.message, result.statusCode));
     }
 
-    const assets = result;
-    const stream = await minioClient.getObject("assets", assets.storageKey);
-
-    const disposition = req.query.disposition === "inline" ? "inline" : "attachment";
-    res.setHeader("Content-Type", assets.mimetype);
-    res.setHeader("Content-Disposition", `${disposition}; filename="${assets.filename}"`);
-
-    stream.pipe(res);
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.success,
+      message: assetMsg.downloadSuccess,
+      data: result,
+    });
   } catch (error) {
     return next(error);
   }
 };
 
 /**
- * GET /:id/thumbnail — Streams the assets thumbnail to the client.
+ * GET /:id/thumbnail — Returns a presigned URL for the asset thumbnail.
  */
 export const thumbnail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -239,13 +218,68 @@ export const thumbnail = async (req: Request, res: Response, next: NextFunction)
     const thumbKey = `thumbnails/${id}.webp`;
 
     try {
-      const stream = await minioClient.getObject("assets", thumbKey);
-      res.setHeader("Content-Type", "image/webp");
-      res.setHeader("Content-Disposition", `inline; filename="thumb_${id}.webp"`);
-      stream.pipe(res);
+      const url = await getPresignedUrl("assets", thumbKey);
+      sendSuccessResponse({
+        res,
+        statusCode: statusCode.success,
+        message: assetMsg.getSuccess,
+        data: { thumbnailUrl: url },
+      });
     } catch (e) {
       return next(new CustomError("Thumbnail not available", statusCode.notFound));
     }
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * POST /upload/presigned-url — Generates a presigned PUT URL for direct upload.
+ */
+export const getUploadUrl = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const result = await getPresignedUploadUrl(req);
+
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.success,
+      message: assetMsg.uploadUrlSuccess,
+      data: result,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * POST /upload/complete — Finalizes asset registration after direct upload.
+ */
+export const completeUpload = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const result = await registerDirectUpload(req);
+
+    if (result instanceof CustomError) {
+      return next(new CustomError(result.message, result.statusCode));
+    }
+
+    sendSuccessResponse({
+      res,
+      statusCode: statusCode.successCreated,
+      message: assetMsg.directUploadSuccess,
+      data: result,
+    });
   } catch (error) {
     return next(error);
   }

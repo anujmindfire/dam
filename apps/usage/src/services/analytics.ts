@@ -79,6 +79,20 @@ export const getSystemOverview = async (filters: any = {}): Promise<any | Custom
       where: { ...assetWhere, status: "expired" },
     });
 
+    // 2.1 Expiring soon (At Risk) - Expiry within next 7 days
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+
+    const { totalCount: atRiskCount } = await findAll(assetsModel, {
+      where: {
+        ...assetWhere,
+        status: { [Op.ne]: "expired" },
+        expiryDate: {
+          [Op.between]: [new Date(), nextWeek],
+        },
+      },
+    });
+
     // 3. Usage trends
     const days = timeRange === "Last 7 Days" ? 7 : 30;
     const startDate = new Date();
@@ -98,7 +112,10 @@ export const getSystemOverview = async (filters: any = {}): Promise<any | Custom
 
     const complianceScore =
       totalAssets > 0
-        ? (((totalAssets - expiredCount - duplicateCount) / totalAssets) * 100).toFixed(1)
+        ? (
+            ((totalAssets - expiredCount - duplicateCount - atRiskCount) / totalAssets) *
+            100
+          ).toFixed(1)
         : "100.0";
 
     const totalStorage =
@@ -118,6 +135,7 @@ export const getSystemOverview = async (filters: any = {}): Promise<any | Custom
       mimetypeDistribution: mimetypeRows,
       duplicateCount,
       expiredCount,
+      atRiskCount,
       usageTrends,
       complianceScore: parseFloat(complianceScore),
     };
@@ -176,12 +194,32 @@ export const getComplianceReport = async (): Promise<any | CustomError> => {
       });
     }
 
+    // New: At Risk (Expiring soon)
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const { totalCount: atRiskCount } = await findAll(assetsModel, {
+      where: {
+        status: { [Op.ne]: "expired" },
+        expiryDate: {
+          [Op.between]: [new Date(), nextWeek],
+        },
+      },
+    });
+
+    if (atRiskCount > 0) {
+      violations.push({
+        title: "Expiring Soon (At Risk)",
+        description: `${atRiskCount} assets will expire within the next 7 days and require review.`,
+      });
+    }
+
     const result = {
       statusRows,
       duplicates,
       score,
-      alertsCount: duplicates + expiredCount,
+      alertsCount: duplicates + expiredCount + atRiskCount,
       approvedCount,
+      atRiskCount,
       violations,
     };
     await cache.set(COMPLIANCE_KEY, result, 60); // Cache for 60 seconds

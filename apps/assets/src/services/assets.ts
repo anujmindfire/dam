@@ -22,6 +22,8 @@ import {
   globalPagination,
   cacheMsg as cacheKeys,
   RequestWithUser,
+  getPresignedUrl,
+  getPresignedPutUrl,
 } from "@dam/shared";
 
 const BUCKET = "assets";
@@ -120,19 +122,6 @@ export const uploadAsset = async (req: RequestWithUser) => {
       expiryDate,
       collectionId,
     });
-  } catch (error) {
-    return new CustomError((error as Error).message, statusCode.badRequest);
-  }
-};
-
-/**
- * Creates an assets record from existing storageKey (no file upload).
- * Used when file is pre-uploaded externally.
- */
-
-export const createAsset = async (req: RequestWithUser) => {
-  try {
-    return await registerAsset(req, req.body);
   } catch (error) {
     return new CustomError((error as Error).message, statusCode.badRequest);
   }
@@ -340,6 +329,59 @@ export const uploadVersion = async (req: RequestWithUser) => {
     await cache.delByPattern(`${cacheKeys.assetListCacheKey}*`);
 
     return updated;
+  } catch (error) {
+    return new CustomError((error as Error).message, statusCode.badRequest);
+  }
+};
+
+/**
+ * Generates a presigned URL for downloading an asset.
+ */
+export const getDownloadUrl = async (req: RequestWithUser) => {
+  try {
+    const { id } = req.params;
+    const assetsData = await findOne(assetsModel, { id: Number(id) });
+    if (!assetsData) return new CustomError(assetMsg.notFound, statusCode.notFound);
+
+    const url = await getPresignedUrl(BUCKET, assetsData.storageKey);
+    return { downloadUrl: url };
+  } catch (error) {
+    return new CustomError((error as Error).message, statusCode.badRequest);
+  }
+};
+
+/**
+ * Generates a presigned PUT URL for direct client upload.
+ */
+export const getPresignedUploadUrl = async (req: RequestWithUser) => {
+  try {
+    const { filename, mimetype } = req.body;
+    if (!filename || !mimetype) {
+      return new CustomError("Filename and mimetype are required", statusCode.badRequest);
+    }
+
+    const ext = path.extname(filename);
+    const storageKey = `uploads/${uuidv4()}${ext}`;
+
+    const url = await getPresignedPutUrl(BUCKET, storageKey);
+    return { uploadUrl: url, storageKey };
+  } catch (error) {
+    return new CustomError((error as Error).message, statusCode.badRequest);
+  }
+};
+
+/**
+ * Finalizes direct upload by registering the asset in the database.
+ */
+export const registerDirectUpload = async (req: RequestWithUser) => {
+  try {
+    const { filename, storageKey, size, mimetype } = req.body;
+
+    if (!filename || !storageKey || !size || !mimetype) {
+      return new CustomError("Missing required fields for registration", statusCode.badRequest);
+    }
+
+    return await registerAsset(req, req.body);
   } catch (error) {
     return new CustomError((error as Error).message, statusCode.badRequest);
   }

@@ -63,6 +63,7 @@ export interface DashboardStatsProps {
   activeJobsCount: number;
   duplicateCount: number;
   expiredCount: number;
+  atRiskCount: number;
   complianceScore: number;
   statusDistribution: Record<string, number>;
   usageTrends: Array<{ date: string; count: number }>;
@@ -79,6 +80,8 @@ export interface ActivityLogsProps {
 export interface ComplianceStatsProps {
   statusRows: Array<{ status: string; count: number }>;
   duplicates: number;
+  atRiskCount: number;
+  approvedCount: number;
 }
 
 export interface ComplianceIssuesProps {

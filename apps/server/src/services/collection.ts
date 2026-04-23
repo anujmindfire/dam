@@ -12,6 +12,7 @@ import {
   collectionMsg,
   RequestWithUser,
   Op,
+  sequelize,
 } from "@dam/shared";
 
 /**
@@ -66,6 +67,19 @@ export const listCollection = async (req: RequestWithUser) => {
         owner: owner,
         ...(parentId !== undefined ? { parentId } : {}),
         ...(searchKey ? { name: { [Op.iLike]: `%${searchKey}%` } } : {}),
+      },
+      attributes: {
+        include: [
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM assets AS assets
+              WHERE
+                assets."collectionId" = "Collection"."id"
+            )`),
+            "assetCount",
+          ] as any,
+        ],
       },
       include: [{ model: collectionModel, as: "subCollections" }],
       limit: parseInt(limit as string),

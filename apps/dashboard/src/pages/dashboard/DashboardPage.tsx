@@ -113,15 +113,18 @@ const DashboardPage: React.FC = () => {
       },
       {
         label: "Expiring Soon",
-        value: stats?.expiredCount?.toString() || "0",
+        value: stats?.atRiskCount?.toString() || "0",
         icon: Clock,
         color: "text-indigo-500",
         bg: "bg-indigo-50",
-        description: "Assets reaching their expiry date",
+        description: "Assets reaching their expiry date in next 7 days",
       },
       {
         label: "Risk Assessment",
-        value: stats?.complianceScore !== undefined ? `${100 - stats.complianceScore}%` : "0%",
+        value:
+          stats?.complianceScore !== undefined
+            ? `${(100 - stats.complianceScore).toFixed(1)}%`
+            : "0%",
         icon: AlertTriangle,
         color: "text-rose-500",
         bg: "bg-rose-50",
