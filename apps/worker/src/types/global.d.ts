@@ -1,2 +1,1 @@
-declare module 'minio';
-declare module '@dam/shared';
+declare module "minio";

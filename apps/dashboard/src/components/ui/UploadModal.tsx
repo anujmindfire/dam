@@ -93,11 +93,14 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-lg"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upload-modal-title"
           >
             <Card className="shadow-2xl">
               <Card.Header className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <Card.HeaderTitle className="flex items-center gap-2">
-                  <Upload size={18} className="text-[var(--primary)]" />
+                <Card.HeaderTitle className="flex items-center gap-2" id="upload-modal-title">
+                  <Upload size={18} aria-hidden="true" className="text-[var(--primary)]" />
                   Upload Digital Assets
                 </Card.HeaderTitle>
                 <Button
@@ -105,6 +108,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
                   onClick={onClose}
                   className="w-8 h-8 p-0"
                   disabled={isUploading}
+                  aria-label="Close upload modal"
                 >
                   <X size={18} />
                 </Button>
@@ -171,10 +175,19 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
                     </div>
 
                     {isUploading && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-indigo-600">
+                      <div
+                        className="space-y-2"
+                        role="progressbar"
+                        aria-valuenow={uploadProgress}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      >
+                        <div
+                          className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-indigo-600"
+                          aria-live="polite"
+                        >
                           <span className="flex items-center gap-1">
-                            <Loader2 size={10} className="animate-spin" />
+                            <Loader2 size={10} aria-hidden="true" className="animate-spin" />
                             Ingesting to Vault...
                           </span>
                           <span>{uploadProgress}%</span>
