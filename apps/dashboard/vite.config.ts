@@ -12,4 +12,10 @@ export default defineConfig({
       "@dam/shared": path.resolve(__dirname, "../../packages/shared/src"),
     },
   },
-});
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.ts",
+    css: true,
+  },
+} as any);

@@ -107,6 +107,13 @@ export default [
   },
   {
     // Ignore patterns
-    ignores: ["**/dist/**", "**/node_modules/**", "**/build/**", ".next/**"],
+    ignores: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/build/**",
+      ".next/**",
+      "**/__tests__/**",
+      "**/src/test/**",
+    ],
   },
 ];
