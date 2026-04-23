@@ -50,7 +50,7 @@ export const apiUrl = {
   report: "/report",
   version: "/version",
   refresh: "/refresh",
-  presignedUrl: "/presigned-url",
+  presignedUrl: "/presigned",
   complete: "/complete",
 };
 
