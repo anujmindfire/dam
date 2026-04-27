@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dam-config
+  namespace: dam
+data:
+  DB_HOST: host.docker.internal
+  DB_PORT: "5432"
+  DB_DATABASE: dam
+  DB_USER: postgres
+  RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  MINIO_ENDPOINT: minio
+  MINIO_PORT: "9000"
+  MINIO_ACCESS_KEY: minioadmin
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  NODE_ENV: development
+  VITE_API_URL: http://api-gateway/api/v1
+  SERVER_HOST: server
+  SERVER_PORT: "3004"
+  ASSETS_SERVICE_HOST: assets
+  ASSETS_SERVICE_PORT: "3001"
+  METADATA_SERVICE_HOST: metadata
+  METADATA_SERVICE_PORT: "3002"
+  USAGE_SERVICE_HOST: usage
+  USAGE_SERVICE_PORT: "3003"
+  WORKER_HOST: worker
+  WORKER_PORT: "3005"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dam-secret
+  namespace: dam
+type: Opaque
+data:
+  DB_PASSWORD: Q2hpa3UxNDM= # Chiku143
+  MINIO_SECRET_KEY: bWluaW9hZG1pbg== # minioadmin
+  ACCESS_TOKEN_SECRET: ZGFtX2FjY2Vzc190b2tlbl9zZWNyZXQ= # dam_access_token_secret
+  REFRESH_TOKEN_SECRET: ZGFtX3JlZnJlc2hfdG9rZW5fc2VjcmV0 # dam_refresh_token_secret
