@@ -138,7 +138,7 @@ export const listAsset = async (req: RequestWithUser) => {
     const { limit, offset } = globalPagination(req);
     const searchConditions = globalSearch(req.query.searchKey as string, assetsModel);
     const sortKey = (req.query.sortKey as string) || "createdAt";
-    const sortOrder = (req.query.sortOrder as string) === "DESC" ? "DESC" : "ASC";
+    const sortOrder = (req.query.sortOrder as string) === "ASC" ? "ASC" : "DESC";
 
     const cacheKey = `${cacheKeys.assetListCacheKey}:${JSON.stringify(req.query)}`;
     const cached = await cache.get(cacheKey);

@@ -4,7 +4,6 @@
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
-    "ignoreDeprecations": "6.0",
     "types": ["jest", "node"]
   },
   "include": ["src/**/*.ts", "src/tests/**/*.ts"],
