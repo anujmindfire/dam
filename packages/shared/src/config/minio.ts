@@ -1,6 +1,7 @@
 import * as Minio from "minio";
 import dotEnv from "./dotEnv";
 import logger from "../utils/logger";
+import { storage } from "../utils/constant";
 
 /**
  * Initializes the MinIO client using centralized environment variables.
@@ -9,52 +10,130 @@ import logger from "../utils/logger";
 export const minioClient = new Minio.Client({
   endPoint: dotEnv.minioEndpoint,
   port: dotEnv.minioPort,
-  useSSL: dotEnv.minioUseSSL,
+  useSSL: false, // Set to true if using HTTPS
   accessKey: dotEnv.minioAccessKey,
   secretKey: dotEnv.minioSecretKey,
 });
 
 /**
- * Uploads a file buffer to a specified MinIO bucket.
- * Automatically creates the bucket if it does not already exist.
- * @param {string} bucketName - Name of the MinIO bucket.
- * @param {string} objectName - Name (path) of the object in the bucket.
- * @param {Buffer} buffer - The file content buffer.
- * @param {string} mimetype - Content-Type of the file.
- * @returns {Promise<void>}
+ * Rewrites internal MinIO URLs (cluster DNS) to the public-facing URL
+ * for client-side access (browser downloads/uploads).
  */
-export const uploadFile = async (
-  bucketName: string,
-  objectName: string,
-  buffer: Buffer,
-  mimetype: string,
-): Promise<void> => {
+const rewriteUrl = (url: string): string => {
+  if (!dotEnv.minioPublicUrl) return url;
+
+  // Remove protocol for hostname matching
+  const internal = `${dotEnv.minioEndpoint}:${dotEnv.minioPort}`;
+  const publicUrl = dotEnv.minioPublicUrl.replace(/^https?:\/\//, "");
+
+  // Replace internal host:port with public host (which might include a port or path)
+  let rewritten = url.replace(internal, publicUrl);
+
+  // Handle cases where the internal hostname might be used without the port
+  if (rewritten === url) {
+    rewritten = url.replace(dotEnv.minioEndpoint, publicUrl);
+  }
+
+  // Ensure protocol matches the public URL
+  const protocol = dotEnv.minioPublicUrl.startsWith("https") ? "https://" : "http://";
+  return rewritten.replace(/^https?:\/\//, protocol);
+};
+
+/**
+ * Configures CORS and public policies for a bucket.
+ */
+export const configureBucket = async (bucketName: string = storage.bucket): Promise<void> => {
   try {
     const exists = await minioClient.bucketExists(bucketName).catch(() => false);
     if (!exists) {
       await minioClient.makeBucket(bucketName, "us-east-1");
-
-      // Set public policy for reports bucket
-      if (bucketName === "reports") {
-        const policy = {
-          Version: "2012-10-17",
-          Statement: [
-            {
-              Effect: "Allow",
-              Principal: "*",
-              Action: ["s3:GetObject"],
-              Resource: [`arn:aws:s3:::${bucketName}/*`],
-            },
-          ],
-        };
-        await minioClient.setBucketPolicy(bucketName, JSON.stringify(policy));
-        logger.info(`Public read policy set for MinIO bucket: ${bucketName}`);
-      }
     }
-    await minioClient.putObject(bucketName, objectName, buffer, buffer.length, {
-      "Content-Type": mimetype,
-    });
-    logger.info(`File ${objectName} successfully uploaded to MinIO bucket ${bucketName}`);
+
+    // Set CORS policy to allow direct uploads from the dashboard
+    const corsConfig = {
+      CORSRules: [
+        {
+          AllowedHeaders: ["*"],
+          AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
+          AllowedOrigins: ["*"], // In production, restrict this to your domain
+          ExposeHeaders: ["ETag"],
+          MaxAgeSeconds: 3000,
+        },
+      ],
+    };
+
+    // Note: If the SDK version doesn't support setBucketCors, we skip it
+    // or use a console command. For MinIO, CORS can also be set via policy.
+    try {
+      await (
+        minioClient as unknown as {
+          setBucketCors: (bucket: string, config: unknown) => Promise<void>;
+        }
+      ).setBucketCors(bucketName, corsConfig);
+      logger.info(`CORS policy set for MinIO bucket: ${bucketName}`);
+    } catch (corsErr) {
+      logger.warn(`Could not set CORS via SDK for ${bucketName}. Ensure it is set via Console/MC.`);
+    }
+
+    // Set public policy for reports bucket if needed
+    if (bucketName === "reports") {
+      const policy = {
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Effect: "Allow",
+            Principal: "*",
+            Action: ["s3:GetObject"],
+            Resource: [`arn:aws:s3:::${bucketName}/*`],
+          },
+        ],
+      };
+      await minioClient.setBucketPolicy(bucketName, JSON.stringify(policy));
+      logger.info(`Public read policy set for MinIO bucket: ${bucketName}`);
+    }
+  } catch (error) {
+    logger.error(`Failed to configure MinIO bucket ${bucketName}:`, error);
+  }
+};
+
+/**
+ * Ensures a bucket exists, creates it if it doesn't, and applies configuration.
+ */
+export const createBucketIfNotExists = async (bucketName: string): Promise<void> => {
+  try {
+    const exists = await minioClient.bucketExists(bucketName);
+    if (!exists) {
+      await minioClient.makeBucket(bucketName, "us-east-1");
+      logger.info(`Bucket created: ${bucketName}`);
+      await configureBucket(bucketName);
+    }
+  } catch (error) {
+    logger.error(`Error ensuring bucket ${bucketName} exists:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Uploads a file to a MinIO bucket. Supports both file paths and Buffers.
+ */
+export const uploadFile = async (
+  bucketName: string,
+  objectName: string,
+  data: string | Buffer,
+  contentType?: string,
+): Promise<void> => {
+  try {
+    await createBucketIfNotExists(bucketName);
+    const metaData: Record<string, string> = {};
+    if (contentType) {
+      metaData["Content-Type"] = contentType;
+    }
+
+    if (Buffer.isBuffer(data)) {
+      await minioClient.putObject(bucketName, objectName, data, data.length, metaData);
+    } else {
+      await minioClient.fPutObject(bucketName, objectName, data, metaData);
+    }
   } catch (error) {
     logger.error(`Failed to upload file to MinIO:`, error);
     throw error;
@@ -62,12 +141,7 @@ export const uploadFile = async (
 };
 
 /**
- * Retrieves a file as a Buffer from MinIO.
- * Useful for processing files in memory (e.g., generating thumbnails or hashing).
- *
- * @param {string} bucketName - Name of the MinIO bucket.
- * @param {string} objectName - Name (path) of the object to retrieve.
- * @returns {Promise<Buffer>}
+ * Downloads a file from a MinIO bucket as a Buffer.
  */
 export const getObject = async (bucketName: string, objectName: string): Promise<Buffer> => {
   try {
@@ -86,11 +160,6 @@ export const getObject = async (bucketName: string, objectName: string): Promise
 
 /**
  * Generates a presigned URL for downloading an object from MinIO.
- *
- * @param {string} bucketName - Name of the MinIO bucket.
- * @param {string} objectName - Name (path) of the object.
- * @param {number} expiry - URL expiration time in seconds (default: 3600).
- * @returns {Promise<string>} - The presigned URL.
  */
 export const getPresignedUrl = async (
   bucketName: string,
@@ -98,7 +167,8 @@ export const getPresignedUrl = async (
   expiry: number = 3600,
 ): Promise<string> => {
   try {
-    return await minioClient.presignedGetObject(bucketName, objectName, expiry);
+    const url = await minioClient.presignedGetObject(bucketName, objectName, expiry);
+    return rewriteUrl(url);
   } catch (error) {
     logger.error(`Failed to generate presigned URL:`, error);
     throw error;
@@ -107,11 +177,6 @@ export const getPresignedUrl = async (
 
 /**
  * Generates a presigned URL for uploading an object to MinIO.
- *
- * @param {string} bucketName - Name of the MinIO bucket.
- * @param {string} objectName - Name (path) of the object.
- * @param {number} expiry - URL expiration time in seconds (default: 3600).
- * @returns {Promise<string>} - The presigned PUT URL.
  */
 export const getPresignedPutUrl = async (
   bucketName: string,
@@ -119,7 +184,8 @@ export const getPresignedPutUrl = async (
   expiry: number = 3600,
 ): Promise<string> => {
   try {
-    return await minioClient.presignedPutObject(bucketName, objectName, expiry);
+    const url = await minioClient.presignedPutObject(bucketName, objectName, expiry);
+    return rewriteUrl(url);
   } catch (error) {
     logger.error(`Failed to generate presigned upload URL:`, error);
     throw error;

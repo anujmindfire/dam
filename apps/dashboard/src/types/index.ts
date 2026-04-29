@@ -11,10 +11,16 @@ export interface UserProps {
   createdAt?: string;
 }
 
+export interface UserBriefProps {
+  id: number;
+  name: string;
+  email: string;
+}
+
 export interface AuthContextTypeProps {
   user: UserProps | null;
   loading: boolean;
-  login: (userData: any) => void;
+  login: (userData: Record<string, unknown>) => void;
   logout: () => void;
 }
 
@@ -29,6 +35,7 @@ export interface AssetsProps {
   owner?: string;
   createdAt: string;
   size: string | number;
+  uploader?: UserBriefProps;
 }
 
 export interface AssetsVersionProps {
@@ -52,7 +59,7 @@ export interface MetadataProps {
   assetsId?: string;
   tags?: string[];
   department?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // --- Analytics & Dashboard Types ---
@@ -75,6 +82,14 @@ export interface ActivityLogsProps {
   action: string;
   target: string;
   timestamp: string;
+}
+
+export interface UsageLogProps {
+  id: number;
+  assetsId: string;
+  action: string;
+  context?: Record<string, unknown>;
+  loggedAt: string;
 }
 
 export interface ComplianceStatsProps {

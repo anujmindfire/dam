@@ -59,9 +59,18 @@ const AssetsListPage: React.FC = () => {
     }
   };
 
-  const handleDownload = (id: string) => {
-    const token = localStorage.getItem("accessToken");
-    window.open(`${import.meta.env.VITE_API_URL}/assets/${id}/download?token=${token}`, "_blank");
+  const handleDownload = async (id: string) => {
+    try {
+      const response = await assetsService.getDownloadUrl(id);
+      const downloadUrl = response.data?.data?.downloadUrl;
+      if (downloadUrl) {
+        window.open(downloadUrl, "_blank");
+      } else {
+        toast("Download URL not found", "error");
+      }
+    } catch (error) {
+      toast("Failed to generate download link", "error");
+    }
   };
 
   const columns: Column[] = [
@@ -95,9 +104,12 @@ const AssetsListPage: React.FC = () => {
                   alt={assets.filename}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as any).style.display = "none";
-                    (e.target as any).parentElement.innerHTML =
-                      '<div class="text-indigo-500 font-bold text-[10px]">FILE</div>';
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                    if (target.parentElement) {
+                      target.parentElement.innerHTML =
+                        '<div class="text-indigo-500 font-bold text-[10px]">FILE</div>';
+                    }
                   }}
                 />
               ) : (
@@ -138,7 +150,7 @@ const AssetsListPage: React.FC = () => {
       case "owner":
         return (
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            {(assets as any).uploader?.name || assets.owner || "System"}
+            {assets.uploader?.name || assets.owner || "System"}
           </span>
         );
       case "createdAt":

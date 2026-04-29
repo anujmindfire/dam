@@ -60,16 +60,16 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
     setIsUploading(true);
     setUploadProgress(0);
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("department", department);
-    formData.append("usageRights", usageRights);
-    formData.append("expiryDate", expiryDate);
-
     try {
-      await assetsService.upload(formData, (percent) => {
-        setUploadProgress(percent);
-      });
+      // Use direct upload to MinIO (via API Gateway)
+      await assetsService.directUpload(
+        selectedFile,
+        { department, usageRights, expiryDate },
+        (percent) => {
+          setUploadProgress(percent);
+        },
+      );
+
       toast("Assets uploaded successfully", "success");
       setSelectedFile(null);
       setUsageRights("");
@@ -78,7 +78,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
       onSuccess?.();
       onClose();
     } catch (error) {
-      toast("Upload failed. Please try again.", "error");
+      toast("Upload failed. Please check your connection to MinIO.", "error");
     } finally {
       setIsUploading(false);
     }

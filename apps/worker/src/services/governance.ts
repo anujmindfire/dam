@@ -34,7 +34,7 @@ export const validateAssetExpiry = async (): Promise<number> => {
         `[Worker] Expiry validation complete. Flagged ${updatedCount} assets as expired.`,
       );
       // Invalidate analytics cache
-      await cache.delete("analytics:overview");
+      await cache.del("analytics:overview");
     }
 
     return updatedCount;
@@ -44,12 +44,22 @@ export const validateAssetExpiry = async (): Promise<number> => {
   }
 };
 
+interface DistributionItem {
+  mimetype: string;
+  count: number;
+}
+
+interface TrendItem {
+  date: string;
+  count: number;
+}
+
 /**
  * Generates a comprehensive system intelligence report.
  * Aggregates usage, duplication, and compliance trends.
  * Saves results to Redis and generates a downloadable report file.
  */
-export const generateSystemReport = async (): Promise<any> => {
+export const generateSystemReport = async (): Promise<Record<string, unknown>> => {
   try {
     logger.info("[Worker] Generating large-scale intelligence report...");
 
@@ -78,7 +88,7 @@ export const generateSystemReport = async (): Promise<any> => {
     // 3. Compliance Audit
     const totalCount = await assetsModel.count();
     const expiredCount = await assetsModel.count({ where: { status: "expired" } });
-    const { totalCount: duplicateCount } = await metadataModel.findAndCountAll({
+    const { count: duplicateCount } = await metadataModel.findAndCountAll({
       where: { isDuplicate: true },
     });
 
@@ -105,11 +115,11 @@ Compliance Score: ${complianceScore}%
 
 2. STORAGE DISTRIBUTION
 -----------------------
-${distribution.map((d: any) => `- ${d.mimetype}: ${d.count} assets`).join("\n")}
+${(distribution as unknown as DistributionItem[]).map((d: DistributionItem) => `- ${d.mimetype}: ${d.count} assets`).join("\n")}
 
 3. USAGE TRENDS (30 DAYS)
 -------------------------
-${trends.map((t: any) => `- ${t.date}: ${t.count} actions`).join("\n")}
+${(trends as unknown as TrendItem[]).map((t: TrendItem) => `- ${t.date}: ${t.count} actions`).join("\n")}
 
 4. AUDIT STATUS
 ---------------

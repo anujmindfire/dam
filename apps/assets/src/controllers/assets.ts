@@ -16,7 +16,6 @@ import {
   CustomError,
   statusCode,
   assetMsg,
-  minioClient,
   RequestWithUser,
   getPresignedUrl,
 } from "@dam/shared";
@@ -62,8 +61,8 @@ export const list = async (req: Request, res: Response, next: NextFunction): Pro
       res,
       statusCode: statusCode.success,
       message: assetMsg.listSuccess,
-      data: (result as any).result,
-      totalCount: (result as any).totalCount,
+      data: (result as { result: unknown[] }).result,
+      totalCount: (result as { totalCount: number }).totalCount,
     });
   } catch (error) {
     return next(error);
@@ -198,6 +197,11 @@ export const download = async (
       return next(new CustomError(result.message, result.statusCode));
     }
 
+    // Support direct download if token is in query (direct link) or if it's a browser request
+    if (req.query.token || req.headers.accept?.includes("text/html")) {
+      return res.redirect((result as { downloadUrl: string }).downloadUrl);
+    }
+
     sendSuccessResponse({
       res,
       statusCode: statusCode.success,
@@ -219,6 +223,12 @@ export const thumbnail = async (req: Request, res: Response, next: NextFunction)
 
     try {
       const url = await getPresignedUrl("assets", thumbKey);
+
+      // Support direct preview if token is in query or if it's a browser request
+      if (req.query.token || req.headers.accept?.includes("text/html")) {
+        return res.redirect(url);
+      }
+
       sendSuccessResponse({
         res,
         statusCode: statusCode.success,

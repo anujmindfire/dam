@@ -18,6 +18,7 @@ import {
   databaseMsg,
   baseRoute,
   apiUrl,
+  configureBucket,
 } from "@dam/shared";
 
 const app = express();
@@ -59,6 +60,10 @@ const bootstrap = async (): Promise<void> => {
 
     await connectRabbitMQ();
     logger.info(commonMsg.rmqConnected);
+
+    // Configure MinIO Bucket (CORS, etc.)
+    await configureBucket();
+    logger.info("MinIO bucket configured successfully");
 
     // Redis is initialized lazily on first use
     redis.on("ready", () => logger.info(commonMsg.redisReady));

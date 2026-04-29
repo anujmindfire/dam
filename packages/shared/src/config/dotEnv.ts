@@ -38,6 +38,7 @@ export interface DotEnvConfig {
   assetsHost: string;
   metadataHost: string;
   usageHost: string;
+  minioPublicUrl?: string;
 }
 
 const config: DotEnvConfig = {
@@ -68,6 +69,7 @@ const config: DotEnvConfig = {
   assetsHost: process.env.ASSETS_SERVICE_HOST || "localhost",
   metadataHost: process.env.METADATA_SERVICE_HOST || "localhost",
   usageHost: process.env.USAGE_SERVICE_HOST || "localhost",
+  minioPublicUrl: process.env.MINIO_PUBLIC_URL,
 };
 
 export default config;

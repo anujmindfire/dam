@@ -23,7 +23,12 @@ import { useToast } from "../../components/ui/ToastProvider";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { PageSkeleton } from "../../components/ui/Loader";
-import type { AssetsDetailProps, MetadataProps, ApprovalHistoryProps } from "../../types";
+import type {
+  AssetsDetailProps,
+  MetadataProps,
+  ApprovalHistoryProps,
+  UsageLogProps,
+} from "../../types";
 
 const AssetsDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,9 +37,11 @@ const AssetsDetailPage: React.FC = () => {
   const [assets, setAssets] = useState<AssetsDetailProps | null>(null);
   const [metadata, setMetadata] = useState<MetadataProps | null>(null);
   const [history, setHistory] = useState<ApprovalHistoryProps[]>([]);
-  const [usageLogs, setUsageLogs] = useState<any[]>([]);
+  const [usageLogs, setUsageLogs] = useState<UsageLogProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"versions" | "activity" | "usage">("activity");
+  const [previewError, setPreviewError] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
 
   useEffect(() => {
     if (id) fetchAssetDetails(id);
@@ -67,7 +74,7 @@ const AssetsDetailPage: React.FC = () => {
         // Try to find a pending approval request first
         const historyRes = await approvalService.history(id);
         const pendingRequest = (historyRes.data.data.result || historyRes.data.data).find(
-          (r: any) => r.status === "pending",
+          (r: ApprovalHistoryProps) => r.status === "pending",
         );
 
         if (pendingRequest) {
@@ -172,27 +179,48 @@ const AssetsDetailPage: React.FC = () => {
           <Card className="overflow-hidden h-full min-h-[400px] flex flex-col">
             <div className="flex-1 bg-slate-50 flex items-center justify-center relative overflow-hidden group">
               {assets.type?.includes("image") || assets.mimetype?.includes("image") ? (
-                <img
-                  src={`${import.meta.env.VITE_API_URL}/assets/${assets.id}/thumbnail?token=${localStorage.getItem("accessToken")}`}
-                  alt={assets.filename}
-                  className="w-full h-full object-contain p-4"
-                  onError={(e) => {
-                    (e.target as any).src =
-                      `${import.meta.env.VITE_API_URL}/assets/${assets.id}/download?token=${localStorage.getItem("accessToken")}&disposition=inline`;
-                  }}
-                />
+                !previewError ? (
+                  <img
+                    src={
+                      useFallback
+                        ? `${import.meta.env.VITE_API_URL}/assets/${assets.id}/download?token=${localStorage.getItem("accessToken")}&disposition=inline`
+                        : `${import.meta.env.VITE_API_URL}/assets/${assets.id}/thumbnail?token=${localStorage.getItem("accessToken")}`
+                    }
+                    alt={assets.filename}
+                    className="w-full h-full object-contain p-4"
+                    onError={() => {
+                      if (!useFallback) {
+                        setUseFallback(true);
+                      } else {
+                        setPreviewError(true);
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    {getFileIcon(assets.type || assets.mimetype)}
+                    <h2 className="text-xl font-bold text-[var(--text-color)] text-center px-6">
+                      {assets.filename}
+                    </h2>
+                    <p className="text-xs text-rose-500 font-bold uppercase tracking-widest">
+                      Preview Unavailable
+                    </p>
+                  </div>
+                )
               ) : assets.type?.includes("video") || assets.mimetype?.includes("video") ? (
                 <video
                   src={`${import.meta.env.VITE_API_URL}/assets/${assets.id}/download?token=${localStorage.getItem("accessToken")}&disposition=inline`}
                   poster={`${import.meta.env.VITE_API_URL}/assets/${assets.id}/thumbnail?token=${localStorage.getItem("accessToken")}`}
                   controls
                   className="w-full h-full object-contain p-4"
+                  onError={() => setPreviewError(true)}
                 />
               ) : assets.type?.includes("pdf") || assets.mimetype?.includes("pdf") ? (
                 <iframe
                   src={`${import.meta.env.VITE_API_URL}/assets/${assets.id}/download?token=${localStorage.getItem("accessToken")}&disposition=inline#toolbar=0`}
                   className="w-full h-full border-0"
                   title={assets.filename}
+                  onError={() => setPreviewError(true)}
                 />
               ) : (
                 <div className="flex flex-col items-center gap-4">
@@ -218,7 +246,7 @@ const AssetsDetailPage: React.FC = () => {
                 {
                   icon: User,
                   label: "Owner",
-                  value: (assets as any).uploader?.name || assets.owner || "Unknown",
+                  value: assets.uploader?.name || assets.owner || "Unknown",
                 },
                 {
                   icon: Clock,
@@ -306,7 +334,7 @@ const AssetsDetailPage: React.FC = () => {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "versions" | "activity" | "usage")}
               className={`flex items-center gap-2 px-6 py-5 text-xs font-bold uppercase tracking-widest transition-all relative ${
                 activeTab === tab.id
                   ? "text-[var(--primary)]"

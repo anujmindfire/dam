@@ -11,9 +11,12 @@ const api = axios.create({
 
 // Flag to avoid infinite refresh loops
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: {
+  resolve: (token: string | null) => void;
+  reject: (error: unknown) => void;
+}[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -40,10 +43,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest: any = error.config;
+    const originalRequest = error.config as { _retry?: boolean; headers: Record<string, string> };
 
     // Check if error is 401 and not already retried
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -97,14 +100,14 @@ export default api;
 
 // Auth
 export const authService = {
-  login: (data: any) => api.post(`${apiUrl.auth}${apiUrl.login}`, data),
-  signup: (data: any) => api.post(`${apiUrl.auth}${apiUrl.signup}`, data),
+  login: (data: Record<string, unknown>) => api.post(`${apiUrl.auth}${apiUrl.login}`, data),
+  signup: (data: Record<string, unknown>) => api.post(`${apiUrl.auth}${apiUrl.signup}`, data),
   logout: () => api.post(`${apiUrl.auth}${apiUrl.logout}`),
 };
 
 // Assets
 export const assetsService = {
-  list: (params?: any) => {
+  list: (params?: Record<string, unknown>) => {
     // Filter out undefined values to prevent axios from converting them to "undefined" string
     const filteredParams = params
       ? Object.fromEntries(Object.entries(params).filter(([_, value]) => value !== undefined))
@@ -122,7 +125,7 @@ export const assetsService = {
         }
       },
     }),
-  update: (id: string, data: any) => api.patch(`${apiUrl.assets}/${id}`, data),
+  update: (id: string, data: Record<string, unknown>) => api.patch(`${apiUrl.assets}/${id}`, data),
   delete: (id: string) => api.delete(`${apiUrl.assets}/${id}`),
   transitionStatus: (id: string, status: string) =>
     api.patch(`${apiUrl.assets}/${id}${apiUrl.status}`, { status }),
@@ -130,11 +133,49 @@ export const assetsService = {
     api.post(`${apiUrl.assets}/${id}${apiUrl.version}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+  getUploadUrl: (data: { filename: string; mimetype: string }) =>
+    api.post(`${apiUrl.assets}${apiUrl.upload}${apiUrl.presignedUrl}`, data),
+  completeUpload: (data: Record<string, unknown>) =>
+    api.post(`${apiUrl.assets}${apiUrl.upload}${apiUrl.complete}`, data),
+  directUpload: async (
+    file: File,
+    extraData: Record<string, unknown>,
+    onProgress?: (percent: number) => void,
+  ) => {
+    const {
+      data: {
+        data: { uploadUrl, storageKey },
+      },
+    } = await assetsService.getUploadUrl({
+      filename: file.name,
+      mimetype: file.type,
+    });
+
+    await axios.put(uploadUrl, file, {
+      headers: { "Content-Type": file.type },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      },
+    });
+
+    return await assetsService.completeUpload({
+      ...extraData,
+      filename: file.name,
+      storageKey,
+      size: file.size,
+      mimetype: file.type,
+    });
+  },
+  getDownloadUrl: (id: string) => api.get(`${apiUrl.assets}/${id}/download`),
 };
 
 // Analytics
 export const analyticsService = {
-  getOverview: (params?: any) => api.get(`${apiUrl.analytics}${apiUrl.overview}`, { params }),
+  getOverview: (params?: Record<string, unknown>) =>
+    api.get(`${apiUrl.analytics}${apiUrl.overview}`, { params }),
   getCompliance: () => api.get(`${apiUrl.analytics}${apiUrl.compliance}`),
   getReport: () => api.get(`${apiUrl.analytics}${apiUrl.report}`),
   triggerReport: () => api.post(`${apiUrl.analytics}${apiUrl.report}/trigger`),
@@ -148,13 +189,13 @@ export const metadataService = {
 
 // Usage
 export const usageService = {
-  getLogs: (params?: any) => api.get(apiUrl.usage, { params }),
+  getLogs: (params?: Record<string, unknown>) => api.get(apiUrl.usage, { params }),
 };
 
 // Approval
 export const approvalService = {
   request: (data: { assetsId: string; comments?: string }) => api.post(apiUrl.approval, data),
-  list: (params?: any) => api.get(apiUrl.approval, { params }),
+  list: (params?: Record<string, unknown>) => api.get(apiUrl.approval, { params }),
   getById: (id: string) => api.get(`${apiUrl.approval}/${id}`),
   approve: (id: string) => api.patch(`${apiUrl.approval}/${id}${apiUrl.approve}`),
   reject: (id: string, reason: string) =>
@@ -167,9 +208,10 @@ export const approvalService = {
 export const collectionService = {
   create: (data: { name: string; description?: string; parentId?: string | number | null }) =>
     api.post(apiUrl.collection, data),
-  list: (params?: any) => api.get(apiUrl.collection, { params }),
+  list: (params?: Record<string, unknown>) => api.get(apiUrl.collection, { params }),
   getById: (id: string) => api.get(`${apiUrl.collection}/${id}`),
-  update: (id: string, data: any) => api.patch(`${apiUrl.collection}/${id}`, data),
+  update: (id: string, data: Record<string, unknown>) =>
+    api.patch(`${apiUrl.collection}/${id}`, data),
   remove: (id: string) => api.delete(`${apiUrl.collection}/${id}`),
   addAsset: (collectionId: string, assetsId: string) =>
     api.post(`${apiUrl.collection}/${collectionId}${apiUrl.assets}`, { assetsId }),
@@ -177,8 +219,8 @@ export const collectionService = {
 
 // Users
 export const userService = {
-  create: (data: any) => api.post(apiUrl.user, data),
-  list: (params?: any) => api.get(apiUrl.user, { params }),
-  update: (id: number, data: any) => api.patch(`${apiUrl.user}/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post(apiUrl.user, data),
+  list: (params?: Record<string, unknown>) => api.get(apiUrl.user, { params }),
+  update: (id: number, data: Record<string, unknown>) => api.patch(`${apiUrl.user}/${id}`, data),
   remove: (id: number) => api.delete(`${apiUrl.user}/${id}`),
 };

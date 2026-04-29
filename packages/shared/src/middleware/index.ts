@@ -161,7 +161,14 @@ export const authorizeRoles = (...allowedRoles: number[]) => {
 export const verifyTokenFactory = (
   secret: string,
   domain: string,
-  userModel: ModelStatic<Model<any>>,
+  userModel: ModelStatic<
+    Model<{
+      id: number;
+      email: string;
+      roleId: number;
+      tokenVersion: number;
+    }>
+  >,
 ): RequestHandler => {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -188,7 +195,12 @@ export const verifyTokenFactory = (
         return next(new CustomError(authMsg.invalidToken, statusCode.badRequest));
       }
 
-      const userExist = await findOne(userModel, { id: decoded.userId });
+      const userExist = (await findOne(userModel, { id: decoded.userId })) as {
+        id: number;
+        email: string;
+        roleId: number;
+        tokenVersion: number;
+      } | null;
 
       if (!userExist) {
         return next(new CustomError(authMsg.userNotFound, statusCode.unAuthorize));
@@ -232,7 +244,7 @@ const rateLimitMap = new Map<string, { count: number; lastModified: number }>();
 
 export const rateLimit = (
   windowMs: number = 15 * 60 * 1000,
-  max: number = 1000,
+  max: number = 10000,
 ): RequestHandler => {
   return (req: Request, _res: Response, next: NextFunction) => {
     const ip = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress;
