@@ -1,5 +1,8 @@
-/// <reference types="vitest" />
-import { defineConfig } from "vite";
+import { defineConfig, type UserConfig } from "vite";
+
+interface VitestConfigExport extends UserConfig {
+  test?: Record<string, unknown>;
+}
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
@@ -17,14 +20,7 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
-    // Required when running behind nginx inside Kubernetes.
-    // Vite 5+ rejects requests whose Host header doesn't match its own
-    // bind address. The gateway forwards the external host (127.0.0.1:42633),
-    // which Vite treats as invalid and drops the connection → 502.
-    allowedHosts: "all",
-    // Setting origin to empty string prevents Vite from injecting an
-    // absolute origin into HMR WebSocket URLs, which breaks when accessed
-    // through the nginx proxy at a different address.
+    allowedHosts: true,
     origin: "",
   },
   test: {
@@ -33,4 +29,4 @@ export default defineConfig({
     setupFiles: "./src/test/setup.ts",
     css: true,
   },
-});
+} as VitestConfigExport);
