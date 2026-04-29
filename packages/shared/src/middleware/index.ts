@@ -158,17 +158,10 @@ export const authorizeRoles = (...allowedRoles: number[]) => {
  * @param {NextFunction} next The Express next middleware function.
  */
 
-export const verifyTokenFactory = (
+export const verifyTokenFactory = <T extends Model>(
   secret: string,
   domain: string,
-  userModel: ModelStatic<
-    Model<{
-      id: number;
-      email: string;
-      roleId: number;
-      tokenVersion: number;
-    }>
-  >,
+  userModel: ModelStatic<T>,
 ): RequestHandler => {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {

@@ -62,7 +62,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
 
     try {
       // Use direct upload to MinIO (via API Gateway)
-      await assetsService.directUpload(
+      const res = await assetsService.directUpload(
         selectedFile,
         { department, usageRights, expiryDate },
         (percent) => {
@@ -71,6 +71,23 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuccess })
       );
 
       toast("Assets uploaded successfully", "success");
+
+      // Auto-download after upload
+      try {
+        const assetId = res.data.data.id;
+        const downloadRes = await assetsService.getDownloadUrl(assetId);
+        const downloadUrl = downloadRes.data.data.downloadUrl;
+
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = selectedFile.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (downloadErr) {
+        console.error("Failed to trigger auto-download:", downloadErr);
+      }
+
       setSelectedFile(null);
       setUsageRights("");
       setExpiryDate("");

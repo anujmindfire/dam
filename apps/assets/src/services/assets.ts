@@ -29,8 +29,6 @@ import {
   storage,
 } from "@dam/shared";
 
-const BUCKET = storage.bucket;
-
 /**
  * Internal helper to save Assets, Metadata, and Version records,
  * and publish the asset_uploaded event.
@@ -112,7 +110,7 @@ export const uploadAsset = async (req: RequestWithUser) => {
     const storageKey = `${storage.uploadsPrefix}${uuidv4()}${ext}`;
 
     // 1. Store in MinIO
-    await uploadFile(BUCKET, storageKey, buffer, mimetype);
+    await uploadFile(storage.bucket, storageKey, buffer, mimetype);
 
     // 2. Register DB records and publish event
     return await registerAsset(req, {
@@ -291,7 +289,7 @@ export const uploadVersion = async (req: RequestWithUser) => {
     const storageKey = `${storage.versionsPrefix}${id}_v${nextVersion}${ext}`;
 
     // 1. Store in MinIO
-    await uploadFile(BUCKET, storageKey, buffer, mimetype);
+    await uploadFile(storage.bucket, storageKey, buffer, mimetype);
 
     // 2. Create version record
     await create(versionModel, {
@@ -346,7 +344,7 @@ export const getDownloadUrl = async (req: RequestWithUser) => {
     const assetsData = await findOne(assetsModel, { id: Number(id) });
     if (!assetsData) return new CustomError(assetMsg.notFound, statusCode.notFound);
 
-    const url = await getPresignedUrl(BUCKET, assetsData.storageKey);
+    const url = await getPresignedUrl(storage.bucket, assetsData.storageKey);
     return { downloadUrl: url };
   } catch (error) {
     return new CustomError((error as Error).message, statusCode.badRequest);
@@ -366,7 +364,7 @@ export const getPresignedUploadUrl = async (req: RequestWithUser) => {
     const ext = path.extname(filename);
     const storageKey = `${storage.uploadsPrefix}${uuidv4()}${ext}`;
 
-    const url = await getPresignedPutUrl(BUCKET, storageKey);
+    const url = await getPresignedPutUrl(storage.bucket, storageKey);
     return { uploadUrl: url, storageKey };
   } catch (error) {
     return new CustomError((error as Error).message, statusCode.badRequest);

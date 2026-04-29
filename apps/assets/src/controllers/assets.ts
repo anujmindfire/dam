@@ -197,8 +197,9 @@ export const download = async (
       return next(new CustomError(result.message, result.statusCode));
     }
 
-    // Support direct download if token is in query (direct link) or if it's a browser request
-    if (req.query.token || req.headers.accept?.includes("text/html")) {
+    // Support direct download if it's a browser request or if token is present
+    const isBrowserRequest = req.headers.accept?.includes("text/html");
+    if (req.query.token || isBrowserRequest) {
       return res.redirect((result as { downloadUrl: string }).downloadUrl);
     }
 

@@ -126,10 +126,16 @@ const AssetsDetailPage: React.FC = () => {
     window.open(`${import.meta.env.VITE_API_URL}/assets/${id}/download?token=${token}`, "_blank");
   };
 
-  const handleShare = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    toast("Link copied to clipboard", "success");
+  const handleShare = async () => {
+    if (!id) return;
+    try {
+      const res = await assetsService.getDownloadUrl(id);
+      const url = res.data.data.downloadUrl;
+      navigator.clipboard.writeText(url);
+      toast("Direct MinIO URL copied to clipboard", "success");
+    } catch (error) {
+      toast("Failed to generate share link", "error");
+    }
   };
 
   const getFileIcon = (type?: string) => {
