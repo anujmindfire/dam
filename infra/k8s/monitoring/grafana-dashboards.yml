@@ -1,0 +1,94 @@
+# Comprehensive Grafana Dashboards ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-json
+  namespace: monitoring
+data:
+  # Main DAM Dashboard
+  dam-dashboard.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": "-- Grafana --",
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "panels": [
+        {
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+          "id": 10,
+          "title": "Worker Service Metrics",
+          "type": "row"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "green", "value": null }]
+              }
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+          "id": 3,
+          "targets": [{ "expr": "sum(kube_deployment_status_replicas{deployment=\"worker\"})", "refId": "A" }],
+          "title": "Worker Scale",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+          "id": 4,
+          "targets": [{ "expr": "dam_worker_jobs_processing", "refId": "A" }],
+          "title": "Active Jobs",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "gridPos": { "h": 6, "w": 8, "x": 8, "y": 1 },
+          "id": 11,
+          "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"worker-.*\",namespace=\"dam\"}[5m]))", "refId": "A" }],
+          "title": "Worker CPU Usage",
+          "type": "graph"
+        }
+      ],
+      "title": "DAM Main Dashboard",
+      "uid": "dam-main"
+    }
+  # Performance Dashboard
+  performance-dashboard.json: |
+    {
+      "title": "DAM Performance Testing",
+      "panels": [
+        {
+          "title": "Pod CPU Utilization (%)",
+          "type": "timeseries",
+          "targets": [{ "expr": "pod:cpu:utilization{namespace=\"dam\"}" }]
+        }
+      ],
+      "uid": "dam-performance"
+    }
+  # Logs Dashboard
+  logs-dashboard.json: |
+    {
+      "title": "DAM Logs Dashboard",
+      "panels": [
+        {
+          "title": "DAM Application Logs",
+          "type": "logs",
+          "targets": [{ "expr": "{namespace=\"dam\"}" }]
+        }
+      ],
+      "uid": "dam-logs"
+    }

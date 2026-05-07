@@ -22,7 +22,7 @@ apply_manifests() {
     kubectl apply -f infra/k8s/apps/
     
     echo "Deploying monitoring stack (Prometheus, Grafana)..."
-    kubectl apply -f infra/k8s/monitoring/dashboard-configmap.yml
+    kubectl apply -f infra/k8s/monitoring/grafana-dashboards.yml
     kubectl apply -f infra/k8s/monitoring/monitoring.yml
     
     echo "Waiting for pods to be ready..."

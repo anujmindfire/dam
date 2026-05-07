@@ -58,7 +58,7 @@ metadata:
   name: prometheus
   namespace: monitoring
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: prometheus
   ports:
@@ -170,7 +170,7 @@ metadata:
   name: grafana
   namespace: monitoring
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: grafana
   ports:
