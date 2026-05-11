@@ -1,0 +1,11 @@
+<div class="layout-container min-h-screen">
+  <app-sidebar></app-sidebar>
+  <app-header></app-header>
+  
+  <main
+    class="relative transition-all duration-300 ease-in-out p-6"
+    style="margin-left: calc(var(--sidebar-width) + 40px); padding-top: calc(var(--header-height) + 40px);"
+  >
+    <router-outlet></router-outlet>
+  </main>
+</div>

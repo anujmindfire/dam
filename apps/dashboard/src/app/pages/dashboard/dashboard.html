@@ -1,0 +1,75 @@
+<div class="flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out]">
+  <div class="mb-2">
+    <h1 class="page-title">{{ ui.dashboardTitle }}</h1>
+    <p class="page-subtitle">{{ ui.dashboardSubtitle }}</p>
+  </div>
+
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
+    <div *ngFor="let stat of stats" class="glass glass-hover flex items-center gap-5 p-6">
+      <div
+        class="w-[54px] h-[54px] rounded-[14px] flex items-center justify-center"
+        [style.backgroundColor]="stat.color + '15'"
+        [style.color]="stat.color"
+      >
+        <span [innerHTML]="stat.icon"></span>
+      </div>
+      <div class="flex flex-col gap-1">
+        <span class="text-sm" style="color: var(--color-text-muted);">
+          {{ stat.label }}
+        </span>
+        <span class="text-2xl font-bold" style="font-family: var(--font-heading);">
+          {{ stat.value }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-[1.6fr_1fr] gap-6 max-xl:grid-cols-1">
+    <div class="glass p-6 flex flex-col gap-5">
+      <div class="flex items-center justify-between">
+        <h3>Usage Trends</h3>
+        <button
+          class="flex items-center gap-1.5 text-[13px] font-medium"
+          style="color: var(--color-primary);"
+        >
+          Detailed Report 
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg>
+        </button>
+      </div>
+      <div
+        class="flex-1 min-h-[300px] rounded-xl flex items-center justify-center"
+        style="background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--color-glass-border); color: var(--color-text-dim);"
+      >
+        <div>Usage activity visualization...</div>
+      </div>
+    </div>
+
+    <div class="glass p-6 flex flex-col gap-5">
+      <div class="flex items-center justify-between">
+        <h3>Recent Activity</h3>
+      </div>
+      <div class="flex flex-col gap-5">
+        <div *ngFor="let item of [1, 2, 3, 4]" class="flex gap-4 relative">
+          <div
+            class="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0"
+            style="background: var(--color-primary); box-shadow: 0 0 8px var(--color-primary-glow);"
+          ></div>
+          <div class="flex flex-col gap-1">
+            <span
+              class="text-sm font-semibold"
+              style="color: var(--color-text-main);"
+            >
+              New Asset Uploaded
+            </span>
+            <span class="text-[13px]" style="color: var(--color-text-muted);">
+              "SummerCampaign_v2.mp4" by Mkt Team
+            </span>
+            <span class="text-[11px]" style="color: var(--color-text-dim);">
+              2 mins ago
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

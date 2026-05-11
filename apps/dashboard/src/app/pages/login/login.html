@@ -1,0 +1,97 @@
+<div class="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 relative overflow-hidden">
+  <!-- Background Orbs -->
+  <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[120px]"></div>
+
+  <div class="w-full max-w-[440px] z-10">
+    <div class="bg-white/[0.03] backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+      <!-- Header -->
+      <div class="text-center mb-10">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-6 shadow-lg shadow-blue-600/20">
+          <!-- ShieldCheck Icon SVG -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white w-8 h-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+        </div>
+        <h1 class="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+        <p class="text-slate-400">Access your digital asset ecosystem</p>
+      </div>
+
+      <!-- Form -->
+      <form (submit)="onSubmit()" class="space-y-6">
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-300 ml-1">Email Address</label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-slate-500 group-focus-within:text-blue-500 transition-colors"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+            </div>
+            <input
+              type="email"
+              [(ngModel)]="email"
+              name="email"
+              class="block w-full pl-11 pr-4 py-3.5 bg-slate-900/50 border border-white/5 rounded-2xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-light"
+              placeholder="name@company.com"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-300 ml-1">Password</label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-slate-500 group-focus-within:text-blue-500 transition-colors"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <input
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              class="block w-full pl-11 pr-4 py-3.5 bg-slate-900/50 border border-white/5 rounded-2xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-light"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+        </div>
+
+        <div *ngIf="errorMessage" class="text-red-400 text-sm px-1">
+          {{ errorMessage }}
+        </div>
+
+        <div class="flex items-center justify-between text-sm px-1">
+          <label class="flex items-center text-slate-400 cursor-pointer">
+            <input
+              type="checkbox"
+              class="mr-2 rounded border-white/10 bg-slate-900 accent-blue-600"
+            />
+            Remember me
+          </label>
+          <a href="#" class="text-blue-400 hover:text-blue-300 transition-colors">
+            Forgot password?
+          </a>
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="isLoading"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 rounded-2xl transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2"
+          [class.opacity-70]="isLoading"
+          [class.cursor-not-allowed]="isLoading"
+        >
+          <div *ngIf="isLoading" class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <ng-container *ngIf="!isLoading">
+            Sign In
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+          </ng-container>
+        </button>
+      </form>
+
+      <!-- Footer -->
+      <div class="mt-8 text-center">
+        <p class="text-slate-500 text-sm">
+          Don't have an account? 
+          <a href="#" class="text-white hover:text-blue-400 transition-colors font-medium">
+            Create Request
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

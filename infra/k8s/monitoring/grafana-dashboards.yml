@@ -42,7 +42,7 @@ data:
           },
           "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
           "id": 3,
-          "targets": [{ "expr": "sum(kube_deployment_status_replicas{deployment=\"worker\"})", "refId": "A" }],
+          "targets": [{ "expr": "count(up{pod=~\"worker-.*\", namespace=\"dam\"})", "refId": "A" }],
           "title": "Worker Scale",
           "type": "stat"
         },
@@ -50,7 +50,7 @@ data:
           "datasource": "Prometheus",
           "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
           "id": 4,
-          "targets": [{ "expr": "dam_worker_jobs_processing", "refId": "A" }],
+          "targets": [{ "expr": "sum(dam_worker_jobs_processing{namespace=\"dam\"})", "refId": "A" }],
           "title": "Active Jobs",
           "type": "stat"
         },
@@ -58,7 +58,7 @@ data:
           "datasource": "Prometheus",
           "gridPos": { "h": 6, "w": 8, "x": 8, "y": 1 },
           "id": 11,
-          "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"worker-.*\",namespace=\"dam\"}[5m]))", "refId": "A" }],
+          "targets": [{ "expr": "sum(rate(process_cpu_seconds_total{pod=~\"worker-.*\",namespace=\"dam\"}[5m]))", "refId": "A" }],
           "title": "Worker CPU Usage",
           "type": "graph"
         }
@@ -74,7 +74,7 @@ data:
         {
           "title": "Pod CPU Utilization (%)",
           "type": "timeseries",
-          "targets": [{ "expr": "pod:cpu:utilization{namespace=\"dam\"}" }]
+          "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"dam\"}[5m])) by (pod)", "refId": "A" }]
         }
       ],
       "uid": "dam-performance"

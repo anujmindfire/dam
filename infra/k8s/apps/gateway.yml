@@ -98,7 +98,7 @@ metadata:
   name: api-gateway
   namespace: dam
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: api-gateway
   ports:
