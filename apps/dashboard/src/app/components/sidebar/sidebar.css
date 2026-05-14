@@ -1,0 +1,56 @@
+.nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link.active {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border-active);
+}
+
+.nav-link.active .icon-placeholder {
+  color: var(--color-primary);
+  opacity: 1;
+}
+
+.nav-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0%;
+  background: var(--color-primary);
+  transition: var(--transition-smooth);
+  border-radius: 0 4px 4px 0;
+}
+
+.nav-link.active::before {
+  height: 60%;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-main);
+}
+
+.icon-placeholder svg {
+  transition: var(--transition-smooth);
+}
+
+.nav-link:hover .icon-placeholder svg {
+  transform: scale(1.1);
+  color: var(--color-primary);
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+}
+
+.brand-logo {
+  animation: pulse-glow 3s infinite;
+}
