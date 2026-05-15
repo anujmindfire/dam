@@ -1,0 +1,108 @@
+<div class="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+  <!-- Top Nav -->
+  <div class="flex items-center justify-between">
+    <app-button variant="ghost" (onClick)="goBack()" class="gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Back to Library
+    </app-button>
+    <div class="flex gap-3">
+      <app-button variant="outline" class="gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+        Download
+      </app-button>
+      <app-button class="gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+        Edit Identity
+      </app-button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Detail -->
+    <div class="lg:col-span-2 space-y-6">
+      <app-card class="p-0 overflow-hidden bg-white">
+        <div class="aspect-video bg-slate-900 flex items-center justify-center overflow-hidden relative group">
+          <div class="flex flex-col items-center gap-4 text-white/40">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+            <p class="text-[10px] font-bold uppercase tracking-widest">Asset Preview Unavailable</p>
+          </div>
+        </div>
+        <app-card-body class="p-8">
+          <div class="flex items-center justify-between mb-4">
+            <h1 class="text-3xl font-bold text-[var(--text-color)] tracking-tight">Summer_Campaign_Main.mp4</h1>
+            <app-badge type="success">Approved</app-badge>
+          </div>
+          <p class="text-slate-500 font-medium">Hero video for the Summer 2026 digital marketing campaign. Optimized for mobile and desktop web.</p>
+        </app-card-body>
+      </app-card>
+
+      <!-- Tabs -->
+      <app-card class="p-0 bg-white">
+        <div class="flex border-b border-slate-100 px-8">
+          <button
+            *ngFor="let tab of [
+              { id: 'activity', label: 'Governance Activity' },
+              { id: 'versions', label: 'Version History' },
+              { id: 'usage', label: 'Usage History' }
+            ]"
+            (click)="activeTab = tab.id"
+            [class]="activeTab === tab.id ? 'text-[var(--primary)]' : 'text-slate-400'"
+            class="px-6 py-5 text-xs font-bold uppercase tracking-widest transition-all relative border-b-2"
+            [class.border-[var(--primary)]]="activeTab === tab.id"
+            [class.border-transparent]="activeTab !== tab.id"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+        <app-card-body class="p-8 min-h-[300px]">
+          <div *ngIf="activeTab === 'activity'" class="space-y-6">
+            <div *ngFor="let item of [1,2]" class="flex gap-4 relative">
+              <div class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 z-10 text-emerald-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <div class="flex-1 pb-6">
+                <div class="flex justify-between items-start mb-1">
+                  <p class="font-bold text-[var(--text-color)]">Approved</p>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">2026-05-14 10:24 AM</span>
+                </div>
+                <p class="text-sm text-slate-500 font-medium italic">Final review completed by System Admin</p>
+              </div>
+            </div>
+          </div>
+        </app-card-body>
+      </app-card>
+    </div>
+
+    <!-- Sidebar Detail -->
+    <div class="space-y-6">
+      <app-card class="bg-white">
+        <app-card-header>
+          <app-card-title>Metadata Details</app-card-title>
+        </app-card-header>
+        <app-card-body class="p-8 space-y-4">
+          <div *ngFor="let meta of [
+            { label: 'Asset ID', value: '8a2b3c4d' },
+            { label: 'Type', value: 'VIDEO / MP4' },
+            { label: 'Resolution', value: '1920 x 1080' },
+            { label: 'Size', value: '156.4 MB' },
+            { label: 'Owner', value: 'John Doe' }
+          ]" class="flex justify-between items-center py-1 border-b border-slate-50 last:border-0">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ meta.label }}</span>
+            <span class="text-xs font-bold text-[var(--text-color)]">{{ meta.value }}</span>
+          </div>
+        </app-card-body>
+      </app-card>
+
+      <app-card class="border-rose-100 bg-rose-50/30">
+        <app-card-header>
+          <app-card-title class="text-rose-600">Danger Zone</app-card-title>
+        </app-card-header>
+        <app-card-body class="p-8">
+          <app-button class="bg-rose-600 hover:bg-rose-700 w-full shadow-rose-200">
+            Terminate Asset
+          </app-button>
+        </app-card-body>
+      </app-card>
+    </div>
+  </div>
+</div>

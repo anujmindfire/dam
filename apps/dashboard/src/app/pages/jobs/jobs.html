@@ -1,0 +1,44 @@
+<div class="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+      <h1 class="text-4xl font-bold text-[var(--text-color)] tracking-tight">Background Processing</h1>
+      <p class="text-slate-500 font-medium mt-1">Real-time status of ingestion and AI enrichment tasks.</p>
+    </div>
+  </div>
+
+  <app-card class="bg-white overflow-hidden">
+    <app-card-body class="p-0">
+      <app-list
+        [columns]="columns"
+        [rows]="jobs"
+        [count]="jobs.length"
+        [loading]="false"
+      >
+        <ng-template #rowTemplate let-row let-columnId="columnId">
+          <ng-container [ngSwitch]="columnId">
+            <div *ngSwitchCase="'id'" class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 font-mono text-[10px] border border-slate-100">
+                #{{ row.id }}
+              </div>
+            </div>
+
+            <div *ngSwitchCase="'progress'" class="w-full max-w-[120px] space-y-1.5">
+              <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <span>{{ row.progress }}%</span>
+              </div>
+              <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-[var(--primary)] rounded-full transition-all duration-500" [style.width.%]="row.progress"></div>
+              </div>
+            </div>
+
+            <app-badge *ngSwitchCase="'status'" [type]="row.status === 'completed' ? 'success' : 'info'">
+              {{ row.status }}
+            </app-badge>
+
+            <span *ngSwitchDefault>{{ row[columnId] }}</span>
+          </ng-container>
+        </ng-template>
+      </app-list>
+    </app-card-body>
+  </app-card>
+</div>

@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CardComponent, CardHeaderComponent, CardTitleComponent, CardBodyComponent } from '../../components/ui/card/card';
 
 @Component({
   selector: 'app-intelligence',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CardComponent, CardHeaderComponent, CardTitleComponent, CardBodyComponent],
   templateUrl: './intelligence.html',
-  styleUrl: './intelligence.css',
 })
 export class IntelligenceComponent {}

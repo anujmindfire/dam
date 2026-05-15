@@ -1,0 +1,54 @@
+<div class="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+      <h1 class="text-4xl font-bold text-[var(--text-color)] tracking-tight">Identity Management</h1>
+      <p class="text-slate-500 font-medium mt-1">Control access levels and user permissions across the DAM ecosystem.</p>
+    </div>
+    <app-button class="gap-2 px-8">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+      Add Operator
+    </app-button>
+  </div>
+
+  <app-card class="p-0 overflow-hidden bg-white">
+    <app-card-body class="p-0">
+      <app-list
+        [columns]="columns"
+        [rows]="users"
+        [count]="users.length"
+        [loading]="false"
+      >
+        <ng-template #rowTemplate let-row let-columnId="columnId">
+          <ng-container [ngSwitch]="columnId">
+            <div *ngSwitchCase="'name'" class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center text-[var(--primary)] font-bold text-xs border border-indigo-100">
+                {{ row.name.charAt(0) }}
+              </div>
+              <div class="flex flex-col">
+                <span class="font-bold text-[var(--text-color)]">{{ row.name }}</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ row.email }}</span>
+              </div>
+            </div>
+
+            <app-badge *ngSwitchCase="'role'" [type]="row.role === 'Admin' ? 'success' : 'info'">
+              {{ row.role }}
+            </app-badge>
+
+            <app-badge *ngSwitchCase="'status'" type="success">Active</app-badge>
+
+            <div *ngSwitchCase="'actions'" class="flex justify-end gap-2">
+              <app-button variant="ghost" size="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              </app-button>
+              <app-button variant="ghost" size="icon" class="text-rose-500 hover:bg-rose-50">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+              </app-button>
+            </div>
+
+            <span *ngSwitchDefault>{{ row[columnId] }}</span>
+          </ng-container>
+        </ng-template>
+      </app-list>
+    </app-card-body>
+  </app-card>
+</div>

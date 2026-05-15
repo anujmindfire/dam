@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AssetsProps, SuccessResponseProps } from '@dam/shared';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -9,36 +10,25 @@ import { AssetsProps, SuccessResponseProps } from '@dam/shared';
 export class AssetService {
   private readonly ASSETS_URL = '/api/v1/assets';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   private getHeaders() {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      Authorization: `Bearer ${token}`,
-    });
+    return { headers: this.authService.getAuthHeaders() };
   }
 
   getAssets(): Observable<SuccessResponseProps<AssetsProps[]>> {
-    return this.http.get<SuccessResponseProps<AssetsProps[]>>(this.ASSETS_URL, {
-      headers: this.getHeaders(),
-    });
+    return this.http.get<SuccessResponseProps<AssetsProps[]>>(this.ASSETS_URL, this.getHeaders());
   }
 
   getAsset(id: string): Observable<SuccessResponseProps<AssetsProps>> {
-    return this.http.get<SuccessResponseProps<AssetsProps>>(`${this.ASSETS_URL}/${id}`, {
-      headers: this.getHeaders(),
-    });
+    return this.http.get<SuccessResponseProps<AssetsProps>>(`${this.ASSETS_URL}/${id}`, this.getHeaders());
   }
 
   uploadAsset(formData: FormData): Observable<SuccessResponseProps<AssetsProps>> {
-    return this.http.post<SuccessResponseProps<AssetsProps>>(this.ASSETS_URL, formData, {
-      headers: this.getHeaders(),
-    });
+    return this.http.post<SuccessResponseProps<AssetsProps>>(this.ASSETS_URL, formData, this.getHeaders());
   }
 
   deleteAsset(id: string): Observable<SuccessResponseProps<void>> {
-    return this.http.delete<SuccessResponseProps<void>>(`${this.ASSETS_URL}/${id}`, {
-      headers: this.getHeaders(),
-    });
+    return this.http.delete<SuccessResponseProps<void>>(`${this.ASSETS_URL}/${id}`, this.getHeaders());
   }
 }

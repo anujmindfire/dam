@@ -1,108 +1,78 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ui } from '../../constants';
+import { ButtonComponent } from '../../components/ui/button/button';
+import { BadgeComponent } from '../../components/ui/badge/badge';
+import { AppListComponent, Column } from '../../components/ui/list/list';
+import { UploadModalComponent } from '../../components/ui/modal/upload-modal';
+import { AddToCollectionModalComponent } from '../../components/ui/modal/collection-modal';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-assets',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ButtonComponent, BadgeComponent, AppListComponent, UploadModalComponent, AddToCollectionModalComponent],
   templateUrl: './assets.html',
-  styleUrl: './assets.css',
 })
 export class AssetsComponent {
-  ui = ui;
-  viewMode: 'grid' | 'list' = 'grid';
-  isUploadModalOpen = false;
-  searchQuery = '';
-  filterStatus = 'all';
-  filterType = 'all';
-
-  assets = [
-    {
-      id: '1',
-      name: 'SummerCampaign_Hero.jpg',
-      type: 'Image',
-      status: 'Approved',
-      owner: 'Mkt',
-      date: '2 days ago',
-      size: '2.4 MB',
-    },
-    {
-      id: '2',
-      name: 'ProductLaunch_Walkthrough.mp4',
-      type: 'Video',
-      status: 'Pending',
-      owner: 'PR',
-      date: '5 hours ago',
-      size: '156 MB',
-    },
-    {
-      id: '3',
-      name: 'BrandGuidelines_2026.pdf',
-      type: 'Document',
-      status: 'Approved',
-      owner: 'Design',
-      date: '1 week ago',
-      size: '12.8 MB',
-    },
-    {
-      id: '4',
-      name: 'RadioSpot_v1.mp3',
-      type: 'Audio',
-      status: 'Under Review',
-      owner: 'Mkt',
-      date: 'Yesterday',
-      size: '4.2 MB',
-    },
-    {
-      id: '5',
-      name: 'Q1_Results.pptx',
-      type: 'Document',
-      status: 'Approved',
-      owner: 'Finance',
-      date: '3 days ago',
-      size: '5.6 MB',
-    },
-    {
-      id: '6',
-      name: 'Promo_Video_30sec.mp4',
-      type: 'Video',
-      status: 'Pending',
-      owner: 'Marketing',
-      date: 'Today',
-      size: '45 MB',
-    },
+  columns: Column[] = [
+    { id: 'name', label: 'Asset Name', width: 40 },
+    { id: 'type', label: 'Type' },
+    { id: 'status', label: 'Status' },
+    { id: 'updatedAt', label: 'Last Updated' },
+    { id: 'actions', label: '', align: 'right' },
   ];
 
-  constructor(private router: Router) {}
+  assets = [
+    { id: '1', name: 'Summer_Campaign_Main.mp4', mimeType: 'video/mp4', status: 'approved', updatedAt: '2026-05-14' },
+    { id: '2', name: 'Logo_Final_2026.svg', mimeType: 'image/svg+xml', status: 'pending', updatedAt: '2026-05-13' },
+    { id: '3', name: 'Brand_Guidelines_v2.pdf', mimeType: 'application/pdf', status: 'approved', updatedAt: '2026-05-12' },
+  ];
 
-  get filteredAssets() {
-    return this.assets.filter((asset) => {
-      const matchesSearch = asset.name.toLowerCase().includes(this.searchQuery.toLowerCase());
-      const matchesStatus =
-        this.filterStatus === 'all' || asset.status.toLowerCase().includes(this.filterStatus);
-      const matchesType =
-        this.filterType === 'all' || asset.type.toLowerCase().includes(this.filterType);
-      return matchesSearch && matchesStatus && matchesType;
-    });
+  totalCount = 3;
+  page = 1;
+  limit = 10;
+  isLoading = false;
+  showUploadModal = false;
+  showCollectionModal = false;
+  selectedAssetId = '';
+
+  mockCollections = [
+    { id: 'c1', name: 'Summer 2026 Marketing', assetCount: 12 },
+    { id: 'c2', name: 'Social Media Assets', assetCount: 45 },
+    { id: 'c3', name: 'Brand Identity', assetCount: 8 },
+  ];
+
+  constructor(private router: Router, private toast: ToastService) {}
+
+  handleSearch(term: string) {
+    console.log('Searching for:', term);
   }
 
-  getStatusColor(status: string) {
-    switch (status) {
-      case 'Approved':
-        return '#10b981';
-      case 'Pending':
-        return 'var(--color-secondary)';
-      case 'Under Review':
-        return 'var(--color-accent-purple)';
-      default:
-        return 'var(--color-text-dim)';
-    }
+  handlePageChange(p: number) {
+    this.page = p;
   }
 
-  viewAsset(id: string) {
+  handleLimitChange(l: number) {
+    this.limit = l;
+    this.page = 1;
+  }
+
+  viewDetail(id: string) {
     this.router.navigate(['/assets', id]);
+  }
+
+  addToCollection(id: string) {
+    this.selectedAssetId = id;
+    this.showCollectionModal = true;
+  }
+
+  handleCollectionSelect(collectionId: string) {
+    this.toast.show('Asset linked to collection successfully', 'success');
+    this.showCollectionModal = false;
+  }
+
+  handleUploadSuccess() {
+    this.toast.show('Asset uploaded and processing started', 'success');
   }
 }

@@ -1,75 +1,80 @@
-<div class="flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out]">
-  <div class="mb-2">
-    <h1 class="page-title">{{ ui.dashboardTitle }}</h1>
-    <p class="page-subtitle">{{ ui.dashboardSubtitle }}</p>
-  </div>
-
-  <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
-    <div *ngFor="let stat of stats" class="glass glass-hover flex items-center gap-5 p-6">
-      <div
-        class="w-[54px] h-[54px] rounded-[14px] flex items-center justify-center"
-        [style.backgroundColor]="stat.color + '15'"
-        [style.color]="stat.color"
-      >
-        <span [innerHTML]="stat.icon"></span>
-      </div>
-      <div class="flex flex-col gap-1">
-        <span class="text-sm" style="color: var(--color-text-muted);">
-          {{ stat.label }}
-        </span>
-        <span class="text-2xl font-bold" style="font-family: var(--font-heading);">
-          {{ stat.value }}
-        </span>
-      </div>
+<div class="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+      <h1 class="text-4xl font-bold text-[var(--text-color)] tracking-tight">Systems Overview</h1>
+      <p class="text-slate-500 font-medium mt-1">Real-time health and performance metrics for the DAM ecosystem.</p>
+    </div>
+    <div class="flex gap-3">
+      <app-button variant="outline" class="gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Generate Report
+      </app-button>
     </div>
   </div>
 
-  <div class="grid grid-cols-[1.6fr_1fr] gap-6 max-xl:grid-cols-1">
-    <div class="glass p-6 flex flex-col gap-5">
-      <div class="flex items-center justify-between">
-        <h3>Usage Trends</h3>
-        <button
-          class="flex items-center gap-1.5 text-[13px] font-medium"
-          style="color: var(--color-primary);"
-        >
-          Detailed Report 
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg>
-        </button>
-      </div>
-      <div
-        class="flex-1 min-h-[300px] rounded-xl flex items-center justify-center"
-        style="background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--color-glass-border); color: var(--color-text-dim);"
-      >
-        <div>Usage activity visualization...</div>
-      </div>
-    </div>
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <app-card *ngFor="let stat of stats" class="hover:shadow-xl hover:-translate-y-1">
+      <app-card-body class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div [class]="stat.color + ' w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg'">
+            <span [innerHTML]="stat.icon"></span>
+          </div>
+          <span [class]="stat.trendUp ? 'text-emerald-500' : 'text-rose-500'" class="text-[10px] font-bold bg-slate-50 px-2 py-1 rounded-full border border-slate-100">
+            {{ stat.trend }}
+          </span>
+        </div>
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ stat.label }}</p>
+        <p class="text-3xl font-bold text-[var(--text-color)] mt-1">{{ stat.value }}</p>
+      </app-card-body>
+    </app-card>
+  </div>
 
-    <div class="glass p-6 flex flex-col gap-5">
-      <div class="flex items-center justify-between">
-        <h3>Recent Activity</h3>
-      </div>
-      <div class="flex flex-col gap-5">
-        <div *ngFor="let item of [1, 2, 3, 4]" class="flex gap-4 relative">
-          <div
-            class="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0"
-            style="background: var(--color-primary); box-shadow: 0 0 8px var(--color-primary-glow);"
-          ></div>
-          <div class="flex flex-col gap-1">
-            <span
-              class="text-sm font-semibold"
-              style="color: var(--color-text-main);"
-            >
-              New Asset Uploaded
-            </span>
-            <span class="text-[13px]" style="color: var(--color-text-muted);">
-              "SummerCampaign_v2.mp4" by Mkt Team
-            </span>
-            <span class="text-[11px]" style="color: var(--color-text-dim);">
-              2 mins ago
-            </span>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Charts Section -->
+    <app-card class="lg:col-span-2">
+      <app-card-header class="flex items-center justify-between">
+        <app-card-title>Infrastructure Usage Trend</app-card-title>
+        <select class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider outline-none focus:border-[var(--primary)]">
+          <option>Last 7 Days</option>
+          <option>Last 30 Days</option>
+        </select>
+      </app-card-header>
+      <app-card-body class="p-8">
+        <div class="h-[300px] flex items-end gap-3 justify-between pb-4">
+          <div *ngFor="let h of [40, 65, 45, 80, 55, 90, 70]" class="flex-1 bg-indigo-50 rounded-t-xl relative group transition-all hover:bg-indigo-500">
+            <div [style.height.%]="h" class="w-full bg-[var(--primary)] rounded-t-xl absolute bottom-0 group-hover:bg-indigo-400 transition-all"></div>
           </div>
         </div>
-      </div>
-    </div>
+        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-4 border-t border-slate-50">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+      </app-card-body>
+    </app-card>
+
+    <!-- Activity Log -->
+    <app-card>
+      <app-card-header>
+        <app-card-title>Recent Activity</app-card-title>
+      </app-card-header>
+      <app-card-body class="p-0">
+        <div class="divide-y divide-slate-50 max-h-[400px] overflow-y-auto">
+          <div *ngFor="let item of activity" class="p-5 flex items-start gap-4 hover:bg-slate-50/80 transition-colors group">
+            <div class="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-[var(--primary)] group-hover:border-indigo-100 transition-all shadow-sm">
+              <span [innerHTML]="item.icon"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-bold text-[var(--text-color)] truncate">{{ item.title }}</p>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ item.time }}</span>
+                <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{{ item.user }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </app-card-body>
+    </app-card>
   </div>
 </div>

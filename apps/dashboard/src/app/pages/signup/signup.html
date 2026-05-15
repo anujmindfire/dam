@@ -1,0 +1,64 @@
+<div class="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+  <div class="card-login">
+    <!-- Header Section -->
+    <div class="flex flex-col items-start mb-8">
+      <h2 class="font-bold text-slate-900 text-4xl tracking-tight">
+        Create Account
+      </h2>
+      <p class="mt-2 text-slate-500 font-medium text-lg">
+        Join the AuraDAM community today
+      </p>
+    </div>
+
+    <!-- Form Section -->
+    <form [formGroup]="signupForm" (ngSubmit)="handleSignup()" class="space-y-5">
+      <app-input
+        type="text"
+        placeholder="Full Name"
+        formControlName="name"
+        [error]="getNameError()"
+      ></app-input>
+
+      <app-input
+        type="email"
+        placeholder="Email Address"
+        formControlName="email"
+        [error]="getEmailError()"
+      ></app-input>
+
+      <div class="relative">
+        <app-input
+          [type]="showPassword ? 'text' : 'password'"
+          placeholder="Password"
+          formControlName="password"
+          [error]="getPasswordError()"
+        ></app-input>
+        <button
+          type="button"
+          class="absolute right-4 top-[26px] -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors z-10 p-2"
+          (click)="showPassword = !showPassword"
+        >
+          <svg *ngIf="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <svg *ngIf="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88 2 2m7.88 7.88L2 2m7.88 7.88 6.24 6.24M2 2l20 20m-5.12-5.12 3.12 3.12M22 12s-3-7-10-7a9.45 9.45 0 0 0-4.73 1.29m11.13 11.13A9.47 9.47 0 0 1 12 19c-7 0-10-7-10-7a9.59 9.59 0 0 1 2.5-3.51"></path></svg>
+        </button>
+      </div>
+
+      <button type="submit" class="btn-test">
+        Sign Up
+      </button>
+
+      <!-- Footer Section -->
+      <div class="text-center pt-6 border-t border-slate-100 mt-6">
+        <p class="text-sm text-slate-500 font-medium">
+          Already have an account?
+          <a
+            routerLink="/login"
+            class="text-indigo-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1"
+          >
+            Sign In
+          </a>
+        </p>
+      </div>
+    </form>
+  </div>
+</div>
