@@ -1,0 +1,61 @@
+# ServiceMonitor for Prometheus Operator (optional if using Prometheus Operator)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: dam-services
+  namespace: dam
+  labels:
+    app: dam
+spec:
+  selector:
+    matchLabels:
+      app: worker
+  namespaceSelector:
+    matchNames:
+    - dam
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: dam-services-assets
+  namespace: dam
+  labels:
+    app: dam
+spec:
+  selector:
+    matchLabels:
+      app: assets
+  namespaceSelector:
+    matchNames:
+    - dam
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-manager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'default'
+    receivers:
+    - name: 'default'
+      slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL_HERE'
+        channel: '#alerts'
+        title: 'DAM Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'

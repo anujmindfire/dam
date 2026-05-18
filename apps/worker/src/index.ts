@@ -30,6 +30,24 @@ import type { AssetUploadedPayloadProps } from "@dam/shared";
 import express, { Request, Response } from "express";
 import { analyzeAsset } from "./services/analysis";
 import { validateAssetExpiry } from "./services/governance";
+import { Registry, Counter, Gauge, collectDefaultMetrics } from "prom-client";
+
+// Prometheus Metrics setup
+const register = new Registry();
+collectDefaultMetrics({ register });
+
+const jobsTotal = new Counter({
+  name: "dam_worker_jobs_total",
+  help: "Total number of jobs processed by the worker",
+  labelNames: ["type", "status"],
+  registers: [register],
+});
+
+const jobsProcessing = new Gauge({
+  name: "dam_worker_jobs_processing",
+  help: "Current number of jobs being processed",
+  registers: [register],
+});
 
 /**
  * Flags an assets as expired if its expiryDate is in the past.
@@ -83,6 +101,9 @@ const bootstrap = async (): Promise<void> => {
       logger.info(workerMsg.processingAsset(payload.assetsId, payload.filename));
 
       // Create a background job log
+      jobsTotal.inc({ type: "Media Processing & Compliance", status: "started" });
+      jobsProcessing.inc();
+
       const job = await create(jobModel, {
         type: "Media Processing & Compliance",
         target: payload.filename,
@@ -163,6 +184,8 @@ const bootstrap = async (): Promise<void> => {
         );
 
         logger.info(workerMsg.transitionComplete(payload.assetsId, enums.reviewed));
+        jobsTotal.inc({ type: "Media Processing & Compliance", status: "completed" });
+        jobsProcessing.dec();
       } catch (err) {
         logger.error(workerMsg.processingFailed(payload.assetsId), err);
 
@@ -179,6 +202,8 @@ const bootstrap = async (): Promise<void> => {
 
         // 2. Revert assets status to pending so it can be retried
         await update(assetsModel, { id: payload.assetsId }, { status: "pending" });
+        jobsTotal.inc({ type: "Media Processing & Compliance", status: "failed" });
+        jobsProcessing.dec();
       }
     });
 
@@ -218,6 +243,10 @@ const bootstrap = async (): Promise<void> => {
     const healthApp = express();
     healthApp.get(`${baseRoute}/health`, (_req: Request, res: Response) => {
       res.status(200).json({ status: "healthy", service: "Worker", uptime: process.uptime() });
+    });
+    healthApp.get("/metrics", async (_req: Request, res: Response) => {
+      res.set("Content-Type", register.contentType);
+      res.end(await register.metrics());
     });
     healthApp.listen(dotEnv.workerPort, () => {
       logger.info(`[Worker] Health monitor running on port ${dotEnv.workerPort}`);

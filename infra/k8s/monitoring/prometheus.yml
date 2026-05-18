@@ -1,0 +1,172 @@
+# Enhanced Prometheus Configuration with Memory and Custom Metrics
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config-enhanced
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    alerting:
+      alertmanagers:
+      - static_configs:
+        - targets:
+          - localhost:9093
+    rule_files:
+      - '/etc/prometheus/rules/*.yml'
+    scrape_configs:
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+        - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+          action: keep
+          regex: default;kubernetes;https
+
+      - job_name: 'kubernetes-cadvisor'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+        metric_relabel_configs:
+          - action: drop
+            regex: 'container_memory_failures_total'
+            source_labels: [__name__]
+
+  alert-rules.yml: |
+    groups:
+    - name: pod_performance
+      interval: 30s
+      rules:
+      - alert: HighCPUUsage
+        expr: (sum(rate(container_cpu_usage_seconds_total[5m])) by (pod, namespace)) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has high CPU usage: {{ $value }}"
+
+      - alert: HighMemoryUsage
+        expr: (sum(container_memory_usage_bytes) by (pod, namespace)) / (sum(container_spec_memory_limit_bytes) by (pod, namespace)) > 0.85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has high memory usage: {{ $value }}"
+
+      - alert: PodMemoryOOM
+        expr: kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pod OOMKilled: {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} was killed due to Out of Memory"
+
+      - alert: HighNetworkIO
+        expr: (sum(rate(container_network_receive_bytes_total[5m])) by (pod, namespace)) > 104857600
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High network I/O on pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} has high network I/O: {{ $value }} bytes/sec"
+
+      - alert: HighDiskIO
+        expr: (sum(rate(container_fs_io_time_seconds_total[5m])) by (pod, namespace)) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk I/O on pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} has high disk I/O utilization"
+
+      - alert: PodRestarting
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod {{ $labels.pod }} is restarting frequently"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 15 minutes"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+data:
+  pod-rules.yml: |
+    groups:
+    - name: pod_metrics
+      interval: 30s
+      rules:
+      - record: pod:cpu:utilization
+        expr: (sum(rate(container_cpu_usage_seconds_total[5m])) by (pod, namespace)) * 100
+
+      - record: pod:memory:utilization
+        expr: (sum(container_memory_usage_bytes) by (pod, namespace)) / (sum(container_spec_memory_limit_bytes) by (pod, namespace)) * 100
+
+      - record: pod:network:bytes:rate
+        expr: sum(rate(container_network_receive_bytes_total[5m]) + rate(container_network_transmit_bytes_total[5m])) by (pod, namespace)
