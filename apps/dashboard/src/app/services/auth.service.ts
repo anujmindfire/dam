@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { API_ENDPOINTS } from '../constants';
 
 export interface LoginCredentials {
   email: string;
@@ -26,7 +27,7 @@ export interface ApiResponse<T> {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly AUTH_URL = '/api/v1/auth';
+  private readonly AUTH_URL = API_ENDPOINTS.AUTH;
   private currentUserSubject = new BehaviorSubject<AuthUser | null>(null);
 
   constructor(private http: HttpClient) {
@@ -55,7 +56,7 @@ export class AuthService {
   }
 
   signup(data: any): Observable<any> {
-    return this.http.post(`${this.AUTH_URL}/register`, data);
+    return this.http.post(`${this.AUTH_URL}/signup`, data);
   }
 
   logout(): void {

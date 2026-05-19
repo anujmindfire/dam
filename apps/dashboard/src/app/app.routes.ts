@@ -30,6 +30,7 @@ export const routes: Routes = [
       { path: 'approvals', component: ApprovalsComponent },
       { path: 'users', component: UsersComponent },
       { path: 'collections', component: CollectionsComponent },
+      { path: 'collections/:id', component: CollectionsComponent },
     ],
   },
 ];

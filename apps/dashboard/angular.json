@@ -25,7 +25,14 @@
                 "input": "public"
               }
             ],
-            "styles": []
+            "styles": [
+              "src/styles.css"
+            ],
+            "optimization": {
+              "styles": {
+                "inlineCritical": false
+              }
+            }
           },
           "configurations": {
             "production": {
