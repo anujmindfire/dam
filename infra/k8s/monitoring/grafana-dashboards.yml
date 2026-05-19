@@ -5,7 +5,7 @@ metadata:
   name: grafana-dashboard-json
   namespace: monitoring
 data:
-  # Main DAM Dashboard
+  # Master Operations Control Dashboard
   dam-dashboard.json: |
     {
       "annotations": {
@@ -22,12 +22,70 @@ data:
         ]
       },
       "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "liveNow": false,
       "panels": [
         {
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
-          "id": 10,
-          "title": "Worker Service Metrics",
+          "id": 1,
+          "title": "👑 KPI Summary Metrics",
           "type": "row"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "orange", "value": 1 },
+                  { "color": "green", "value": 2 }
+                ]
+              },
+              "unit": "none"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+          "id": 2,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "targets": [{ "expr": "count(container_cpu_usage_seconds_total{pod=~\"worker-.*\", id=~\"/kubepods.*\", namespace=\"dam\"})", "refId": "A" }],
+          "title": "Worker Replicas Active",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+          "id": 3,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "targets": [{ "expr": "sum(dam_worker_jobs_total{status=\"completed\"}) or vector(0)", "refId": "A" }],
+          "title": "Total Processed Tasks",
+          "type": "stat"
         },
         {
           "datasource": "Prometheus",
@@ -36,59 +94,206 @@ data:
               "color": { "mode": "thresholds" },
               "thresholds": {
                 "mode": "absolute",
-                "steps": [{ "color": "green", "value": null }]
-              }
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "orange", "value": 5 },
+                  { "color": "red", "value": 10 }
+                ]
+              },
+              "unit": "short"
             }
           },
-          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
-          "id": 3,
-          "targets": [{ "expr": "sum(kube_deployment_status_replicas{deployment=\"worker\"})", "refId": "A" }],
-          "title": "Worker Scale",
-          "type": "stat"
-        },
-        {
-          "datasource": "Prometheus",
-          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
           "id": 4,
-          "targets": [{ "expr": "dam_worker_jobs_processing", "refId": "A" }],
-          "title": "Active Jobs",
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "targets": [{ "expr": "sum(dam_worker_jobs_processing) or vector(0)", "refId": "A" }],
+          "title": "Active Queued Jobs",
           "type": "stat"
         },
         {
           "datasource": "Prometheus",
-          "gridPos": { "h": 6, "w": 8, "x": 8, "y": 1 },
-          "id": 11,
-          "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"worker-.*\",namespace=\"dam\"}[5m]))", "refId": "A" }],
-          "title": "Worker CPU Usage",
-          "type": "graph"
-        }
-      ],
-      "title": "DAM Main Dashboard",
-      "uid": "dam-main"
-    }
-  # Performance Dashboard
-  performance-dashboard.json: |
-    {
-      "title": "DAM Performance Testing",
-      "panels": [
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "reqps"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+          "id": 5,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "targets": [{ "expr": "sum(rate(container_network_receive_packets_total{pod=~\"api-gateway-.*\"}[1m])) or vector(0)", "refId": "A" }],
+          "title": "API Gateway Request Rate",
+          "type": "stat"
+        },
         {
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+          "id": 6,
+          "title": "⚡ Application Ingress & Network Performance",
+          "type": "row"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "fillOpacity": 10,
+                "gradientMode": "opacity",
+                "lineWidth": 2
+              },
+              "unit": "KBs"
+            }
+          },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+          "id": 7,
+          "options": {
+            "legend": {
+              "calcs": ["max", "mean", "last"],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": { "mode": "multi", "sort": "desc" }
+          },
+          "targets": [{ "expr": "sum(rate(container_network_receive_bytes_total{interface=~\"eth0|bridge|veth.*\"}[1m])) by (pod) / 1024", "legendFormat": "{{pod}} Ingress", "refId": "A" }],
+          "title": "Cluster Network Throughput (KB/s)",
+          "type": "timeseries"
+        },
+        {
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+          "id": 8,
+          "title": "🐳 Resource Compute Analytics (cAdvisor)",
+          "type": "row"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "fillOpacity": 12,
+                "gradientMode": "opacity",
+                "lineWidth": 2
+              },
+              "unit": "percent"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+          "id": 9,
+          "options": {
+            "legend": {
+              "calcs": ["max", "mean", "last"],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": { "mode": "multi", "sort": "desc" }
+          },
+          "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/kubepods.*\", namespace=\"dam\"}[1m])) by (pod) * 100", "legendFormat": "{{pod}}", "refId": "A" }],
           "title": "Pod CPU Utilization (%)",
-          "type": "timeseries",
-          "targets": [{ "expr": "pod:cpu:utilization{namespace=\"dam\"}" }]
-        }
-      ],
-      "uid": "dam-performance"
-    }
-  # Logs Dashboard
-  logs-dashboard.json: |
-    {
-      "title": "DAM Logs Dashboard",
-      "panels": [
+          "type": "timeseries"
+        },
         {
-          "title": "DAM Application Logs",
-          "type": "logs",
-          "targets": [{ "expr": "{namespace=\"dam\"}" }]
+          "datasource": "Prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "fillOpacity": 15,
+                "gradientMode": "opacity",
+                "lineWidth": 2
+              },
+              "unit": "decimbytes"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+          "id": 10,
+          "options": {
+            "legend": {
+              "calcs": ["max", "mean", "last"],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": { "mode": "multi", "sort": "desc" }
+          },
+          "targets": [{ "expr": "sum(container_memory_usage_bytes{id=~\"/kubepods.*\", namespace=\"dam\"}) by (pod) / 1024 / 1024", "legendFormat": "{{pod}}", "refId": "A" }],
+          "title": "Pod Memory Usage (MB)",
+          "type": "timeseries"
+        },
+        {
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+          "id": 11,
+          "title": "📬 Queue & Worker Deep-Dive",
+          "type": "row"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "fillOpacity": 10,
+                "gradientMode": "opacity",
+                "lineWidth": 2
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+          "id": 12,
+          "options": {
+            "legend": {
+              "calcs": ["max", "mean", "last"],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": { "mode": "multi", "sort": "desc" }
+          },
+          "targets": [
+            { "expr": "sum(rate(dam_worker_jobs_total{status=\"completed\"}[1m]))", "legendFormat": "Jobs Completed Rate", "refId": "A" },
+            { "expr": "sum(rate(dam_worker_jobs_total{status=\"failed\"}[1m]))", "legendFormat": "Jobs Failed Rate", "refId": "B" }
+          ],
+          "title": "Worker Media Processing Jobs Speed & Compliance (Rate/Sec)",
+          "type": "timeseries"
         }
       ],
-      "uid": "dam-logs"
+      "refresh": "5s",
+      "schemaVersion": 36,
+      "style": "dark",
+      "tags": ["DAM", "Kubernetes", "Observability"],
+      "time": {
+        "from": "now-15m",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "5s",
+          "10s",
+          "30s",
+          "1m"
+        ]
+      },
+      "title": "DAM Master Operations Control Center",
+      "uid": "dam-master",
+      "version": 1
     }
