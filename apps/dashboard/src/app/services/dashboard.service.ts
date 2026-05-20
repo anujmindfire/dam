@@ -56,7 +56,7 @@ export class DashboardService {
   }
 
   getJobs(): Observable<any> {
-    return this.http.get<any>(`${API_ENDPOINTS.USAGE}/jobs`, this.getHeaders());
+    return this.http.get<any>(API_ENDPOINTS.JOBS, this.getHeaders());
   }
 
   getApprovals(status?: string, limit?: number): Observable<any> {

@@ -17,7 +17,7 @@ export interface UserProps {
   providedIn: 'root',
 })
 export class UserService {
-  private readonly USER_URL = API_ENDPOINTS.USER;
+  private readonly USER_URL = API_ENDPOINTS.USERS;
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

@@ -37,7 +37,8 @@ export const API_ENDPOINTS = {
   APPROVAL: '/api/v1/approval',
   ASSETS: '/api/v1/assets',
   COLLECTION: '/api/v1/collection',
-  USER: '/api/v1/user',
+  USERS: '/api/v1/users',
+  JOBS: '/api/v1/jobs',
 };
 
 export const NAV_ITEMS = [
