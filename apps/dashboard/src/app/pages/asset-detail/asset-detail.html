@@ -109,7 +109,7 @@
           <app-card-title class="text-rose-600">Danger Zone</app-card-title>
         </app-card-header>
         <app-card-body class="p-8">
-          <app-button (onClick)="deleteAsset()" class="bg-rose-600 hover:bg-rose-700 w-full shadow-rose-200">
+          <app-button variant="danger" [fullWidth]="true" (onClick)="deleteAsset()">
             Terminate Asset
           </app-button>
         </app-card-body>

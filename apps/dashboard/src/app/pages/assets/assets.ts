@@ -35,11 +35,6 @@ export class AssetsComponent implements OnInit {
   showCollectionModal = false;
   selectedAssetId = '';
 
-  mockCollections = [
-    { id: 'c1', name: 'Summer 2026 Marketing', assetCount: 12 },
-    { id: 'c2', name: 'Social Media Assets', assetCount: 45 },
-    { id: 'c3', name: 'Brand Identity', assetCount: 8 },
-  ];
 
   constructor(
     private router: Router, 
@@ -137,10 +132,6 @@ export class AssetsComponent implements OnInit {
     });
   }
 
-  handleCollectionSelect(collectionId: string) {
-    this.toast.show('Asset linked to collection successfully', 'success');
-    this.showCollectionModal = false;
-  }
 
   handleUploadSuccess() {
     this.toast.show('Asset uploaded successfully', 'success');

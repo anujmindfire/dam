@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CardComponent, CardHeaderComponent, CardTitleComponent, CardBodyComponent } from '../../components/ui/card/card';
 import { ButtonComponent } from '../../components/ui/button/button';
-import { BadgeComponent } from '../../components/ui/badge/badge';
 import { AppListComponent, Column } from '../../components/ui/list/list';
 import { UserService, UserProps } from '../../services/user.service';
 import { ToastService } from '../../services/toast.service';
@@ -11,7 +10,7 @@ import { ToastService } from '../../services/toast.service';
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardComponent, CardHeaderComponent, CardTitleComponent, CardBodyComponent, ButtonComponent, BadgeComponent, AppListComponent],
+  imports: [CommonModule, FormsModule, CardComponent, CardHeaderComponent, CardTitleComponent, CardBodyComponent, ButtonComponent, AppListComponent],
   templateUrl: './users.html',
 })
 export class UsersComponent implements OnInit {

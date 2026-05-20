@@ -95,7 +95,7 @@ export class DashboardComponent implements OnInit {
           this.trends = usageTrends.map((trend: any) => ({
             label: new Date(trend.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
             count: parseInt(trend.count) || 0,
-            height: maxCount > 0 ? ((parseInt(trend.count) || 0) / maxCount) * 100 : 0
+            height: maxCount > 0 ? Math.max(((parseInt(trend.count) || 0) / maxCount) * 100, 8) : 8
           }));
         }
 

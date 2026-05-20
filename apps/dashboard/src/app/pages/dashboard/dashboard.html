@@ -59,9 +59,12 @@
       </app-card-header>
       <app-card-body>
         <div *ngIf="trends.length > 0" class="h-64 flex items-end gap-2 px-4 pb-8" role="img" aria-label="Usage trends chart">
-          <div *ngFor="let trend of trends" class="flex-1 flex flex-col items-center gap-2 group">
+          <div *ngFor="let trend of trends" class="flex-1 h-full flex flex-col justify-end items-center gap-2 group">
             <div
-              class="w-full bg-indigo-500 rounded-t-lg transition-all duration-500 hover:bg-indigo-600 relative"
+              class="w-full rounded-t-lg transition-all duration-300 relative"
+              [class.bg-indigo-500]="trend.count > 0"
+              [class.hover:bg-indigo-600]="trend.count > 0"
+              [class.bg-slate-100]="trend.count === 0"
               [style.height.%]="trend.height"
               [attr.aria-label]="trend.count + ' events on ' + trend.label"
             >

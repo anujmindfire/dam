@@ -85,10 +85,10 @@
           />
         </div>
         <div class="flex gap-3 pt-2">
-          <app-button variant="outline" class="flex-1" (onClick)="isEditModalOpen = false">
+          <app-button variant="outline" class="flex-1" [fullWidth]="true" (onClick)="isEditModalOpen = false">
             Cancel
           </app-button>
-          <app-button class="flex-1 shadow-lg shadow-indigo-100" (onClick)="handleUpdate()">
+          <app-button class="flex-1 shadow-lg shadow-indigo-100" [fullWidth]="true" (onClick)="handleUpdate()">
             Update
           </app-button>
         </div>

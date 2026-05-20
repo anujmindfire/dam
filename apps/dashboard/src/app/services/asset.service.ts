@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpBackend, HttpRequest, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AssetsProps, SuccessResponseProps } from '@dam/shared';
 import { AuthService } from './auth.service';
@@ -10,8 +10,11 @@ import { API_ENDPOINTS } from '../constants';
 })
 export class AssetService {
   private readonly ASSETS_URL = API_ENDPOINTS.ASSETS;
+  private httpWithoutInterceptor: HttpClient;
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(private http: HttpClient, private handler: HttpBackend, private authService: AuthService) {
+    this.httpWithoutInterceptor = new HttpClient(handler);
+  }
 
   private getHeaders() {
     return { headers: this.authService.getAuthHeaders() };
@@ -35,5 +38,21 @@ export class AssetService {
 
   deleteAsset(id: string): Observable<SuccessResponseProps<void>> {
     return this.http.delete<SuccessResponseProps<void>>(`${this.ASSETS_URL}/${id}`, this.getHeaders());
+  }
+
+  getUploadUrl(data: { filename: string; mimetype: string }): Observable<SuccessResponseProps<any>> {
+    return this.http.post<SuccessResponseProps<any>>(`${this.ASSETS_URL}/upload/presignedUrl`, data, this.getHeaders());
+  }
+
+  completeUpload(data: any): Observable<SuccessResponseProps<any>> {
+    return this.http.post<SuccessResponseProps<any>>(`${this.ASSETS_URL}/upload/complete`, data, this.getHeaders());
+  }
+
+  uploadToMinio(uploadUrl: string, file: File, mimetype: string): Observable<any> {
+    const req = new HttpRequest('PUT', uploadUrl, file, {
+      reportProgress: true,
+      headers: new HttpHeaders({ 'Content-Type': mimetype })
+    });
+    return this.httpWithoutInterceptor.request(req);
   }
 }

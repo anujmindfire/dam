@@ -49,7 +49,7 @@ export class CollectionService {
     return this.http.delete<any>(`${this.COLLECTION_URL}/${id}`, this.getHeaders());
   }
 
-  addAssetToCollection(collectionId: string, assetId: string): Observable<any> {
-    return this.http.post<any>(`${this.COLLECTION_URL}/${collectionId}/assets`, { assetId }, this.getHeaders());
+  addAssetToCollection(collectionId: string, assetsId: string): Observable<any> {
+    return this.http.post<any>(`${this.COLLECTION_URL}/${collectionId}/assets`, { assetsId }, this.getHeaders());
   }
 }

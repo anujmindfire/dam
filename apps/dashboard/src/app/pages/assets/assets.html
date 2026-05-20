@@ -65,11 +65,11 @@
         </span>
 
         <span *ngSwitchCase="'owner'" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          {{ row.owner }}
+          {{ row.uploader?.name || row.owner || 'System' }}
         </span>
 
         <span *ngSwitchCase="'createdAt'" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          {{ row.createdAt }}
+          {{ (row.createdAt | date:'shortDate') || 'Unknown' }}
         </span>
 
         <div *ngSwitchCase="'actions'" class="flex items-center justify-end gap-1">
@@ -101,7 +101,6 @@
 
 <app-add-to-collection-modal
   [isOpen]="showCollectionModal"
-  [collections]="mockCollections"
-  (onClose)="showCollectionModal = false"
-  (onSelect)="handleCollectionSelect($event)"
+  [assetsId]="selectedAssetId"
+  (onClose)="showCollectionModal = false; selectedAssetId = ''"
 ></app-add-to-collection-modal>

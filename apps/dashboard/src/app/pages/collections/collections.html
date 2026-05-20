@@ -181,10 +181,10 @@
         />
       </div>
       <div class="flex gap-3 pt-4">
-        <app-button variant="outline" class="flex-1" (onClick)="isModalOpen = false">
+        <app-button variant="outline" class="flex-1" [fullWidth]="true" (onClick)="isModalOpen = false">
           Cancel
         </app-button>
-        <app-button class="flex-1 shadow-lg shadow-indigo-100" (onClick)="handleCreate()">
+        <app-button class="flex-1 shadow-lg shadow-indigo-100" [fullWidth]="true" (onClick)="handleCreate()">
           Create
         </app-button>
       </div>
