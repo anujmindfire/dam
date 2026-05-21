@@ -7,6 +7,7 @@ import {
   usageModel,
   metadataModel,
   uploadFile,
+  getPresignedUrl,
   dotEnv,
 } from "@dam/shared";
 
@@ -137,8 +138,8 @@ Governance Check: PASSED
 
     await uploadFile(bucketName, objectName, Buffer.from(reportContent), "text/plain");
 
-    // Construct Download URL (Assuming MinIO is reachable via local endpoint for this demo)
-    const downloadUrl = `http://${dotEnv.minioEndpoint}:${dotEnv.minioPort}/${bucketName}/${objectName}`;
+    // Generate a secure presigned URL (rewrites internal cluster DNS to public endpoint)
+    const downloadUrl = await getPresignedUrl(bucketName, objectName, 3600 * 24);
 
     const report = {
       id: reportId,

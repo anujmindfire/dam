@@ -25,6 +25,11 @@ kind: Ingress
 metadata:
   name: dam-infra-ingress
   namespace: dam
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/upstream-vhost: "minio.local:8080"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
 spec:
   ingressClassName: nginx
   rules:
@@ -37,7 +42,7 @@ spec:
           service:
             name: minio
             port:
-              number: 9001
+              number: 9000
   - host: rabbitmq.local
     http:
       paths:
