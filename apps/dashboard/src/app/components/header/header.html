@@ -1,49 +1,27 @@
-<header
-  class="glass fixed top-5 right-5 px-6 flex items-center justify-between z-[900] transition-all duration-300 ease-in-out"
-  style="height: var(--header-height); left: calc(var(--sidebar-width) + 60px);"
->
-  <div class="flex items-center gap-4 flex-1">
-    <button class="hidden md:hidden text-[var(--color-text-main)]">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-    </button>
-    <div
-      class="search-container flex items-center gap-3 w-full max-w-[480px] py-2 px-4 rounded-xl transition-all duration-300 ease-in-out focus-within:shadow-[0_0_0_3px_var(--color-primary-glow)]"
-      style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--color-glass-border);"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-text-dim);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      <input
-        type="text"
-        placeholder="Search assets, metadata, versions..."
-        class="bg-transparent border-none text-sm w-full outline-none"
-        style="color: var(--color-text-main);"
-      />
-    </div>
+<header class="sticky top-0 z-20 flex items-center h-[var(--header-height)] px-6 bg-white/80 backdrop-blur-md border-b border-[var(--border)]">
+  <button
+    (click)="onMenuClick.emit()"
+    [class.opacity-100]="collapsed"
+    [class.opacity-0]="!collapsed"
+    [class.pointer-events-none]="!collapsed"
+    [class.lg:hidden]="!collapsed"
+    class="mr-4 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  </button>
+
+  <div class="flex-1 overflow-hidden">
+    <app-breadcrumb></app-breadcrumb>
   </div>
 
-  <div class="flex items-center gap-6">
-    <button class="relative" style="color: var(--color-text-muted);">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
-      <span
-        class="notification-badge absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
-        style="background: var(--color-accent-purple); border: 2px solid var(--color-bg-sidebar);"
-      ></span>
-    </button>
-    <div
-      class="profile-section flex items-center gap-3 pl-5"
-      style="border-left: 1px solid var(--color-glass-border);"
-    >
-      <div class="flex flex-col items-end">
-        <span class="text-sm font-medium" style="color: var(--color-text-main);">
-          Marketing Lead
-        </span>
-        <span
-          class="text-[11px] uppercase tracking-wider"
-          style="color: var(--color-text-dim);"
-        >
-          Administrator
-        </span>
-      </div>
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-text-muted);"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+  <div class="ml-auto flex items-center gap-4">
+    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-full border border-indigo-100">
+      <div class="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse"></div>
+      <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider">
+        Live System
+      </span>
     </div>
+    <div class="h-8 w-px bg-slate-200 mx-1"></div>
+    <app-logout></app-logout>
   </div>
 </header>

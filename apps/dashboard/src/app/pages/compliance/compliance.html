@@ -1,44 +1,192 @@
-<div class="p-8 animate-[fadeIn_0.5s_ease-out]">
-  <div class="mb-8">
-    <h1 class="page-title">Compliance</h1>
-    <p class="page-subtitle">Track asset usage and regulatory adherence.</p>
+<div class="space-y-8 animate-in fade-in duration-500">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--text-color)] tracking-tight italic">
+        Governance & Compliance
+      </h1>
+      <p class="text-slate-500 text-sm mt-1 font-medium">
+        Standardized assets auditing and policy enforcement
+      </p>
+    </div>
+    <div class="flex bg-slate-100 rounded-xl p-1 border border-slate-200">
+      <button
+        (click)="activeTab = 'policy'"
+        [ngClass]="activeTab === 'policy' ? 'bg-white text-[var(--primary)] shadow-sm border border-indigo-100' : 'text-slate-500 hover:text-slate-700'"
+        class="px-6 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+      >
+        policy
+      </button>
+      <button
+        (click)="activeTab = 'history'"
+        [ngClass]="activeTab === 'history' ? 'bg-white text-[var(--primary)] shadow-sm border border-indigo-100' : 'text-slate-500 hover:text-slate-700'"
+        class="px-6 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+      >
+        history
+      </button>
+    </div>
   </div>
 
-  <div class="glass p-8 mb-6">
-    <div class="flex items-center justify-between mb-8">
-      <h2 class="text-xl font-semibold">Governance Overview</h2>
-      <div class="flex items-center gap-2">
-        <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]"></span>
-        <span class="text-emerald-500 text-sm font-bold uppercase tracking-wider">98% Compliant</span>
-      </div>
-    </div>
-    
-    <div class="grid gap-6">
-      <div class="compliance-card p-5 bg-white/5 rounded-2xl border border-white/5 transition-all hover:bg-white/[0.07]">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h4 class="font-semibold text-lg mb-1">GDPR Compliance</h4>
-            <p class="text-sm text-[var(--color-text-dim)]">Status of user data protection for hosted assets.</p>
-          </div>
-          <span class="text-sm font-mono text-emerald-500">100%</span>
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <app-card class="p-6 border-none bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-xl shadow-indigo-100 lg:col-span-1 relative overflow-hidden group">
+      <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
+      <div class="relative z-10">
+        <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80 mb-1">
+          Audit Score
+        </p>
+        <div class="flex items-baseline gap-2 mb-4">
+          <span class="text-5xl font-bold tracking-tighter">
+            {{ complianceData?.score || 0 }}%
+          </span>
         </div>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill bg-emerald-500" style="width: 100%"></div>
+        <div class="h-2 bg-white/20 rounded-full overflow-hidden border border-white/10">
+          <div
+            class="h-full bg-white transition-all duration-1000"
+            [style.width.%]="complianceData?.score || 0"
+          ></div>
         </div>
+        <p class="text-[10px] font-bold uppercase tracking-wider mt-4 opacity-70 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-300"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          System Integrity Validated
+        </p>
       </div>
+    </app-card>
 
-      <div class="compliance-card p-5 bg-white/5 rounded-2xl border border-white/5 transition-all hover:bg-white/[0.07]">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h4 class="font-semibold text-lg mb-1">Copyright Management</h4>
-            <p class="text-sm text-[var(--color-text-dim)]">Asset licensing and usage rights tracking.</p>
-          </div>
-          <span class="text-sm font-mono text-amber-500">85%</span>
+    <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <app-card class="flex flex-row items-center gap-4 p-6 hover:border-indigo-200 transition-all group">
+        <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100 group-hover:scale-110 transition-transform">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
         </div>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill bg-amber-500" style="width: 85%"></div>
+        <div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Policy Alerts
+          </p>
+          <p class="text-2xl font-bold text-[var(--text-color)]">
+            {{ complianceData?.alertsCount || 0 }}
+          </p>
         </div>
-      </div>
+      </app-card>
+      <app-card class="flex flex-row items-center gap-4 p-6 hover:border-indigo-200 transition-all group">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 group-hover:scale-110 transition-transform">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Approved Assets
+          </p>
+          <p class="text-2xl font-bold text-[var(--text-color)]">
+            {{ complianceData?.approvedCount || 0 }}
+          </p>
+        </div>
+      </app-card>
     </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <app-card class="lg:col-span-2">
+      <ng-container *ngIf="activeTab === 'policy'">
+        <app-card-header class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--primary)]"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <app-card-title>Security Audit Findings</app-card-title>
+        </app-card-header>
+        <app-card-body class="space-y-4">
+          <ng-container *ngIf="complianceData?.violations?.length > 0; else noViolations">
+            <div
+              *ngFor="let v of complianceData.violations"
+              class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-4 group hover:bg-white hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 transition-all cursor-pointer"
+              (click)="navigateViolation(v)"
+            >
+              <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-bold text-[var(--text-color)] group-hover:text-[var(--primary)] transition-colors">
+                  {{ v.title }}
+                </p>
+                <p class="text-xs text-slate-500 font-medium mt-0.5">{{ v.description }}</p>
+              </div>
+              <app-button variant="ghost" size="icon" class="text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </app-button>
+            </div>
+          </ng-container>
+          <ng-template #noViolations>
+            <div class="py-20 text-center flex flex-col items-center gap-4">
+              <div class="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <h3 class="text-[var(--text-color)] text-xl font-bold italic">
+                No Governance Issues Detected
+              </h3>
+              <p class="text-slate-400 max-w-xs font-medium">
+                All assets currently meet the established system policies
+              </p>
+            </div>
+          </ng-template>
+        </app-card-body>
+      </ng-container>
+
+      <ng-container *ngIf="activeTab === 'history'">
+        <app-card-header class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--primary)]"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          <app-card-title>Full Audit History</app-card-title>
+        </app-card-header>
+        <app-card-body class="p-0">
+          <div class="divide-y divide-slate-50">
+            <ng-container *ngIf="activity.length > 0; else noActivity">
+              <div
+                *ngFor="let log of activity"
+                class="px-8 py-5 flex items-center justify-between hover:bg-slate-50 transition-colors"
+              >
+                <div class="min-w-0 flex-1 mr-4">
+                  <p class="text-sm font-bold text-[var(--text-color)] truncate capitalize">
+                    {{ log.action.replace('_', ' ') }}
+                  </p>
+                  <div class="flex items-center gap-4 mt-1">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {{ log.loggedAt | date:'medium' }}
+                    </p>
+                    <span class="text-[10px] text-slate-300">|</span>
+                    <p class="text-[10px] font-bold text-indigo-400 uppercase">
+                      User ID: {{ log.userId }}
+                    </p>
+                  </div>
+                </div>
+                <span class="px-3 py-1 rounded-full text-[9px] font-bold uppercase bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  Verified
+                </span>
+              </div>
+            </ng-container>
+            <ng-template #noActivity>
+              <div class="p-20 text-center text-slate-400 font-medium">
+                No historical records found
+              </div>
+            </ng-template>
+          </div>
+        </app-card-body>
+      </ng-container>
+    </app-card>
+
+    <app-card>
+      <app-card-header class="flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--primary)]"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+        <app-card-title>Quick Insights</app-card-title>
+      </app-card-header>
+      <app-card-body class="space-y-6">
+        <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
+          <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">
+            Policy Coverage
+          </p>
+          <p class="text-sm font-bold text-indigo-900">100% of assets monitored</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+          <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1">
+            Recent Success
+          </p>
+          <p class="text-sm font-bold text-emerald-900">
+            {{ complianceData?.approvedCount || 0 }} Assets Approved this week
+          </p>
+        </div>
+      </app-card-body>
+    </app-card>
   </div>
 </div>

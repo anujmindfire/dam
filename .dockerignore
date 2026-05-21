@@ -1,17 +1,18 @@
-# root 
-node_modules 
-**/node_modules 
+# root
+node_modules
+**/node_modules
 
-# builds 
-**/dist 
+# builds
+**/dist
+!apps/dashboard/dist
 
-# logs 
-**/logs 
-*.log 
+# logs
+**/logs
+*.log
 
-# git 
-.git 
-.github 
+# git
+.git
+.github
 
-# misc 
+# misc
 coverage
