@@ -23,7 +23,10 @@ spec:
         - name: POSTGRES_USER
           value: postgres
         - name: POSTGRES_PASSWORD
-          value: Chiku143
+          valueFrom:
+            secretKeyRef:
+              name: dam-secret
+              key: DB_PASSWORD
         ports:
         - containerPort: 5432
           name: postgres
