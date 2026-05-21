@@ -1,237 +1,533 @@
-# AuraDAM: Digital Assets Management & Media Intelligence Platform
+# DAM — Digital Asset Management Platform
 
-AuraDAM is a high-performance, scalable Digital Asset Management (DAM) system built with a microservices architecture. It provides robust capabilities for managing digital assets, metadata orchestration, real-time analytics, and automated media processing via an event-driven worker pipeline.
-
-## 🏗 Architecture
-
-The platform follows a **Microservices Architecture** managed within a **Turborepo** monorepo using **pnpm**.
-
-### Core Components
-
-- **API Gateway (Nginx)**: The entry point that routes traffic to internal services.
-- **Server Service**: Handles authentication, user management, collections, and orchestrates requests.
-- **Asset Service**: Manages the lifecycle of digital assets (upload, CRUD, versioning).
-- **Metadata Service**: Handles assets tags, search indexing, and metadata enrichment.
-- **Usage Service**: Tracks system-wide activity, audit logs, and engagement analytics.
-- **Worker Service**: Background process consumer that handles media analysis and flags.
-
-### Tech Stack
-
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Lucide Icons.
-- **Backend**: Node.js, Express, TypeScript.
-- **Storage**: MinIO (S3-compatible Object Storage).
-- **Database**: PostgreSQL with Sequelize ORM.
-- **Messaging**: RabbitMQ (Event-driven communication).
-- **Caching**: Redis (Performance optimization).
+> A production-ready, cloud-native Digital Asset Management system built on a microservices architecture. Upload, organize, preview, approve, and distribute digital assets at scale.
 
 ---
 
-## 🚀 Features
+## Table of Contents
 
-- **Centralized Asset Management**: Securely store, organize, and retrieve assets.
-- **Media Intelligence**: Automated background analysis of uploaded assets.
-- **Version Control**: Track changes and maintain historical versions of assets.
-- **Role-Based Access Control (RBAC)**: Fine-grained permissions for users and departments.
-- **Audit Logging**: Comprehensive tracking of all system interactions.
-- **Advanced Search**: Fast retrieval based on metadata and tags.
-- **Collection Management**: Organize assets into logical groups and hierarchies.
-
----
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Node.js**: v20.x or higher
-- **pnpm**: v9.0.0 or higher
-- **Docker & Docker Compose**: For containerized deployment and infrastructure
-- **PostgreSQL**: v15+ (if running locally without Docker)
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Tech Stack](#tech-stack)
+4. [Prerequisites](#prerequisites)
+5. [Getting Started (Local Dev)](#getting-started)
+6. [Environment Variables](#environment-variables)
+7. [Running the Application](#running-the-application)
+8. [API Reference](#api-reference)
+9. [Branch Strategy](#branch-strategy)
+10. [Contribution Guidelines](#contribution-guidelines)
+11. [Commit Message Convention](#commit-message-convention)
+12. [Versioning](#versioning)
+13. [Testing](#testing)
+14. [Load & Stress Testing](#load--stress-testing)
+15. [Kubernetes & DevOps](#kubernetes--devops)
+16. [Troubleshooting](#troubleshooting)
 
 ---
 
-## ⚡ Quick Start (Docker)
+## Overview
 
-To spin up the entire stack (Infrastructure + Microservices) using Docker:
+The DAM platform provides:
 
-```bash
-# Navigate to the infra directory
-cd infra/docker
+- **Asset Library** — Upload, search, filter, and manage digital files (images, videos, audio, PDFs)
+- **Approval Workflow** — Multi-step review and approval with comment threads
+- **Compliance Dashboard** — Track expiring assets, duplicates, and governance scores
+- **Intelligence Analytics** — Usage trends, storage metrics, and compliance reports
+- **Background Jobs** — Async processing via RabbitMQ workers (thumbnail gen, report gen)
+- **Collections** — Group related assets into curated collections
+- **Role-Based Access** — Admin / Manager / Viewer roles with route-level guards
 
-# Build and start all services
-docker compose up --build
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Kubernetes (Minikube)                  │
+│                                                          │
+│  ┌──────────────┐    ┌─────────────────────────────────┐ │
+│  │  Angular SPA │    │         API Gateway             │ │
+│  │ (dashboard)  │───▶│  (Express + JWT auth + proxy)   │ │
+│  └──────────────┘    └────────┬────────────────────────┘ │
+│                               │                          │
+│         ┌─────────────────────┼──────────────────────┐   │
+│         ▼                     ▼                      ▼   │
+│  ┌────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │   Assets   │  │     Metadata     │  │    Usage &   │  │
+│  │  Service   │  │     Service      │  │  Analytics   │  │
+│  └──────┬─────┘  └──────────────────┘  └──────────────┘  │
+│         │                                                 │
+│  ┌──────▼─────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │   MinIO    │  │  PostgreSQL  │  │  Redis Cache     │  │
+│  │  (storage) │  │  (database)  │  │  (list caches)   │  │
+│  └────────────┘  └──────────────┘  └──────────────────┘  │
+│                                                           │
+│  ┌────────────┐  ┌────────────────────────────────────┐  │
+│  │  RabbitMQ  │  │  Worker Service (thumbnail, report) │  │
+│  └────────────┘  └────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────┘
 ```
 
-The application will be available at `http://localhost:3000`.
+### Services
+
+| Service                | Port (internal) | Responsibility                       |
+| ---------------------- | --------------- | ------------------------------------ |
+| `server` (API Gateway) | 3000            | Auth, routing, JWT validation        |
+| `assets`               | 3001            | Upload, list, delete, presigned URLs |
+| `metadata`             | 3002            | Tag extraction, duplicate detection  |
+| `usage`                | 3003            | Analytics, compliance, usage logs    |
+| `worker`               | —               | Background jobs via RabbitMQ         |
+| `dashboard`            | 80              | Angular SPA                          |
 
 ---
 
-## 💻 Local Development (Without Docker)
+## Tech Stack
 
-If you prefer to run the microservices locally while keeping infrastructure in Docker:
+| Layer         | Technology                                |
+| ------------- | ----------------------------------------- |
+| **Frontend**  | Angular 19 (Standalone Components)        |
+| **Styling**   | Tailwind CSS + CSS Variables              |
+| **Backend**   | Node.js, Express, TypeScript              |
+| **Database**  | PostgreSQL 16 + Sequelize ORM             |
+| **Cache**     | Redis 7                                   |
+| **Storage**   | MinIO (S3-compatible object storage)      |
+| **Queue**     | RabbitMQ 3.12                             |
+| **Container** | Docker + Kubernetes (Minikube for local)  |
+| **Ingress**   | NGINX Ingress Controller                  |
+| **Monorepo**  | pnpm + Nx workspace                       |
+| **Testing**   | Jasmine + Karma (Angular), Jest (Node.js) |
 
-### 1. Start Infrastructure
+---
+
+## Prerequisites
 
 ```bash
-# Start only the core infrastructure (Redis, RabbitMQ, MinIO)
-cd infra/docker
-docker compose up -d redis rabbitmq minio
+# Required tools
+node   >= 20.x    # https://nodejs.org
+pnpm   >= 9.x     # npm install -g pnpm
+docker            # https://docker.com
+minikube          # https://minikube.sigs.k8s.io
+kubectl           # https://kubernetes.io/docs/tasks/tools/
 ```
 
-### 2. Configure Environment
+Check your versions:
 
 ```bash
-# In the root directory
-cp .env.example .env
-# Update the .env file with your local credentials
+node --version && pnpm --version && docker --version && minikube version && kubectl version --client
 ```
 
-### 3. Install & Start
+---
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/anujmindfire/digital-asset-management.git
+cd digital-asset-management
+```
+
+### 2. Install dependencies
 
 ```bash
 pnpm install
-pnpm run dev
 ```
 
----
-
-## 🔌 Service Ports
-
-| Service                 | Internal Port | External Port |
-| :---------------------- | :------------ | :------------ |
-| **API Gateway**         | 80            | 3000          |
-| **Dashboard UI**        | 5173          | 5173          |
-| **Server Service**      | 3004          | 3004          |
-| **Asset Service**       | 3001          | 3001          |
-| **Metadata Service**    | 3002          | 3002          |
-| **Usage Service**       | 3003          | 3003          |
-| **Worker Service**      | 3005          | 3005          |
-| **MinIO Console**       | 9001          | 9001          |
-| **RabbitMQ Management** | 15672         | 15672         |
-
----
-
-## 📡 API Endpoints
-
-The primary entry point is the API Gateway at `http://localhost:3000/api/v1`.
-
-- **Auth**: `/auth`
-- **Assets**: `/assets`
-- **Metadata**: `/metadata`
-- **Collections**: `/collections`
-- **Usage/Logs**: `/usage`
-- **Dashboard Stats**: `/analytics/overview`
-
----
-
-## ⚙️ Worker Pipeline
-
-AuraDAM uses an event-driven architecture for background tasks:
-
-1. **Upload**: User uploads an assets via the Asset Service.
-2. **Event**: Asset Service stores the file in MinIO and publishes an `asset_uploaded` event to RabbitMQ.
-3. **Consumption**: The Worker Service consumes the event from the queue.
-4. **Processing**: Worker performs analysis (checksums, duplicates check, metadata extraction).
-5. **Update**: Worker updates the database and potentially triggers notification events.
-
----
-
-## 📦 Building for Production
-
-To create production-ready bundles for all apps and packages:
+### 3. Start Minikube
 
 ```bash
-pnpm run build
+minikube start --driver=docker --cpus=4 --memory=8192 --disk-size=30g
+minikube addons enable ingress
 ```
 
-Individual service Dockerfiles are located in their respective `apps/<service>/` directories.
+### 4. Add hosts entry
+
+```bash
+echo "$(minikube ip) dam.local" | sudo tee -a /etc/hosts
+```
+
+### 5. Apply Kubernetes manifests
+
+```bash
+kubectl apply -f infra/k8s/base/
+kubectl apply -f infra/k8s/
+```
+
+### 6. Wait for all pods to be ready
+
+```bash
+kubectl get pods -n dam --watch
+```
+
+### 7. Access the application
+
+Open http://dam.local:8080 in your browser.
+
+**Default credentials:**
+
+- Email: `admin@dam.com`
+- Password: `Admin1234`
 
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
-Key variables required in `.env`:
+All secrets are managed via `infra/k8s/base/secrets.yml`.
 
-- `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERS`, `DB_PASSWORD`
-- `RABBITMQ_URL`: Connection string for the message broker.
-- `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`
-- `REDIS_HOST`, `REDIS_PORT`
-- `ACCESS_TOKEN`, `REFRESH_TOKEN`: JWT secrets.
+| Variable           | Description             | Example                            |
+| ------------------ | ----------------------- | ---------------------------------- |
+| `DB_HOST`          | PostgreSQL host         | `postgres`                         |
+| `DB_NAME`          | Database name           | `dam`                              |
+| `DB_USER`          | DB username             | `postgres`                         |
+| `DB_PASSWORD`      | DB password             | (secret)                           |
+| `REDIS_URL`        | Redis connection URL    | `redis://redis:6379`               |
+| `RABBITMQ_URL`     | RabbitMQ AMQP URL       | `amqp://guest:guest@rabbitmq:5672` |
+| `MINIO_ENDPOINT`   | MinIO host              | `minio`                            |
+| `MINIO_ACCESS_KEY` | MinIO access key        | `minioadmin`                       |
+| `MINIO_SECRET_KEY` | MinIO secret key        | (secret)                           |
+| `MINIO_PUBLIC_URL` | Public-facing MinIO URL | `http://dam.local:8080/minio`      |
+| `JWT_SECRET`       | JWT signing secret      | (secret)                           |
+| `APP_URL`          | API gateway public URL  | `http://dam.local:8080`            |
+| `CLIENT_URL`       | Frontend origin         | `http://dam.local:8080`            |
 
-See [.env.example](file:///.env.example) for a complete list.
+> ⚠️ **Never commit real secrets to Git.** Use `kubectl create secret` or a secrets manager in production.
 
 ---
 
-## 📂 Project Structure
+## Running the Application
 
-```text
-├── apps/
-│   ├── assets/       # Asset lifecycle management
-│   ├── dashboard/    # React frontend (Vite)
-│   ├── metadata/     # Tags and metadata enrichment
-│   ├── server/       # Core orchestrator & Auth
-│   ├── usage/        # Audit logs & engagement
-│   └── worker/       # Background job processor
-├── packages/
-│   └── shared/       # Shared models, types, and utilities
-├── infra/
-│   ├── docker/       # Docker Compose & configurations
-│   └── gateway/      # Nginx Gateway configuration
-└── turbo.json        # Turborepo configuration
+### Local development (TypeScript watch mode)
+
+```bash
+pnpm dev          # starts all services with ts-node --watch
+```
+
+### Build all packages
+
+```bash
+pnpm build        # builds shared, then all apps
+```
+
+### Build Docker images (inside Minikube's Docker daemon)
+
+```bash
+eval $(minikube docker-env)
+docker build -f apps/dashboard/Dockerfile -t dam-dashboard:latest .
+docker build -f apps/assets/Dockerfile    -t dam-assets:latest .
+docker build -f apps/server/Dockerfile   -t dam-server:latest .
+# ... repeat for other services
+```
+
+### Rollout after image rebuild
+
+```bash
+kubectl rollout restart deployment/dashboard-ui deployment/assets -n dam
+kubectl rollout status  deployment/dashboard-ui deployment/assets -n dam
+```
+
+### Seed usage analytics data (for dashboard chart)
+
+```bash
+PGPASSWORD=<password> psql -h localhost -U postgres -d dam -f scripts/seed-usage.sql
 ```
 
 ---
 
-## 🛡 Security
+## API Reference
 
-- **JWT Authentication**: Secure stateless authentication across services.
-- **RBAC**: Implementation of roles (Admin, Manager, Viewer) to restrict access.
-- **Data Isolation**: Each service manages its own domain logic while sharing the core data schema.
-- **S3 Policies**: MinIO is configured with private buckets and presigned URLs for secure assets access.
+Base URL: `http://dam.local:8080/api/v1`
+
+### Auth
+
+| Method | Endpoint       | Description                        |
+| ------ | -------------- | ---------------------------------- |
+| POST   | `/auth/login`  | Obtain JWT access + refresh tokens |
+| POST   | `/auth/signup` | Create new user account            |
+| POST   | `/auth/logout` | Invalidate session                 |
+
+### Assets
+
+| Method | Endpoint                      | Description                     |
+| ------ | ----------------------------- | ------------------------------- |
+| GET    | `/assets`                     | List all assets (paginated)     |
+| GET    | `/assets/:id`                 | Get single asset                |
+| POST   | `/assets/upload/presignedUrl` | Get MinIO presigned upload URL  |
+| POST   | `/assets/upload/complete`     | Finalize upload metadata        |
+| GET    | `/assets/:id/thumbnail`       | Authenticated thumbnail stream  |
+| GET    | `/assets/:id/download`        | Generate presigned download URL |
+| DELETE | `/assets/:id`                 | Delete asset + MinIO object     |
+
+### Analytics
+
+| Method | Endpoint                    | Description                          |
+| ------ | --------------------------- | ------------------------------------ |
+| GET    | `/analytics/overview`       | Dashboard stats + usage trends       |
+| GET    | `/analytics/compliance`     | Compliance score + violations        |
+| GET    | `/analytics/report`         | Latest generated report              |
+| POST   | `/analytics/report/trigger` | Trigger background report generation |
+
+### Collections
+
+| Method | Endpoint          | Description             |
+| ------ | ----------------- | ----------------------- |
+| GET    | `/collection`     | List all collections    |
+| POST   | `/collection`     | Create collection       |
+| GET    | `/collection/:id` | Get collection + assets |
+| DELETE | `/collection/:id` | Delete collection       |
+
+### Approvals
+
+| Method | Endpoint                | Description            |
+| ------ | ----------------------- | ---------------------- |
+| GET    | `/approval`             | List pending approvals |
+| POST   | `/approval/:id/approve` | Approve asset          |
+| POST   | `/approval/:id/reject`  | Reject asset           |
 
 ---
 
-## 📊 Monitoring
+## Branch Strategy
 
-- **Health Checks**: Every service exposes a `/api/v1/health` endpoint.
-- **Structured Logging**: Services use Winston for consistent log formatting.
-- **Docker Healthchecks**: Integrated into the docker-compose for automated recovery.
+This project follows **GitHub Flow** with semantic branch naming:
 
----
+```
+main          ← production-ready code, protected
+develop       ← integration branch for feature PRs
+feat/*        ← new features    e.g. feat/bulk-delete
+fix/*         ← bug fixes       e.g. fix/minio-delete
+chore/*       ← maintenance     e.g. chore/update-deps
+docs/*        ← documentation   e.g. docs/api-reference
+perf/*        ← performance     e.g. perf/lazy-routes
+test/*        ← test additions  e.g. test/asset-service
+```
 
-## 📈 Scaling
+### Rules
 
-- **Horizontal Scaling**: All microservices are stateless and can be scaled horizontally.
-- **Worker Scaling**: Increase the number of worker replicas to handle high-volume processing tasks.
-- **Queue Buffering**: RabbitMQ handles spikes in traffic by buffering events for the worker service.
-
----
-
-## 🔍 Troubleshooting
-
-- **Database Connection**: Ensure PostgreSQL is running and credentials in `.env` match.
-- **RabbitMQ Unreachable**: Check if the container is healthy via `http://localhost:15672`.
-- **MinIO Upload Fails**: Verify `MINIO_ENDPOINT` is correctly set (use `127.0.0.1` for local, `minio` for Docker).
-- **Turbo Cache Issues**: Run `pnpm run build --force` to bypass the build cache.
-
----
-
-## 🌿 Branch Strategy
-
-- **`main`**: Production-ready code.
-- **`development`**: Integration branch for new features.
-- **`feature/*`**: Individual feature development branches.
-- **`bugfix/*`**: Critical hotfixes.
+- **Never push directly to `main`** — all changes go through PRs
+- All PRs must target `develop`, not `main`
+- `main` ← `develop` merges happen on release only (squash merge)
+- Branch names must follow the pattern: `<type>/<short-description>`
 
 ---
 
-## 🤝 Contribution
+## Contribution Guidelines
 
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
+1. **Fork** the repository (external contributors) or **branch** from `develop`
+2. Follow the [branch naming convention](#branch-strategy)
+3. Write or update tests for all changed functionality
+4. Ensure `pnpm build` and `pnpm lint` pass before opening a PR
+5. Fill in the [PR template](.github/PULL_REQUEST_TEMPLATE.md) completely
+6. Request at least **1 reviewer** before merging
+7. Squash-merge PRs into `develop`
 
 ---
 
-**Built with ❤️ by the AuraDAM Team.**
+## Commit Message Convention
+
+This project uses **[Conventional Commits](https://www.conventionalcommits.org/)** enforced by `commitlint` and `husky`.
+
+### Format
+
+```
+<type>(<scope>): <short summary>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+
+| Type       | When to use                        |
+| ---------- | ---------------------------------- |
+| `feat`     | A new feature                      |
+| `fix`      | A bug fix                          |
+| `docs`     | Documentation only                 |
+| `style`    | Formatting, no logic change        |
+| `refactor` | Code restructuring, no feature/fix |
+| `perf`     | Performance improvement            |
+| `test`     | Adding or fixing tests             |
+| `chore`    | Build, tooling, CI/CD              |
+| `ci`       | GitHub Actions / CI changes        |
+
+### Examples
+
+```bash
+feat(assets): add MinIO cleanup on delete
+fix(dashboard): bust analytics cache on asset deletion
+perf(routes): convert all page routes to lazy-loaded
+test(pipes): add unit tests for FileSizePipe and RelativeTimePipe
+docs: add full README with API reference and branch strategy
+chore(deps): bump @angular/core to 19.3.0
+```
+
+### Breaking Changes
+
+Append `!` after the type or add `BREAKING CHANGE:` footer:
+
+```bash
+feat!: change asset delete to also remove MinIO object
+
+BREAKING CHANGE: DELETE /assets/:id now also removes the MinIO file.
+```
+
+---
+
+## Versioning
+
+This project uses **[Semantic Versioning](https://semver.org/)** (`MAJOR.MINOR.PATCH`):
+
+| Part    | When to bump                      |
+| ------- | --------------------------------- |
+| `MAJOR` | Breaking API or behavioral change |
+| `MINOR` | New feature, backward-compatible  |
+| `PATCH` | Bug fix, backward-compatible      |
+
+Current version: see `package.json` root `"version"` field.
+
+### Release Process
+
+```bash
+# 1. Merge develop → main (squash)
+# 2. Tag the release
+git tag -a v1.2.0 -m "release: v1.2.0"
+git push origin v1.2.0
+# 3. Update CHANGELOG.md
+```
+
+---
+
+## Testing
+
+### Run Angular unit tests
+
+```bash
+cd apps/dashboard
+pnpm test          # Karma + Jasmine (headless Chrome)
+```
+
+### Run backend tests
+
+```bash
+cd apps/server
+pnpm test          # Jest
+```
+
+### Run all tests
+
+```bash
+pnpm test          # from monorepo root
+```
+
+### Test coverage targets
+
+| Layer           | Target |
+| --------------- | ------ |
+| Pipes           | 100%   |
+| Guards          | 100%   |
+| Services (HTTP) | ≥ 80%  |
+| Components      | ≥ 60%  |
+
+---
+
+## Load & Stress Testing
+
+The stress test simulates 10 concurrent upload workers for 60 seconds to trigger HPA autoscaling:
+
+```bash
+bash scripts/stress-test.sh
+```
+
+What it does:
+
+1. Authenticates and gets a JWT token
+2. Auto-selects a test file from `test-media/`
+3. Launches 10 parallel upload workers for 60 seconds
+4. Monitors HPA scaling every 10 seconds
+5. Scales workers back to 2 after completion
+
+**Prerequisites**: Files in `test-media/` directory (`.jpg`, `.webp`, `.mp4`)
+
+---
+
+## Kubernetes & DevOps
+
+### Check cluster status
+
+```bash
+kubectl get pods -n dam
+kubectl get services -n dam
+kubectl get hpa -n dam
+```
+
+### View logs
+
+```bash
+kubectl logs deployment/assets    -n dam --follow
+kubectl logs deployment/dashboard-ui -n dam --follow
+kubectl logs deployment/worker    -n dam --follow
+```
+
+### Scale services manually
+
+```bash
+kubectl scale deployment/worker -n dam --replicas=5
+```
+
+### Flush Redis cache
+
+```bash
+kubectl exec -n dam deployment/redis -- redis-cli FLUSHDB
+```
+
+### MinIO console
+
+```bash
+kubectl port-forward svc/minio -n dam 9001:9001
+# Open http://localhost:9001 (minioadmin / minioadmin)
+```
+
+### Grafana monitoring
+
+```bash
+kubectl port-forward svc/grafana -n monitoring 3000:3000
+# Open http://localhost:3000 (admin / admin)
+```
+
+---
+
+## Troubleshooting
+
+### "Not Found" on asset download
+
+**Cause**: `MINIO_PUBLIC_URL` pointing to port 80 (Apache) instead of port 8080 (Ingress).  
+**Fix**: Verify `infra/k8s/base/secrets.yml` has `http://dam.local:8080/minio`.
+
+### Deleted asset reappears after refresh
+
+**Cause**: Redis list cache not invalidated.  
+**Fix**: Run `kubectl exec -n dam deployment/redis -- redis-cli FLUSHDB` to clear all caches.
+
+### Dashboard chart is empty
+
+**Cause**: No data in the `usage` table.  
+**Fix**: Run `scripts/seed-usage.sql` to seed 7 days of usage data.
+
+### Pods not starting
+
+```bash
+kubectl describe pod <pod-name> -n dam   # check events
+kubectl logs <pod-name> -n dam           # check logs
+```
+
+### Build fails
+
+```bash
+pnpm install --frozen-lockfile   # ensure lockfile is clean
+pnpm build                       # rebuild all packages
+```
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.

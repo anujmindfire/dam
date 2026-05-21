@@ -12,6 +12,7 @@ import {
   findOneAndUpdate,
   deleteRecord,
   uploadFile,
+  deleteFile,
   publishMessage,
   cacheUtil as cache,
   statusCode,
@@ -257,11 +258,23 @@ export const deleteAsset = async (req: RequestWithUser) => {
   try {
     const { id } = req.params;
 
+    // Fetch the record first so we know the storageKey to clean up MinIO
+    const assetData = await findOne(assetsModel, { id: Number(id) });
+    if (!assetData) return new CustomError(assetMsg.notFound, statusCode.notFound);
+
     const count = await deleteRecord(assetsModel, { id: Number(id) });
     if (count === 0) return new CustomError(assetMsg.notFound, statusCode.notFound);
 
+    // Invalidate per-asset and list caches
     await cache.del(`${cacheKeys.assetCacheKeyPrefix}${id}`);
     await cache.delByPattern(`${cacheKeys.assetListCacheKey}*`);
+    await cache.del("analytics:overview");
+    await cache.del("analytics:compliance");
+
+    // Clean up MinIO — remove original file + generated thumbnail (non-fatal)
+    await deleteFile(storage.bucket, assetData.storageKey);
+    await deleteFile(storage.bucket, `thumbnails/${id}.webp`);
+
     return true;
   } catch (error) {
     return new CustomError((error as Error).message, statusCode.badRequest);

@@ -1,0 +1,27 @@
+<header class="sticky top-0 z-20 flex items-center h-[var(--header-height)] px-6 bg-white/80 backdrop-blur-md border-b border-[var(--border)]">
+  <button
+    (click)="onMenuClick.emit()"
+    [class.opacity-100]="collapsed"
+    [class.opacity-0]="!collapsed"
+    [class.pointer-events-none]="!collapsed"
+    [class.lg:hidden]="!collapsed"
+    class="mr-4 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  </button>
+
+  <div class="flex-1 overflow-hidden">
+    <app-breadcrumb></app-breadcrumb>
+  </div>
+
+  <div class="ml-auto flex items-center gap-4">
+    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-full border border-indigo-100">
+      <div class="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse"></div>
+      <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider">
+        Live System
+      </span>
+    </div>
+    <div class="h-8 w-px bg-slate-200 mx-1"></div>
+    <app-logout></app-logout>
+  </div>
+</header>

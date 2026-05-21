@@ -87,7 +87,13 @@ export const list = async (
  */
 export const overview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const result = await getSystemOverview(req.query);
+    const user = (req as any).user;
+    const filters = {
+      ...req.query,
+      userId: user?.id,
+      isAdmin: user?.roleId === 1,
+    };
+    const result = await getSystemOverview(filters);
 
     sendSuccessResponse({
       res,

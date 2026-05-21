@@ -1,0 +1,147 @@
+<div class="space-y-8 animate-in fade-in duration-500">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--text-color)] tracking-tight italic">
+        Background Processing
+      </h1>
+      <p class="text-slate-500 text-sm mt-1 font-medium">
+        System workers and event-driven operations
+      </p>
+    </div>
+    <app-button variant="outline" (onClick)="fetchJobs()" class="gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+      Refresh Tasks
+    </app-button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2">
+      <app-card>
+        <app-card-header class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--primary)]"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16.5 12"/></svg>
+          <app-card-title>Active Tasks Queue</app-card-title>
+        </app-card-header>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50/50 border-b border-slate-100">
+              <tr>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Job Type
+                </th>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Asset
+                </th>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Status
+                </th>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Started
+                </th>
+                <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">
+                  Duration
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              <tr *ngFor="let job of jobs" class="hover:bg-slate-50/50 transition-colors">
+                <td class="px-6 py-5">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-[var(--primary)] border border-indigo-100">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
+                    <span class="text-sm font-bold text-[var(--text-color)] capitalize">
+                      {{ job.type }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-6 py-5">
+                  <span class="text-xs font-bold text-slate-500 uppercase tracking-tight">
+                    {{ job.target || "System Task" }}
+                  </span>
+                </td>
+                <td class="px-6 py-5">
+                  <ng-container [ngSwitch]="job.status">
+                    <span *ngSwitchCase="'completed'" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-600 border border-emerald-100">Completed</span>
+                    <span *ngSwitchCase="'failed'" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-50 text-rose-600 border border-rose-100">Failed</span>
+                    <span *ngSwitchCase="'active'" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-50 text-[var(--primary)] border border-indigo-100">Active</span>
+                    <span *ngSwitchCase="'queued'" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-600 border border-amber-100">Queued</span>
+                    <span *ngSwitchDefault class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-50 text-slate-500 border border-slate-100">Unknown</span>
+                  </ng-container>
+                </td>
+                <td class="px-6 py-5">
+                  <span class="text-xs font-bold text-slate-400 uppercase">
+                    {{ job.createdAt | date:'shortTime' }}
+                  </span>
+                </td>
+                <td class="px-6 py-5 text-right">
+                  <span class="text-xs font-bold text-slate-400 uppercase">
+                    {{ getDuration(job) }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="jobs.length === 0">
+                <td colspan="5" class="px-6 py-8 text-center text-slate-400 text-sm font-medium italic">
+                  No active or recent background tasks.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-card>
+    </div>
+
+    <div class="space-y-8">
+      <app-card class="bg-indigo-600 border-none shadow-xl shadow-indigo-200 overflow-hidden relative">
+        <div class="absolute top-0 right-0 p-4 opacity-10">
+          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <app-card-body class="relative z-10 text-white">
+          <h3 class="text-xl font-bold mb-2">Worker Status</h3>
+          <p class="text-indigo-100 text-sm font-medium mb-6">
+            Internal systems operating at peak efficiency
+          </p>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-white/10 rounded-xl border border-white/10">
+              <span class="text-xs font-bold uppercase tracking-widest">Throughput</span>
+              <span class="text-lg font-bold">1.2 GB/s</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-white/10 rounded-xl border border-white/10">
+              <span class="text-xs font-bold uppercase tracking-widest">Active nodes</span>
+              <span class="text-lg font-bold">8 / 12</span>
+            </div>
+          </div>
+        </app-card-body>
+      </app-card>
+
+      <app-card>
+        <app-card-header>
+          <app-card-title>Health Overview</app-card-title>
+        </app-card-header>
+        <app-card-body class="space-y-4">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                Message Queue
+              </p>
+              <p class="text-sm font-bold text-emerald-600 uppercase">Operational</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                Cache Layer
+              </p>
+              <p class="text-sm font-bold text-amber-600 uppercase">Warning (Memory)</p>
+            </div>
+          </div>
+        </app-card-body>
+      </app-card>
+    </div>
+  </div>
+</div>

@@ -170,8 +170,8 @@ export const verifyTokenFactory = <T extends Model>(
       }
 
       const sessionToken =
-        req.cookies?.[domain] ||
         req.headers?.authorization?.split(" ")[1] ||
+        req.cookies?.[domain] ||
         (req.query?.token as string);
 
       if (!sessionToken) {

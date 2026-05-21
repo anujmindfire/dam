@@ -185,10 +185,9 @@ const bootstrap = async (): Promise<void> => {
 
         logger.info(workerMsg.transitionComplete(payload.assetsId, enums.reviewed));
         jobsTotal.inc({ type: "Media Processing & Compliance", status: "completed" });
-        jobsProcessing.dec();
       } catch (err) {
         logger.error(workerMsg.processingFailed(payload.assetsId), err);
-
+ 
         // 1. Mark the background job as failed
         await findOneAndUpdate(
           jobModel,
@@ -199,10 +198,11 @@ const bootstrap = async (): Promise<void> => {
             message: `Processing failed: ${(err as Error).message}`,
           },
         );
-
+ 
         // 2. Revert assets status to pending so it can be retried
         await update(assetsModel, { id: payload.assetsId }, { status: "pending" });
         jobsTotal.inc({ type: "Media Processing & Compliance", status: "failed" });
+      } finally {
         jobsProcessing.dec();
       }
     });
