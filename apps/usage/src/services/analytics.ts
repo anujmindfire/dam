@@ -21,18 +21,23 @@ const COMPLIANCE_KEY = "analytics:compliance";
  */
 export const getSystemOverview = async (filters: any = {}): Promise<any | CustomError> => {
   try {
-    const { department, assetType, timeRange } = filters;
+    const { department, assetType, timeRange, userId, isAdmin } = filters;
+
+    // Non-admin users only see their own assets
+    const ownerFilter = !isAdmin && userId ? { owner: userId } : {};
+
     const hasFilters =
       (department && department !== "All Departments") ||
       (assetType && assetType !== "All Asset Types") ||
-      (timeRange && timeRange !== "Last 30 Days");
+      (timeRange && timeRange !== "Last 30 Days") ||
+      Object.keys(ownerFilter).length > 0;
 
     if (!hasFilters) {
       const cached = await cache.get(OVERVIEW_KEY);
       if (cached) return cached;
     }
 
-    const assetWhere: any = {};
+    const assetWhere: any = { ...ownerFilter };
     if (department && department !== "All Departments") assetWhere.department = department;
     if (assetType && assetType !== "All Asset Types") {
       const typeMap: any = { Images: "image", Videos: "video", Documents: "pdf" };

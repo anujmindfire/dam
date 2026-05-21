@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpBackend, HttpRequest, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { AssetsProps, SuccessResponseProps } from '@dam/shared';
 import { AuthService } from './auth.service';
 import { API_ENDPOINTS } from '../constants';
@@ -36,12 +37,22 @@ export class AssetService {
     return this.http.get<SuccessResponseProps<{ downloadUrl: string }>>(`${this.ASSETS_URL}/${id}/download`, this.getHeaders());
   }
 
+  getThumbnailBlobUrl(id: string | number): Observable<string | null> {
+    return this.http.get(`${this.ASSETS_URL}/${id}/thumbnail`, {
+      headers: this.authService.getAuthHeaders(),
+      responseType: 'blob',
+    }).pipe(
+      map(blob => URL.createObjectURL(blob)),
+      catchError(() => of(null)),
+    );
+  }
+
   deleteAsset(id: string): Observable<SuccessResponseProps<void>> {
     return this.http.delete<SuccessResponseProps<void>>(`${this.ASSETS_URL}/${id}`, this.getHeaders());
   }
 
   getUploadUrl(data: { filename: string; mimetype: string }): Observable<SuccessResponseProps<any>> {
-    return this.http.post<SuccessResponseProps<any>>(`${this.ASSETS_URL}/upload/presignedUrl`, data, this.getHeaders());
+    return this.http.post<SuccessResponseProps<any>>(`${this.ASSETS_URL}/upload/presigned`, data, this.getHeaders());
   }
 
   completeUpload(data: any): Observable<SuccessResponseProps<any>> {

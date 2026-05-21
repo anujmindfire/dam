@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../k8s
+
+labels:
+  - pairs:
+      environment: local
+
+replicas:
+  - name: assets
+    count: 1
+  - name: metadata
+    count: 1
+  - name: server
+    count: 1
+  - name: usage
+    count: 1
+  - name: worker
+    count: 1
+  - name: dashboard-ui
+    count: 1

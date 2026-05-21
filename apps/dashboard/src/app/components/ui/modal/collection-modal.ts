@@ -12,7 +12,7 @@ import { ToastService } from '../../../services/toast.service';
   template: `
     <div *ngIf="isOpen" class="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
       <app-card class="w-full max-w-md shadow-2xl overflow-hidden border-white/5 animate-[slideUp_0.3s_ease-out]">
-        <app-card-header class="flex flex-row items-center justify-between border-b border-slate-100 pb-6">
+        <app-card-header [className]="'flex flex-row items-center justify-between !pb-6 !bg-transparent w-full'">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-[var(--primary)] border border-indigo-100">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>

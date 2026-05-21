@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - base/namespace.yml
+  - base/secrets.yml
+  - infrastructure/minio.yml
+  - infrastructure/postgres.yml
+  - infrastructure/rabbitmq.yml
+  - infrastructure/redis.yml
+  - apps/assets.yml
+  - apps/dashboard.yml
+  - apps/gateway.yml
+  - apps/hpa.yml
+  - apps/ingress.yml
+  - apps/metadata.yml
+  - apps/server.yml
+  - apps/usage.yml
+  - apps/worker.yml
+  - monitoring/grafana-dashboards.yml
+  - monitoring/monitoring.yml

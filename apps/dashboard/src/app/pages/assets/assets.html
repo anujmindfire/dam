@@ -29,14 +29,13 @@
         <div *ngSwitchCase="'filename'" class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0 overflow-hidden">
             <ng-container *ngIf="row.mimetype && (row.mimetype.includes('image') || row.mimetype.includes('video')); else fallbackIcon">
-              <img
-                [src]="'/api/v1/assets/' + row.id + '/thumbnail'"
-                [alt]="row.filename"
-                class="w-full h-full object-cover"
-                (error)="imgErr.style.display='none'; fallbackIconSpan.style.display='flex'"
-                #imgErr
-              />
-              <span class="hidden text-indigo-500 font-bold text-[10px]" #fallbackIconSpan>FILE</span>
+              <ng-container *ngIf="getThumbnail(row.id) | async as thumbUrl; else fallbackIcon">
+                <img
+                  [src]="thumbUrl"
+                  [alt]="row.filename"
+                  class="w-full h-full object-cover"
+                />
+              </ng-container>
             </ng-container>
             <ng-template #fallbackIcon>
               <!-- Document or general file icon -->
@@ -50,7 +49,7 @@
         </div>
 
         <span *ngSwitchCase="'type'" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          {{ row.mimetype ? (row.mimetype.split('/')[1] || row.mimetype) : 'file' }}
+          {{ row.mimetype | mimeLabel }}
         </span>
 
         <span *ngSwitchCase="'status'"
@@ -69,7 +68,7 @@
         </span>
 
         <span *ngSwitchCase="'createdAt'" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          {{ (row.createdAt | date:'shortDate') || 'Unknown' }}
+          {{ row.createdAt | relativeTime }}
         </span>
 
         <div *ngSwitchCase="'actions'" class="flex items-center justify-end gap-1">
@@ -104,3 +103,13 @@
   [assetsId]="selectedAssetId"
   (onClose)="showCollectionModal = false; selectedAssetId = ''"
 ></app-add-to-collection-modal>
+
+<app-confirm-dialog
+  [isOpen]="showConfirmDelete"
+  [title]="'Delete Asset'"
+  [message]="'Are you sure you want to permanently delete this digital asset? This will also remove the physical files from cloud storage and cannot be undone.'"
+  confirmLabel="Delete Asset"
+  confirmVariant="danger"
+  (confirmed)="executeDelete()"
+  (cancelled)="showConfirmDelete = false; assetToDeleteId = ''"
+></app-confirm-dialog>

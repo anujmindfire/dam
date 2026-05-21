@@ -67,3 +67,7 @@ logs/
 # Tools
 .husky/
 .turbo/
+
+# Large test media assets
+test-media/
+
