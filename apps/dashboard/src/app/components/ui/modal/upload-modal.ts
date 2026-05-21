@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CardComponent, CardHeaderComponent, CardTitleComponent, CardBodyComponent } from '../card/card';
 import { ButtonComponent } from '../button/button';
+import { AssetService } from '../../../services/asset.service';
+import { ToastService } from '../../../services/toast.service';
+import { HttpEventType } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-upload-modal',
@@ -12,15 +16,15 @@ import { ButtonComponent } from '../button/button';
     <div *ngIf="isOpen" class="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
       <div class="w-full max-w-lg animate-[slideUp_0.3s_ease-out]">
         <app-card class="shadow-2xl">
-          <app-card-header class="flex items-center justify-between border-b border-slate-100 pb-4">
-            <app-card-title class="flex items-center gap-2">
+          <div class="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-slate-50/50">
+            <h2 class="text-xl font-bold tracking-tight text-[var(--text-color)] flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--primary)]"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
               Upload Digital Assets
-            </app-card-title>
+            </h2>
             <app-button variant="ghost" (onClick)="close()" class="w-8 h-8 p-0" [disabled]="isUploading">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </app-button>
-          </app-card-header>
+          </div>
 
           <app-card-body class="space-y-6 pt-6">
             <div
@@ -121,12 +125,13 @@ import { ButtonComponent } from '../button/button';
             </div>
           </app-card-body>
 
-          <div class="p-6 flex gap-3 border-t border-slate-50">
-            <app-button variant="outline" class="flex-1" (onClick)="close()" [disabled]="isUploading">
+          <div class="p-6 flex gap-3 border-t border-slate-100">
+            <app-button variant="outline" class="flex-1" [fullWidth]="true" (onClick)="close()" [disabled]="isUploading">
               Cancel
             </app-button>
             <app-button
               class="flex-1 shadow-lg shadow-indigo-100"
+              [fullWidth]="true"
               [disabled]="!selectedFile || !usageRights || isUploading"
               (onClick)="startUpload()"
             >
@@ -150,6 +155,8 @@ export class UploadModalComponent {
   department = 'Marketing';
   usageRights = '';
   expiryDate = '';
+
+  constructor(private assetService: AssetService, private toast: ToastService) {}
 
   close() {
     this.onClose.emit();
@@ -182,19 +189,71 @@ export class UploadModalComponent {
     this.selectedFile = null;
   }
 
-  startUpload() {
+  async startUpload() {
+    if (!this.selectedFile) return;
     this.isUploading = true;
     this.uploadProgress = 0;
     
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      this.uploadProgress += 10;
-      if (this.uploadProgress >= 100) {
-        clearInterval(interval);
-        this.isUploading = false;
-        this.onSuccess.emit();
-        this.close();
+    try {
+      // 1. Get Presigned URL
+      const urlRes: any = await lastValueFrom(this.assetService.getUploadUrl({
+        filename: this.selectedFile.name,
+        mimetype: this.selectedFile.type
+      }));
+      
+      const payload = urlRes?.data?.data || urlRes?.data || {};
+      const { uploadUrl, storageKey } = payload;
+      
+      if (!uploadUrl) {
+        throw new Error('Failed to retrieve secure upload URL');
       }
-    }, 200);
+
+      // 2. Upload directly to MinIO
+      this.assetService.uploadToMinio(uploadUrl, this.selectedFile, this.selectedFile.type)
+        .subscribe({
+          next: async (event: any) => {
+            if (event.type === HttpEventType.UploadProgress && event.total) {
+              this.uploadProgress = Math.round((event.loaded * 100) / event.total);
+            } else if (event.type === HttpEventType.Response) {
+              // 3. Finalize metadata binding
+              try {
+                await lastValueFrom(this.assetService.completeUpload({
+                  department: this.department,
+                  usageRights: this.usageRights,
+                  expiryDate: this.expiryDate,
+                  filename: this.selectedFile!.name,
+                  storageKey,
+                  size: this.selectedFile!.size,
+                  mimetype: this.selectedFile!.type
+                }));
+                
+                this.toast.show('Assets uploaded successfully', 'success');
+                this.selectedFile = null;
+                this.usageRights = '';
+                this.expiryDate = '';
+                this.uploadProgress = 0;
+                this.isUploading = false;
+                
+                this.onSuccess.emit();
+                this.close();
+              } catch (err) {
+                console.error('Completion error', err);
+                this.toast.show('Failed to finalize asset metadata', 'error');
+                this.isUploading = false;
+              }
+            }
+          },
+          error: (err: any) => {
+            console.error('MinIO upload error', err);
+            this.toast.show('Upload failed. Please check your connection to MinIO.', 'error');
+            this.isUploading = false;
+          }
+        });
+        
+    } catch (error) {
+      console.error('Initialization error', error);
+      this.toast.show('Failed to initiate secure upload', 'error');
+      this.isUploading = false;
+    }
   }
 }

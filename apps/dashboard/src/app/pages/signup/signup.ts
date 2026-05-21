@@ -11,7 +11,7 @@ import { ToastService } from '../../services/toast.service';
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, CardComponent, ButtonComponent, InputComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, InputComponent, CardComponent, ButtonComponent],
   templateUrl: './signup.html',
 })
 export class SignupComponent implements OnInit {

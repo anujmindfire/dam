@@ -16,6 +16,7 @@ interface NavItem {
   imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
+  host: { class: 'contents' }
 })
 export class Sidebar implements OnInit {
   @Input() isOpen = true;

@@ -30,6 +30,17 @@ export const BRAND = {
   name: 'Intelligence',
 };
 
+export const API_ENDPOINTS = {
+  AUTH: '/api/v1/auth',
+  ANALYTICS: '/api/v1/analytics',
+  USAGE: '/api/v1/usage',
+  APPROVAL: '/api/v1/approval',
+  ASSETS: '/api/v1/assets',
+  COLLECTION: '/api/v1/collection',
+  USERS: '/api/v1/users',
+  JOBS: '/api/v1/jobs',
+};
+
 export const NAV_ITEMS = [
   {
     name: 'Dashboard',

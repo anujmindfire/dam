@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar';
 import { HeaderComponent } from '../header/header';
-import { ToastContainerComponent } from '../ui/toast/toast';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, Sidebar, HeaderComponent, ToastContainerComponent],
+  imports: [CommonModule, RouterOutlet, Sidebar, HeaderComponent],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
 })

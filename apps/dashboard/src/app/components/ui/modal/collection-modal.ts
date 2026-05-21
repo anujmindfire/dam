@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardComponent, CardHeaderComponent, CardTitleComponent, CardBodyComponent } from '../card/card';
 import { ButtonComponent } from '../button/button';
+import { CollectionService } from '../../../services/collection.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-add-to-collection-modal',
@@ -10,7 +12,7 @@ import { ButtonComponent } from '../button/button';
   template: `
     <div *ngIf="isOpen" class="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
       <app-card class="w-full max-w-md shadow-2xl overflow-hidden border-white/5 animate-[slideUp_0.3s_ease-out]">
-        <app-card-header class="flex flex-row items-center justify-between border-b border-slate-100 pb-6">
+        <app-card-header [className]="'flex flex-row items-center justify-between !pb-6 !bg-transparent w-full'">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-[var(--primary)] border border-indigo-100">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
@@ -23,7 +25,10 @@ import { ButtonComponent } from '../button/button';
         </app-card-header>
         
         <div class="flex flex-col max-h-[400px] overflow-y-auto bg-white">
-          <ng-container *ngIf="collections.length > 0; else emptyState">
+          <div *ngIf="isLoading" class="p-16 flex justify-center text-indigo-500">
+            <svg class="animate-spin w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          </div>
+          <ng-container *ngIf="!isLoading && collections.length > 0">
             <button
               *ngFor="let col of collections; let last = last"
               (click)="select(col.id)"
@@ -37,11 +42,9 @@ import { ButtonComponent } from '../button/button';
               <svg class="text-[var(--primary)] opacity-0 group-hover:opacity-100 group-hover:text-white transition-all transform scale-50 group-hover:scale-100" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </button>
           </ng-container>
-          <ng-template #emptyState>
-            <div class="p-16 text-center text-slate-400 text-sm font-medium italic">
-              No collection hubs found.
-            </div>
-          </ng-template>
+          <div *ngIf="!isLoading && collections.length === 0" class="p-16 text-center text-slate-400 text-sm font-medium italic">
+            No collection hubs found.
+          </div>
         </div>
 
         <div class="p-6 border-t border-slate-50 bg-slate-50/50 flex justify-end">
@@ -53,17 +56,51 @@ import { ButtonComponent } from '../button/button';
     </div>
   `,
 })
-export class AddToCollectionModalComponent {
+export class AddToCollectionModalComponent implements OnChanges {
   @Input() isOpen = false;
-  @Input() collections: any[] = [];
+  @Input() assetsId = '';
   @Output() onClose = new EventEmitter<void>();
-  @Output() onSelect = new EventEmitter<string>();
+
+  collections: any[] = [];
+  isLoading = false;
+
+  constructor(private collectionService: CollectionService, private toast: ToastService) {}
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['isOpen'] && this.isOpen) {
+      this.loadCollections();
+    }
+  }
+
+  loadCollections() {
+    this.isLoading = true;
+    this.collectionService.getCollections({ limit: 100 }).subscribe({
+      next: (res: any) => {
+        const payload = res.data?.data || res.data || {};
+        this.collections = Array.isArray(payload) ? payload : (payload.result || []);
+        this.isLoading = false;
+      },
+      error: () => {
+        this.toast.show('Failed to retrieve collections', 'error');
+        this.isLoading = false;
+      }
+    });
+  }
 
   close() {
     this.onClose.emit();
   }
 
   select(id: string) {
-    this.onSelect.emit(id);
+    if (!this.assetsId) return;
+    this.collectionService.addAssetToCollection(id, this.assetsId).subscribe({
+      next: () => {
+        this.toast.show('Assets added to collection successfully', 'success');
+        this.close();
+      },
+      error: () => {
+        this.toast.show('Failed to bind asset to collection', 'error');
+      }
+    });
   }
 }

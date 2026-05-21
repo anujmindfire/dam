@@ -215,7 +215,8 @@ export const download = async (
 };
 
 /**
- * GET /:id/thumbnail — Returns a presigned URL for the asset thumbnail.
+ * GET /:id/thumbnail — Streams the asset thumbnail image bytes directly from MinIO.
+ * This avoids presigned URL host-mismatch issues when accessed through the nginx gateway.
  */
 export const thumbnail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -223,19 +224,11 @@ export const thumbnail = async (req: Request, res: Response, next: NextFunction)
     const thumbKey = `thumbnails/${id}.webp`;
 
     try {
-      const url = await getPresignedUrl("assets", thumbKey);
-
-      // Support direct preview if token is in query or if it's a browser request
-      if (req.query.token || req.headers.accept?.includes("text/html")) {
-        return res.redirect(url);
-      }
-
-      sendSuccessResponse({
-        res,
-        statusCode: statusCode.success,
-        message: assetMsg.getSuccess,
-        data: { thumbnailUrl: url },
-      });
+      const { getObject } = await import("@dam/shared");
+      const imageBuffer = await getObject("assets", thumbKey);
+      res.set("Content-Type", "image/webp");
+      res.set("Cache-Control", "public, max-age=86400");
+      res.send(imageBuffer);
     } catch (e) {
       return next(new CustomError("Thumbnail not available", statusCode.notFound));
     }

@@ -1,8 +1,8 @@
-<div class="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-  <div class="card-login">
+<div class="min-h-screen bg-[var(--background)] flex items-center justify-center p-6">
+  <app-card class="max-w-xl" [customStyle]="{ 'background': 'var(--card-background)', 'padding': 'var(--card-padding)' }">
     <!-- Header Section -->
-    <div class="flex flex-col items-start mb-8">
-      <h2 class="font-bold text-slate-900 text-4xl tracking-tight">
+    <div class="flex flex-col items-start mb-10">
+      <h2 class="font-bold text-[var(--text-color)] text-4xl tracking-tight leading-none">
         Create Account
       </h2>
       <p class="mt-2 text-slate-500 font-medium text-lg">
@@ -11,7 +11,7 @@
     </div>
 
     <!-- Form Section -->
-    <form [formGroup]="signupForm" (ngSubmit)="handleSignup()" class="space-y-5">
+    <form [formGroup]="signupForm" (ngSubmit)="handleSignup()" class="space-y-6">
       <app-input
         type="text"
         placeholder="Full Name"
@@ -35,7 +35,7 @@
         ></app-input>
         <button
           type="button"
-          class="absolute right-4 top-[26px] -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors z-10 p-2"
+          class="absolute right-4 top-[26px] -translate-y-1/2 text-slate-400 hover:text-[var(--primary)] transition-colors z-10 p-2"
           (click)="showPassword = !showPassword"
         >
           <svg *ngIf="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -43,9 +43,9 @@
         </button>
       </div>
 
-      <button type="submit" class="btn-test">
+      <app-button type="submit" [fullWidth]="true" [isLoading]="isLoading">
         Sign Up
-      </button>
+      </app-button>
 
       <!-- Footer Section -->
       <div class="text-center pt-6 border-t border-slate-100 mt-6">
@@ -53,12 +53,12 @@
           Already have an account?
           <a
             routerLink="/login"
-            class="text-indigo-600 font-bold hover:underline decoration-2 underline-offset-4 ml-1"
+            class="text-[var(--primary)] font-bold hover:underline decoration-2 underline-offset-4 ml-1"
           >
             Sign In
           </a>
         </p>
       </div>
     </form>
-  </div>
+  </app-card>
 </div>

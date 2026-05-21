@@ -13,7 +13,30 @@ export const minioClient = new Minio.Client({
   useSSL: false, // Set to true if using HTTPS
   accessKey: dotEnv.minioAccessKey,
   secretKey: dotEnv.minioSecretKey,
+  region: "us-east-1",
 });
+
+/**
+ * Dedicated client for generating presigned URLs.
+ * Uses the public-facing URL (minioPublicUrl) so signatures are computed
+ * with the correct host header (e.g. minio.local:8080) that the client browser uses.
+ */
+let presignClient = minioClient;
+if (dotEnv.minioPublicUrl) {
+  try {
+    const parsed = new URL(dotEnv.minioPublicUrl);
+    presignClient = new Minio.Client({
+      endPoint: parsed.hostname,
+      port: parsed.port ? Number(parsed.port) : (parsed.protocol === "https:" ? 443 : 80),
+      useSSL: parsed.protocol === "https:",
+      accessKey: dotEnv.minioAccessKey,
+      secretKey: dotEnv.minioSecretKey,
+      region: "us-east-1",
+    });
+  } catch (err) {
+    logger.error("Failed to parse minioPublicUrl for presignClient:", err);
+  }
+}
 
 /**
  * Rewrites internal MinIO URLs (cluster DNS) to the public-facing URL
@@ -167,8 +190,8 @@ export const getPresignedUrl = async (
   expiry: number = 3600,
 ): Promise<string> => {
   try {
-    const url = await minioClient.presignedGetObject(bucketName, objectName, expiry);
-    return rewriteUrl(url);
+    const url = await presignClient.presignedGetObject(bucketName, objectName, expiry);
+    return presignClient !== minioClient ? url : rewriteUrl(url);
   } catch (error) {
     logger.error(`Failed to generate presigned URL:`, error);
     throw error;
@@ -184,10 +207,24 @@ export const getPresignedPutUrl = async (
   expiry: number = 3600,
 ): Promise<string> => {
   try {
-    const url = await minioClient.presignedPutObject(bucketName, objectName, expiry);
-    return rewriteUrl(url);
+    const url = await presignClient.presignedPutObject(bucketName, objectName, expiry);
+    return presignClient !== minioClient ? url : rewriteUrl(url);
   } catch (error) {
     logger.error(`Failed to generate presigned upload URL:`, error);
     throw error;
+  }
+};
+
+/**
+ * Deletes an object from a MinIO bucket.
+ * Silently swallows "not found" errors so callers don't need to guard.
+ */
+export const deleteFile = async (bucketName: string, objectName: string): Promise<void> => {
+  try {
+    await minioClient.removeObject(bucketName, objectName);
+    logger.info(`Deleted MinIO object: ${bucketName}/${objectName}`);
+  } catch (error) {
+    // Non-fatal: object may have already been removed or never existed
+    logger.warn(`Could not delete MinIO object ${bucketName}/${objectName}:`, error);
   }
 };

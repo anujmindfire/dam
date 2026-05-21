@@ -1,35 +1,84 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/login/login';
-import { LayoutComponent } from './components/layout/layout';
-import { DashboardComponent } from './pages/dashboard/dashboard';
-import { AssetsComponent } from './pages/assets/assets';
-import { IntelligenceComponent } from './pages/intelligence/intelligence';
-import { ComplianceComponent } from './pages/compliance/compliance';
-import { JobsComponent } from './pages/jobs/jobs';
-import { SettingsComponent } from './pages/settings/settings';
-import { SignupComponent } from './pages/signup/signup';
-import { ApprovalsComponent } from './pages/approvals/approvals';
-import { UsersComponent } from './pages/users/users';
-import { CollectionsComponent } from './pages/collections/collections';
-import { AssetDetailComponent } from './pages/asset-detail/asset-detail';
+import { authGuard } from './guards/auth.guard';
 
+/**
+ * Application routes — all page routes are LAZY LOADED to reduce initial bundle size.
+ * Only the login/signup pages and the layout shell are included in the main chunk.
+ *
+ * Route title is automatically set in the browser tab via Angular's Title strategy.
+ */
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'signup', component: SignupComponent },
+  {
+    path: 'login',
+    loadComponent: () => import('./pages/login/login').then(m => m.LoginComponent),
+    title: 'Sign In — DAM',
+  },
+  {
+    path: 'signup',
+    loadComponent: () => import('./pages/signup/signup').then(m => m.SignupComponent),
+    title: 'Create Account — DAM',
+  },
   {
     path: '',
-    component: LayoutComponent,
+    loadComponent: () => import('./components/layout/layout').then(m => m.LayoutComponent),
+    canActivate: [authGuard],
     children: [
-      { path: '', component: DashboardComponent },
-      { path: 'assets', component: AssetsComponent },
-      { path: 'assets/:id', component: AssetDetailComponent },
-      { path: 'intelligence', component: IntelligenceComponent },
-      { path: 'compliance', component: ComplianceComponent },
-      { path: 'jobs', component: JobsComponent },
-      { path: 'settings', component: SettingsComponent },
-      { path: 'approvals', component: ApprovalsComponent },
-      { path: 'users', component: UsersComponent },
-      { path: 'collections', component: CollectionsComponent },
+      {
+        path: '',
+        loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardComponent),
+        title: 'Dashboard — DAM',
+      },
+      {
+        path: 'assets',
+        loadComponent: () => import('./pages/assets/assets').then(m => m.AssetsComponent),
+        title: 'Asset Library — DAM',
+      },
+      {
+        path: 'assets/:id',
+        loadComponent: () => import('./pages/asset-detail/asset-detail').then(m => m.AssetDetailComponent),
+        title: 'Asset Details — DAM',
+      },
+      {
+        path: 'intelligence',
+        loadComponent: () => import('./pages/intelligence/intelligence').then(m => m.IntelligenceComponent),
+        title: 'Intelligence — DAM',
+      },
+      {
+        path: 'compliance',
+        loadComponent: () => import('./pages/compliance/compliance').then(m => m.ComplianceComponent),
+        title: 'Compliance — DAM',
+      },
+      {
+        path: 'jobs',
+        loadComponent: () => import('./pages/jobs/jobs').then(m => m.JobsComponent),
+        title: 'Background Jobs — DAM',
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./pages/settings/settings').then(m => m.SettingsComponent),
+        title: 'Settings — DAM',
+      },
+      {
+        path: 'approvals',
+        loadComponent: () => import('./pages/approvals/approvals').then(m => m.ApprovalsComponent),
+        title: 'Approvals — DAM',
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./pages/users/users').then(m => m.UsersComponent),
+        title: 'Users — DAM',
+      },
+      {
+        path: 'collections',
+        loadComponent: () => import('./pages/collections/collections').then(m => m.CollectionsComponent),
+        title: 'Collections — DAM',
+      },
+      {
+        path: 'collections/:id',
+        loadComponent: () => import('./pages/collections/collections').then(m => m.CollectionsComponent),
+        title: 'Collection — DAM',
+      },
     ],
   },
+  { path: '**', redirectTo: '' },
 ];
