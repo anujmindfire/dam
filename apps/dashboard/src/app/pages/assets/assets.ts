@@ -13,6 +13,7 @@ import { MimeLabelPipe } from '../../pipes/mime-label.pipe';
 import { RelativeTimePipe } from '../../pipes/relative-time.pipe';
 import { ToastService } from '../../services/toast.service';
 import { AssetService } from '../../services/asset.service';
+import { HasRoleDirective } from '../../directives/has-role.directive';
 
 @Component({
   selector: 'app-assets',
@@ -26,7 +27,8 @@ import { AssetService } from '../../services/asset.service';
     AddToCollectionModalComponent,
     ConfirmDialogComponent,
     MimeLabelPipe,
-    RelativeTimePipe
+    RelativeTimePipe,
+    HasRoleDirective
   ],
   templateUrl: './assets.html',
 })
