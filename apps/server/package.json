@@ -56,11 +56,11 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src/__tests__"
+      "<rootDir>/src/tests"
     ],
     "moduleNameMapper": {
       "^@dam/shared$": "<rootDir>/../../packages/shared/src/index.ts"
     },
-    "testPathPattern": "\\.test\\.ts$"
+    "testRegex": "\\.test\\.ts$"
   }
 }

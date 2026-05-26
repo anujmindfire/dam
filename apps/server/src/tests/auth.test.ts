@@ -7,9 +7,12 @@ import router from "../routes/index";
  * Tests login, logout, and token enforcement.
  */
 
+import { errorHandler } from "@dam/shared";
+
 const app = express();
 app.use(express.json());
 app.use(router);
+app.use(errorHandler as any);
 
 describe("Auth API", () => {
   let _accessToken: string = "";
